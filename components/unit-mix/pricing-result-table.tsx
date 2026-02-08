@@ -12,44 +12,63 @@ type SortKey = 'unitName' | 'tier' | 'supplyArea' | 'totalPrice' | 'pricePerPyun
 type SortOrder = 'asc' | 'desc';
 
 export function PricingResultTable({ pricing }: PricingResultTableProps) {
-    const [sortKey, setSortKey] = useState<SortKey>('unitName');
-    const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+    // Multi-column sort state: Array of sort criteria, where index 0 is the primary sort.
+    const [sorts, setSorts] = useState<{ key: SortKey; order: SortOrder }[]>([
+        { key: 'unitName', order: 'asc' }
+    ]);
 
     if (!pricing || pricing.length === 0) return null;
 
     const handleSort = (key: SortKey) => {
-        if (sortKey === key) {
-            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-        } else {
-            setSortKey(key);
-            setSortOrder('asc');
-        }
+        setSorts(prev => {
+            const existingIndex = prev.findIndex(s => s.key === key);
+            let newSorts = [...prev];
+
+            if (existingIndex === 0) {
+                // If clicking the primary sort column, toggle its order
+                newSorts[0] = { ...newSorts[0], order: newSorts[0].order === 'asc' ? 'desc' : 'asc' };
+            } else {
+                // If clicking a new column or a secondary column, move it to the front (make it primary)
+                // Remove it from its old position if it exists
+                if (existingIndex > -1) {
+                    newSorts.splice(existingIndex, 1);
+                }
+                // Add to the front as 'asc'
+                newSorts.unshift({ key, order: 'asc' });
+            }
+            return newSorts;
+        });
     };
 
     const tierOrder = { "1st": 1, "2nd": 2, "General": 3 };
 
     const sortedPricing = [...pricing].sort((a, b) => {
-        let comparison = 0;
+        // Iterate through sort criteria in order of priority
+        for (const sort of sorts) {
+            let comparison = 0;
+            switch (sort.key) {
+                case 'unitName':
+                    comparison = a.unitName.localeCompare(b.unitName);
+                    break;
+                case 'tier':
+                    comparison = (tierOrder[a.tier] || 4) - (tierOrder[b.tier] || 4);
+                    break;
+                case 'supplyArea':
+                    comparison = (a.supplyArea || 0) - (b.supplyArea || 0);
+                    break;
+                case 'totalPrice':
+                    comparison = a.totalPrice - b.totalPrice;
+                    break;
+                case 'pricePerPyung':
+                    comparison = a.pricePerPyung - b.pricePerPyung;
+                    break;
+            }
 
-        switch (sortKey) {
-            case 'unitName':
-                comparison = a.unitName.localeCompare(b.unitName);
-                break;
-            case 'tier':
-                comparison = (tierOrder[a.tier] || 4) - (tierOrder[b.tier] || 4);
-                break;
-            case 'supplyArea':
-                comparison = (a.supplyArea || 0) - (b.supplyArea || 0);
-                break;
-            case 'totalPrice':
-                comparison = a.totalPrice - b.totalPrice;
-                break;
-            case 'pricePerPyung':
-                comparison = a.pricePerPyung - b.pricePerPyung;
-                break;
+            if (comparison !== 0) {
+                return sort.order === 'asc' ? comparison : -comparison;
+            }
         }
-
-        return sortOrder === 'asc' ? comparison : -comparison;
+        return 0;
     });
 
     const formatMoney = (val: number) => {
@@ -61,21 +80,30 @@ export function PricingResultTable({ pricing }: PricingResultTableProps) {
         return `${thousands.toLocaleString()}만`;
     };
 
-    const SortButton = ({ column, label }: { column: SortKey; label: string }) => (
-        <button
-            onClick={() => handleSort(column)}
-            className="flex items-center justify-center gap-1 hover:text-stone-700 transition-colors group w-full"
-        >
-            {label}
-            <span className="opacity-50 group-hover:opacity-100 transition-opacity">
-                {sortKey === column ? (
-                    sortOrder === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
-                ) : (
-                    <ArrowUpDown className="w-3 h-3" />
-                )}
-            </span>
-        </button>
-    );
+    const SortButton = ({ column, label }: { column: SortKey; label: string }) => {
+        const sortIndex = sorts.findIndex(s => s.key === column);
+        const currentSort = sorts[sortIndex];
+        const isSorted = sortIndex !== -1;
+
+        return (
+            <button
+                onClick={() => handleSort(column)}
+                className="flex items-center justify-center gap-1 hover:text-stone-700 transition-colors group w-full relative"
+            >
+                {label}
+                <div className="flex items-center">
+                    {isSorted ? (
+                        <>
+                            {currentSort.order === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
+                            <span className="text-[10px] font-bold ml-0.5 text-stone-600 leading-none">{sortIndex + 1}</span>
+                        </>
+                    ) : (
+                        <ArrowUpDown className="w-3 h-3 opacity-30 group-hover:opacity-100 transition-opacity" />
+                    )}
+                </div>
+            </button>
+        );
+    };
 
     return (
         <div className="w-full">
