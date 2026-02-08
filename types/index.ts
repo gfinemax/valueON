@@ -25,12 +25,18 @@ export interface AnalysisInputs {
   // Unit Mix Data
   unitTypes: UnitType[];
   unitAllocations: UnitAllocation[];
+
+  // 1차 조합원 초기 분양가 (Initial payment)
+  initialPayment: number;
 }
 
 export interface UnitType {
   id: string;
-  name: string;      // e.g. "59A", "84B"
-  supplyArea: number; // 공급면적 (평) - used for price calculation
+  name: string;
+  supplyArea: number; // in pyung
+  exclusiveAreaM2?: number; // 전용면적 in m²
+  category?: 'APARTMENT' | 'RETAIL' | 'RENTAL';
+  totalUnits?: number; // 해당 평형의 총 세대수 (연동 계산용)
 }
 
 export type MemberTier = '1st' | '2nd' | 'General';
@@ -44,6 +50,18 @@ export interface UnitAllocation {
   targetPricePerPyung?: number;
   // For 2nd Member: Premium amount vs 1st Member
   premium?: number;
+  // For 1st Member: Fixed total price (고정 분양가)
+  fixedTotalPrice?: number;
+
+  // Memo/Note for specific details
+  note?: string;
+}
+
+export interface SubItem {
+  id: string;
+  name: string;
+  amount: number;
+  note?: string; // Memo for sub-item
 }
 
 export interface CostItem {
@@ -56,12 +74,17 @@ export interface CostItem {
   calculationBasis?: 'fixed' | 'per_unit' | 'per_site_pyung' | 'per_floor_pyung' | 'mix_linked';
   // For mix_linked: maps allocationId -> amount (won/unit)
   mixConditions?: Record<string, number>;
+  // NEW: Application Rate (%) - Default 100
+  applicationRate?: number;
+  // NEW: Sub-Items for detailed breakdown
+  subItems?: SubItem[];
 }
 
 export interface CostCategory {
   id: string; // e.g., 'land', 'construction'
   title: string;
   items: CostItem[];
+  note?: string; // Memo for category
 }
 
 export interface AnalysisResult {
@@ -86,7 +109,12 @@ export interface AnalysisResult {
     allocationId: string;
     unitName: string;
     tier: MemberTier;
+    supplyArea: number; // 평형 (pyung)
     totalPrice: number;
     pricePerPyung: number;
+    revenueContribution?: number; // Total revenue from this allocation (price * count)
   }[];
+
+  // Total Expected Revenue (분양가 총액)
+  totalRevenue?: number;
 }

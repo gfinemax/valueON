@@ -1,30 +1,44 @@
 "use client";
 
-import { UnitType, UnitAllocation } from "@/types";
-import { UnitMixTable } from "./unit-mix-table";
+import { UnitType, UnitAllocation, AnalysisResult } from "@/types";
+import { UnitMixGrid } from "./unit-mix-grid";
 
 interface UnitMixSectionProps {
     unitTypes: UnitType[];
     allocations: UnitAllocation[];
-    onUpdateAllocation: (id: string, field: keyof UnitAllocation, value: number) => void;
+    onUpdateAllocation: (id: string, field: keyof UnitAllocation, value: number | string) => void;
+    unitPricing?: AnalysisResult['unitPricing'];
 }
 
-export function UnitMixSection({ unitTypes, allocations, onUpdateAllocation }: UnitMixSectionProps) {
+export function UnitMixSection({ unitTypes, allocations, onUpdateAllocation, unitPricing }: UnitMixSectionProps) {
     return (
-        <div className="space-y-4 pt-6 border-t border-slate-200">
-            <div className="bg-purple-50 p-4 rounded-lg mb-2 text-sm text-purple-800">
-                <p className="font-bold mb-1">🏗️ 세대 구성 및 분양가 (Unit Mix)</p>
-                <p>일반분양 수익금을 제외한 나머지 사업비를 조합원이 부담합니다.</p>
-                <p className="mt-1 text-xs text-purple-600">
-                    * 2차 조합원은 1차보다 설정된 프리미엄만큼 더 부담합니다.
-                </p>
-            </div>
+        <div className="space-y-6">
+            {/* Group by Category */}
+            {['APARTMENT', 'RENTAL', 'RETAIL'].map((category) => {
+                const categoryTypes = unitTypes.filter(u => (u.category || 'APARTMENT') === category);
+                if (categoryTypes.length === 0) return null;
 
-            <UnitMixTable
-                unitTypes={unitTypes}
-                allocations={allocations}
-                onUpdateAllocation={onUpdateAllocation}
-            />
+                const categoryLabel = {
+                    'APARTMENT': '아파트 (Apartment)',
+                    'RENTAL': '임대주택 (Rental)',
+                    'RETAIL': '상가 (Retail)'
+                }[category as string];
+
+                return (
+                    <div key={category} className="space-y-3">
+                        <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                            <span className="w-1 h-4 bg-slate-800 rounded-full inline-block"></span>
+                            {categoryLabel}
+                        </h3>
+                        <UnitMixGrid
+                            unitTypes={categoryTypes}
+                            allocations={allocations}
+                            onUpdateAllocation={onUpdateAllocation}
+                            unitPricing={unitPricing}
+                        />
+                    </div>
+                );
+            })}
         </div>
     );
 }

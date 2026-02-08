@@ -31,6 +31,7 @@ export function MixConditionDialog({
 
     useEffect(() => {
         if (open) {
+            // eslint-disable-next-line react-hooks/exhaustive-deps
             setLocalConditions(currentConditions || {});
             // Initialize inputs
             const initialInputs: Record<string, string> = {};

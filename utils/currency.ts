@@ -2,7 +2,7 @@ export function parseKoreanMoney(input: string): number {
     if (!input) return 0;
 
     // Remove commas and spaces
-    let cleanInput = input.replace(/,/g, "").replace(/\s/g, "");
+    const cleanInput = input.replace(/,/g, "").replace(/\s/g, "");
 
     // Check if it's just a number
     if (!isNaN(Number(cleanInput))) {
@@ -41,8 +41,8 @@ export function parseKoreanMoney(input: string): number {
             // '원' ignores
             if (char === '원') continue;
 
-            let unitVal = units[char];
-            if (unitVal) {
+            const val = units[char];
+            if (val) {
                 // If currentNumStr empty, maybe it was "2억3천" -> 2(억) -> 3(천)
                 // detailed parsing is complex.
 
@@ -50,7 +50,7 @@ export function parseKoreanMoney(input: string): number {
                 // e.g. "1000만"
 
                 const num = parseFloat(currentNumStr || "1"); // "만원" implies 1만원
-                total += num * unitVal;
+                total += num * val;
                 currentNumStr = "";
             }
         }

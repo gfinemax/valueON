@@ -1,52 +1,30 @@
 
-> temp_app@0.1.0 build
+> temp_app@0.1.0 build C:\workspace\antigravity\ValueOn
 > next build
 
-??Warning: Next.js inferred your workspace root, but it may not be correct.
+⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
  We detected multiple lockfiles and selected the directory of C:\workspace\package-lock.json as the root directory.
  To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
    See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
  Detected additional lockfiles: 
    * C:\workspace\antigravity\ValueOn\package-lock.json
 
-??Next.js 16.1.6 (Turbopack)
+▲ Next.js 16.1.6 (Turbopack)
 
   Creating an optimized production build ...
+✓ Compiled successfully in 2.6s
+  Running TypeScript ...
+Failed to compile.
 
-> Build error occurred
-Error: Turbopack build failed with 1 errors:
-./antigravity/ValueOn/components/advanced-mode/mix-condition-dialog.tsx:4:1
-Module not found: Can't resolve '@/components/ui/dialog'
-  2 |
-  3 | import { useState, useEffect } from "react";
-> 4 | import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  5 | import { Button } from "@/components/ui/button";
-  6 | import { Input } from "@/components/ui/input";
-  7 | import { UnitAllocation, UnitType } from "@/types";
+./app/expense/page.tsx:34:26
+Type error: Type '{ categories: CostCategory[]; projectTarget: ProjectTarget; unitAllocations: UnitAllocation[]; unitTypes: UnitType[]; totalIncome: number; ... 8 more ...; removeCostCategory: (id: string) => void; }' is missing the following properties from type 'AdvancedInputSectionProps': addSubItem, updateSubItem, removeSubItem
 
-Import map: aliased to relative './components/ui/dialog' inside of [project]/antigravity/ValueOn
-
-
-Import traces:
-  Client Component Browser:
-    ./antigravity/ValueOn/components/advanced-mode/mix-condition-dialog.tsx [Client Component Browser]
-    ./antigravity/ValueOn/components/advanced-mode/cost-item-row.tsx [Client Component Browser]
-    ./antigravity/ValueOn/components/advanced-mode/cost-category-card.tsx [Client Component Browser]
-    ./antigravity/ValueOn/components/advanced-mode/advanced-input-section.tsx [Client Component Browser]
-    ./antigravity/ValueOn/app/page.tsx [Client Component Browser]
-    ./antigravity/ValueOn/app/page.tsx [Server Component]
-
-  Client Component SSR:
-    ./antigravity/ValueOn/components/advanced-mode/mix-condition-dialog.tsx [Client Component SSR]
-    ./antigravity/ValueOn/components/advanced-mode/cost-item-row.tsx [Client Component SSR]
-    ./antigravity/ValueOn/components/advanced-mode/cost-category-card.tsx [Client Component SSR]
-    ./antigravity/ValueOn/components/advanced-mode/advanced-input-section.tsx [Client Component SSR]
-    ./antigravity/ValueOn/app/page.tsx [Client Component SSR]
-    ./antigravity/ValueOn/app/page.tsx [Server Component]
-
-https://nextjs.org/docs/messages/module-not-found
-
-
-    at <unknown> (./antigravity/ValueOn/components/advanced-mode/mix-condition-dialog.tsx:4:1)
-    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+[0m [90m 32 |[39m                 [33m<[39m[33mdiv[39m className[33m=[39m[32m"grid grid-cols-1 lg:grid-cols-12 gap-6"[39m[33m>[39m
+ [90m 33 |[39m                     [33m<[39m[33mdiv[39m className[33m=[39m[32m"lg:col-span-12 space-y-6"[39m[33m>[39m
+[31m[1m>[22m[39m[90m 34 |[39m                         [33m<[39m[33mAdvancedInputSection[39m
+ [90m    |[39m                          [31m[1m^[22m[39m
+ [90m 35 |[39m                             categories[33m=[39m{inputs[33m.[39madvancedCategories}
+ [90m 36 |[39m                             projectTarget[33m=[39m{inputs[33m.[39mprojectTarget}
+ [90m 37 |[39m                             unitAllocations[33m=[39m{inputs[33m.[39munitAllocations}[0m
+Next.js build worker exited with code: 1 and signal: null
+ ELIFECYCLE  Command failed with exit code 1.

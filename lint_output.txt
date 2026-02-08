@@ -1,0 +1,69 @@
+
+> temp_app@0.1.0 lint C:\workspace\antigravity\ValueOn
+> eslint
+
+
+C:\workspace\antigravity\ValueOn\app\page.tsx
+  9:5  warning  'inputs' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\workspace\antigravity\ValueOn\components\advanced-mode\cost-category-card.tsx
+  4:10  warning  'CopyPlus' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\workspace\antigravity\ValueOn\components\advanced-mode\cost-item-row.tsx
+    8:18  warning  'Settings' is defined but never used                             @typescript-eslint/no-unused-vars
+  212:33  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  212:40  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\workspace\antigravity\ValueOn\components\advanced-mode\mix-condition-dialog.tsx
+  34:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\workspace\antigravity\ValueOn\components\advanced-mode\mix-condition-dialog.tsx:34:13
+  32 |     useEffect(() => {
+  33 |         if (open) {
+> 34 |             setLocalConditions(currentConditions || {});
+     |             ^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  35 |             // Initialize inputs
+  36 |             const initialInputs: Record<string, string> = {};
+  37 |             allocations.forEach(alloc => {  react-hooks/set-state-in-effect
+
+C:\workspace\antigravity\ValueOn\components\header.tsx
+  1:10  warning  'Power' is defined but never used  @typescript-eslint/no-unused-vars
+  2:8   warning  'Link' is defined but never used   @typescript-eslint/no-unused-vars
+
+C:\workspace\antigravity\ValueOn\components\result-chart.tsx
+  44:52  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\workspace\antigravity\ValueOn\components\sidebar.tsx
+  10:5  warning  'Settings' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\workspace\antigravity\ValueOn\components\unit-mix\unit-mix-table.tsx
+  24:11  warning  'handleMoneyChange' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\workspace\antigravity\ValueOn\hooks\useCalculator.ts
+   2:82  warning  'ProjectTarget' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+  18:17  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\workspace\antigravity\ValueOn\hooks\useCalculator.ts:18:17
+  16 |                 const parsed = JSON.parse(saved);
+  17 |                 // Merge with default values to ensure structure integrity
+> 18 |                 setInputs({ ...defaultValues, ...parsed });
+     |                 ^^^^^^^^^ Avoid calling setState() directly within an effect
+  19 |             } catch (e) {
+  20 |                 console.error("Failed to load saved data", e);
+  21 |             }  react-hooks/set-state-in-effect
+
+??13 problems (5 errors, 8 warnings)
+
+?덭LIFECYCLE??Command failed with exit code 1.

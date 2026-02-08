@@ -120,7 +120,71 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Custom Animation that forces initial state */
+@keyframes fade-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(2rem);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  opacity: 0;
+  /* Ensure hidden initially if animation delays */
+  animation: fade-in-up 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.delay-200 {
+  animation-delay: 200ms;
+}
+
+.delay-500 {
+  animation-delay: 500ms;
+}
+
+/* Highlight animation for search navigation */
+@keyframes highlight-pulse {
+
+  0%,
+  100% {
+    background-color: rgb(254 249 195);
+    /* yellow-100 */
+  }
+
+  50% {
+    background-color: rgb(254 240 138);
+    /* yellow-200 */
+  }
+}
+
+.animate-highlight-pulse {
+  animation: highlight-pulse 1s ease-in-out 3;
+}
+
+/* Pulse once animation for expanded category */
+@keyframes pulse-once {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  }
+
+  50% {
+    box-shadow: 0 0 0 8px rgba(59, 130, 246, 0.3);
+  }
+}
+
+.animate-pulse-once {
+  animation: pulse-once 0.6s ease-out 2;
 }

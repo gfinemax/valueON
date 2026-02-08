@@ -18,43 +18,49 @@ export function ResultChart({ data, totalCost }: ResultChartProps) {
         maximumFractionDigits: 1,
     }).format(totalCost);
 
+    // Muted/Earthy tones for editorial look
+    const COLORS = ['#d97757', '#8c9c8a', '#e3c086', '#6b7280', '#c2b280'];
+
     return (
-        <Card className="w-full shadow-sm">
-            <CardHeader className="pb-2">
-                <CardTitle className="text-base font-medium">비용 구조 분석</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div className="h-[250px] w-full relative">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                            <Pie
-                                data={data}
-                                cx="50%"
-                                cy="50%"
-                                innerRadius={60}
-                                outerRadius={80}
-                                paddingAngle={2}
-                                dataKey="value"
-                            >
-                                {data.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={entry.fill} />
-                                ))}
-                            </Pie>
-                            <Tooltip
-                                formatter={(value: any) =>
-                                    new Intl.NumberFormat("ko-KR", { style: "currency", currency: "KRW" }).format(value as number)
-                                }
-                            />
-                            <Legend layout="horizontal" verticalAlign="bottom" align="center" wrapperStyle={{ fontSize: "12px", paddingTop: "10px" }} />
-                        </PieChart>
-                    </ResponsiveContainer>
-                    {/* Center Text */}
-                    <div className="absolute top-[40%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
-                        <div className="text-xs text-muted-foreground">총 사업비</div>
-                        <div className="text-sm font-bold">{formattedTotal}원</div>
-                    </div>
+        <div className="w-full">
+            <h3 className="text-lg font-serif mb-4 text-stone-800">비용 구조 분석</h3>
+            <div className="h-[300px] w-full relative">
+                <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                        <Pie
+                            data={data}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={80}
+                            outerRadius={100}
+                            paddingAngle={3}
+                            dataKey="value"
+                            stroke="none"
+                        >
+                            {data.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                        </Pie>
+                        <Tooltip
+                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
+                            formatter={(value: number | undefined) =>
+                                new Intl.NumberFormat("ko-KR", { style: "currency", currency: "KRW" }).format(value || 0)
+                            }
+                        />
+                        <Legend
+                            verticalAlign="bottom"
+                            align="center"
+                            iconType="circle"
+                            wrapperStyle={{ fontSize: "12px", paddingTop: "20px", color: "#57534e" }}
+                        />
+                    </PieChart>
+                </ResponsiveContainer>
+                {/* Center Text */}
+                <div className="absolute top-[45%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
+                    <div className="text-xs text-stone-500 font-serif mb-1">Total Cost</div>
+                    <div className="text-xl font-serif text-stone-900">{formattedTotal}원</div>
                 </div>
-            </CardContent>
-        </Card>
+            </div>
+        </div>
     );
 }

@@ -31,10 +31,10 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <div className="h-full relative">
-          <div className="hidden h-full md:flex md:w-72 md:flex-col md:fixed md:inset-y-0 z-[80] bg-gray-900">
+          <div className="hidden h-full md:flex md:w-20 hover:md:w-56 md:flex-col md:fixed md:inset-y-0 z-[80] bg-gray-900 group transition-all duration-300 ease-in-out overflow-hidden">
             <Sidebar />
           </div>
-          <main className="md:pl-72">
+          <main className="md:pl-20 transition-all duration-300 ease-in-out">
             {children}
           </main>
         </div>

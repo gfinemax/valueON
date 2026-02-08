@@ -1,27 +1,58 @@
 "use client";
 
 import { AnalysisResult } from "@/types";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
+import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 
 interface PricingResultTableProps {
     pricing: AnalysisResult['unitPricing'];
 }
 
+type SortKey = 'unitName' | 'tier' | 'supplyArea' | 'totalPrice' | 'pricePerPyung';
+type SortOrder = 'asc' | 'desc';
+
 export function PricingResultTable({ pricing }: PricingResultTableProps) {
+    const [sortKey, setSortKey] = useState<SortKey>('unitName');
+    const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+
     if (!pricing || pricing.length === 0) return null;
 
-    // Sort by Unit Name then Tier for better readability
+    const handleSort = (key: SortKey) => {
+        if (sortKey === key) {
+            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortKey(key);
+            setSortOrder('asc');
+        }
+    };
+
+    const tierOrder = { "1st": 1, "2nd": 2, "General": 3 };
+
     const sortedPricing = [...pricing].sort((a, b) => {
-        if (a.unitName !== b.unitName) return a.unitName.localeCompare(b.unitName);
-        // Custom tier order: 1st < 2nd < General
-        const tierOrder = { "1st": 1, "2nd": 2, "General": 3 };
-        return (tierOrder[a.tier] || 4) - (tierOrder[b.tier] || 4);
+        let comparison = 0;
+
+        switch (sortKey) {
+            case 'unitName':
+                comparison = a.unitName.localeCompare(b.unitName);
+                break;
+            case 'tier':
+                comparison = (tierOrder[a.tier] || 4) - (tierOrder[b.tier] || 4);
+                break;
+            case 'supplyArea':
+                comparison = (a.supplyArea || 0) - (b.supplyArea || 0);
+                break;
+            case 'totalPrice':
+                comparison = a.totalPrice - b.totalPrice;
+                break;
+            case 'pricePerPyung':
+                comparison = a.pricePerPyung - b.pricePerPyung;
+                break;
+        }
+
+        return sortOrder === 'asc' ? comparison : -comparison;
     });
 
     const formatMoney = (val: number) => {
-        // e.g. 5.5억 or 5억 5천
-        // Use simplified format for table
         const unit = 100000000;
         const eok = Math.floor(val / unit);
         const thousands = Math.round((val % unit) / 10000);
@@ -30,44 +61,76 @@ export function PricingResultTable({ pricing }: PricingResultTableProps) {
         return `${thousands.toLocaleString()}만`;
     };
 
+    const SortButton = ({ column, label }: { column: SortKey; label: string }) => (
+        <button
+            onClick={() => handleSort(column)}
+            className="flex items-center justify-center gap-1 hover:text-stone-700 transition-colors group w-full"
+        >
+            {label}
+            <span className="opacity-50 group-hover:opacity-100 transition-opacity">
+                {sortKey === column ? (
+                    sortOrder === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                ) : (
+                    <ArrowUpDown className="w-3 h-3" />
+                )}
+            </span>
+        </button>
+    );
+
     return (
-        <Card>
-            <CardHeader className="py-3">
-                <CardTitle className="text-sm font-bold text-slate-700">📌 예상 분양가 산출 결과</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-                <Table>
-                    <TableHeader className="bg-slate-50">
-                        <TableRow>
-                            <TableHead className="text-xs">타입</TableHead>
-                            <TableHead className="text-xs">구분</TableHead>
-                            <TableHead className="text-right text-xs">예상 분양가</TableHead>
-                            <TableHead className="text-right text-xs">평당가</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
+        <div className="w-full">
+            <h3 className="text-lg font-serif mb-4 text-stone-800 border-b border-stone-200 pb-2">
+                예상 분양가 산출 결과
+            </h3>
+            <div className="overflow-hidden">
+                <table className="w-full text-sm">
+                    <thead>
+                        <tr className="border-b border-stone-200 text-stone-500 text-xs">
+                            <th className="py-3 text-center font-medium">
+                                <SortButton column="unitName" label="Type" />
+                            </th>
+                            <th className="py-3 text-center font-medium">
+                                <SortButton column="supplyArea" label="평형" />
+                            </th>
+                            <th className="py-3 text-center font-medium">
+                                <SortButton column="tier" label="Category" />
+                            </th>
+                            <th className="py-3 text-center font-medium">
+                                <SortButton column="totalPrice" label="Price" />
+                            </th>
+                            <th className="py-3 text-center font-medium">
+                                <SortButton column="pricePerPyung" label="Per Pyung" />
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-stone-100">
                         {sortedPricing.map((item) => (
-                            <TableRow key={item.allocationId}>
-                                <TableCell className="font-medium text-xs">{item.unitName}</TableCell>
-                                <TableCell className="text-xs">
-                                    <span className={`px-2 py-0.5 rounded-full text-[10px] ${item.tier === '1st' ? 'bg-blue-100 text-blue-700' :
-                                            item.tier === '2nd' ? 'bg-purple-100 text-purple-700' :
-                                                'bg-gray-100 text-gray-700'
+                            <tr key={item.allocationId} className="group hover:bg-stone-50 transition-colors">
+                                <td className="py-3 text-center text-sm text-stone-800">{item.unitName}</td>
+                                <td className="py-3 text-center text-sm text-stone-800">
+                                    {item.supplyArea ? `${item.supplyArea}평` : '-'}
+                                </td>
+                                <td className="py-3 text-center">
+                                    <span className={`px-2 py-0.5 rounded text-xs ${item.tier === '1st' ? 'bg-[#e8f0fe] text-[#1967d2]' :
+                                        item.tier === '2nd' ? 'bg-[#f3e8fd] text-[#7627bb]' :
+                                            'bg-stone-100 text-stone-600'
                                         }`}>
                                         {item.tier === '1st' ? "1차" : item.tier === '2nd' ? "2차" : "일반"}
                                     </span>
-                                </TableCell>
-                                <TableCell className="text-right font-bold text-xs text-slate-800">
+                                </td>
+                                <td className="py-3 text-center text-sm text-stone-800">
                                     {formatMoney(item.totalPrice)}
-                                </TableCell>
-                                <TableCell className="text-right text-[10px] text-slate-500">
+                                </td>
+                                <td className="py-3 text-center text-sm text-stone-800">
                                     {(item.pricePerPyung / 10000).toLocaleString()}만
-                                </TableCell>
-                            </TableRow>
+                                </td>
+                            </tr>
                         ))}
-                    </TableBody>
-                </Table>
-            </CardContent>
-        </Card>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     );
 }
+
+

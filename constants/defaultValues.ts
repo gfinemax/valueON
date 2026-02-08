@@ -82,22 +82,36 @@ const defaultAdvancedCategories: CostCategory[] = [
 ];
 
 const defaultUnitTypes: UnitType[] = [
-    { id: "u1", name: "59 Type", supplyArea: 25 },
-    { id: "u2", name: "84 Type", supplyArea: 34 },
+    // 아파트 (Apartment) - 총 236세대
+    { id: "u2", name: "84 Type", supplyArea: 34, exclusiveAreaM2: 112.40, category: "APARTMENT", totalUnits: 64 },
+    { id: "u3", name: "73 Type", supplyArea: 31, exclusiveAreaM2: 102.48, category: "APARTMENT", totalUnits: 47 },
+    { id: "u1", name: "59 Type", supplyArea: 25, exclusiveAreaM2: 82.84, category: "APARTMENT", totalUnits: 125 },
+    // 임대주택 (Rental) - 총 18세대
+    { id: "u6", name: "임대 84Type", supplyArea: 34, exclusiveAreaM2: 112.40, category: "RENTAL", totalUnits: 3 },
+    { id: "u5", name: "임대 73Type", supplyArea: 31, exclusiveAreaM2: 102.48, category: "RENTAL", totalUnits: 3 },
+    { id: "u4", name: "임대 59Type", supplyArea: 25, exclusiveAreaM2: 82.84, category: "RENTAL", totalUnits: 12 },
 ];
 
 const defaultUnitAllocations: UnitAllocation[] = [
-    // 1st Members
-    { id: "a1", unitTypeId: "u1", tier: "1st", count: 50 },
-    { id: "a2", unitTypeId: "u2", tier: "1st", count: 80 },
+    // 아파트 - 1st Members (고정 분양가) - 총 70세대
+    { id: "a1", unitTypeId: "u1", tier: "1st", count: 37, fixedTotalPrice: 750000000 },  // 59 Type: 7억 5천
+    { id: "a7", unitTypeId: "u3", tier: "1st", count: 14, fixedTotalPrice: 925000000 },  // 73 Type: 9억 2,500만
+    { id: "a2", unitTypeId: "u2", tier: "1st", count: 19, fixedTotalPrice: 999000000 },  // 84 Type: 9억 9,900만
 
-    // 2nd Members (Premium 30M)
-    { id: "a3", unitTypeId: "u1", tier: "2nd", count: 30, premium: 30000000 },
-    { id: "a4", unitTypeId: "u2", tier: "2nd", count: 44, premium: 30000000 },
+    // 아파트 - 2nd Members (일반분양과 동일) - 총 130세대
+    { id: "a3", unitTypeId: "u1", tier: "2nd", count: 69, fixedTotalPrice: 1000000000 },  // 59 Type: 10억
+    { id: "a8", unitTypeId: "u3", tier: "2nd", count: 26, fixedTotalPrice: 1325000000 }, // 73 Type: 13.25억
+    { id: "a4", unitTypeId: "u2", tier: "2nd", count: 35, fixedTotalPrice: 1399000000 }, // 84 Type: 13.99억
 
-    // General Sales (Target Price 35M/pyung)
-    { id: "a5", unitTypeId: "u1", tier: "General", count: 20, targetPricePerPyung: 35000000 },
-    { id: "a6", unitTypeId: "u2", tier: "General", count: 30, targetPricePerPyung: 35000000 },
+    // 아파트 - General Sales - 총 36세대
+    { id: "a5", unitTypeId: "u1", tier: "General", count: 19, fixedTotalPrice: 1100000000 },  // 59 Type: 11억
+    { id: "a9", unitTypeId: "u3", tier: "General", count: 7, fixedTotalPrice: 1475000000 },   // 73 Type: 13.25억+1.5억=14.75억
+    { id: "a6", unitTypeId: "u2", tier: "General", count: 10, fixedTotalPrice: 1549000000 },  // 84 Type: 13.99억+1.5억=15.49억
+
+    // 임대주택 - General only (평당 2,500만원) - 총 18세대
+    { id: "a10", unitTypeId: "u4", tier: "General", count: 12, targetPricePerPyung: 25000000 },
+    { id: "a11", unitTypeId: "u5", tier: "General", count: 3, targetPricePerPyung: 25000000 },
+    { id: "a12", unitTypeId: "u6", tier: "General", count: 3, targetPricePerPyung: 25000000 },
 ];
 
 export const defaultValues: AnalysisInputs = {
@@ -123,4 +137,5 @@ export const defaultValues: AnalysisInputs = {
 
     unitTypes: defaultUnitTypes,
     unitAllocations: defaultUnitAllocations,
+    initialPayment: 450000000, // 초기 분양가 4억 5천만원
 };
