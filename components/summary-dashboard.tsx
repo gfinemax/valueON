@@ -108,13 +108,13 @@ export function SummaryDashboard({ result }: SummaryDashboardProps) {
 
 
     return (
-        <div className="space-y-24 py-12">
+        <div className="space-y-12 md:space-y-24 py-6 md:py-12">
 
             {/* Story 1: The Bottom Line (Profit) */}
             <ScrollReveal>
                 <section>
-                    <div className="mb-8">
-                        <h2 className="text-4xl font-serif text-stone-900 mb-3 tracking-tight">Safe Margin Secured</h2>
+                    <div className="mb-6 md:mb-8">
+                        <h2 className="text-2xl md:text-4xl font-serif text-stone-900 mb-2 md:mb-3 tracking-tight">Safe Margin Secured</h2>
                         <p className="text-stone-600 text-lg leading-relaxed max-w-2xl">
                             This project is projected to generate a net profit of <strong className="text-emerald-700 font-semibold">{formatMoney(profit)}</strong>,
                             representing a <strong className="text-emerald-700 font-semibold">{profitMargin.toFixed(1)}% safe margin</strong>.
@@ -122,7 +122,7 @@ export function SummaryDashboard({ result }: SummaryDashboardProps) {
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center bg-white p-10 rounded-3xl border border-stone-200 shadow-xl shadow-stone-200/50 hover:shadow-2xl hover:shadow-stone-200/50 transition-all duration-500">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-center bg-white p-6 md:p-10 rounded-2xl md:rounded-3xl border border-stone-200 shadow-xl shadow-stone-200/50 hover:shadow-2xl hover:shadow-stone-200/50 transition-all duration-500">
                         {/* Metrics */}
                         <div className="space-y-10">
                             <div>
@@ -145,7 +145,7 @@ export function SummaryDashboard({ result }: SummaryDashboardProps) {
                         </div>
 
                         {/* Simple Bar Chart */}
-                        <div className="h-[240px] w-full pl-6 border-l border-stone-100">
+                        <div className="h-[180px] md:h-[240px] w-full pl-0 md:pl-6 border-l-0 md:border-l border-stone-100 pt-6 md:pt-0 border-t md:border-t-0">
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={overviewData} layout="vertical" margin={{ left: 0, right: 20 }}>
                                     <XAxis type="number" hide />
@@ -167,8 +167,8 @@ export function SummaryDashboard({ result }: SummaryDashboardProps) {
             <ScrollReveal delay={200}>
                 {(isVisible) => (
                     <section>
-                        <div className="mb-8">
-                            <h2 className="text-3xl font-serif text-stone-900 mb-3 tracking-tight">Core Revenue Drivers</h2>
+                        <div className="mb-6 md:mb-8">
+                            <h2 className="text-2xl md:text-3xl font-serif text-stone-900 mb-2 md:mb-3 tracking-tight">Core Revenue Drivers</h2>
                             <p className="text-stone-600 text-lg leading-relaxed max-w-2xl">
                                 Analyzing where the value comes from. The
                                 <strong className="text-stone-900 font-semibold mx-1.5 border-b-2 border-[#8c9c8a]">{topUnit?.unitName || "Main Type"}</strong>
@@ -178,7 +178,7 @@ export function SummaryDashboard({ result }: SummaryDashboardProps) {
                         </div>
 
                         <div
-                            className="bg-white p-10 rounded-3xl border border-stone-200 shadow-xl shadow-stone-200/50 hover:shadow-2xl hover:shadow-stone-200/50 transition-all duration-300 cursor-pointer group relative overflow-hidden"
+                            className="bg-white p-6 md:p-10 rounded-2xl md:rounded-3xl border border-stone-200 shadow-xl shadow-stone-200/50 hover:shadow-2xl hover:shadow-stone-200/50 transition-all duration-300 cursor-pointer group relative overflow-hidden"
                             onClick={() => setIsRevenueDetailOpen(!isRevenueDetailOpen)}
                         >
                             {/* Click Hint */}
@@ -237,8 +237,8 @@ export function SummaryDashboard({ result }: SummaryDashboardProps) {
             <ScrollReveal delay={200}>
                 {(isVisible) => (
                     <section>
-                        <div className="mb-8">
-                            <h2 className="text-3xl font-serif text-stone-900 mb-3 tracking-tight">Strategic Investment</h2>
+                        <div className="mb-6 md:mb-8">
+                            <h2 className="text-2xl md:text-3xl font-serif text-stone-900 mb-2 md:mb-3 tracking-tight">Strategic Investment</h2>
                             <p className="text-stone-600 text-lg leading-relaxed max-w-3xl">
                                 Efficient capital allocation is key.
                                 <strong className="text-stone-900 font-semibold mx-1.5 border-b-2 border-[#d97757]">{majorCostName}</strong>
@@ -249,7 +249,7 @@ export function SummaryDashboard({ result }: SummaryDashboardProps) {
 
                         <div
                             ref={costDetailRef}
-                            className="bg-white p-10 rounded-3xl border border-stone-200 shadow-xl shadow-stone-200/50 hover:shadow-2xl hover:shadow-stone-200/50 transition-all duration-300 cursor-pointer group relative overflow-hidden"
+                            className="bg-white p-6 md:p-10 rounded-2xl md:rounded-3xl border border-stone-200 shadow-xl shadow-stone-200/50 hover:shadow-2xl hover:shadow-stone-200/50 transition-all duration-300 cursor-pointer group relative overflow-hidden"
                             onClick={() => setIsCostDetailOpen(!isCostDetailOpen)}
                         >
                             {/* Click Hint */}

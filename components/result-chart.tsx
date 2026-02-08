@@ -24,15 +24,15 @@ export function ResultChart({ data, totalCost }: ResultChartProps) {
     return (
         <div className="w-full">
             <h3 className="text-lg font-serif mb-4 text-stone-800">비용 구조 분석</h3>
-            <div className="h-[300px] w-full relative">
+            <div className="h-[250px] md:h-[300px] w-full relative">
                 <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                         <Pie
                             data={data}
                             cx="50%"
                             cy="50%"
-                            innerRadius={80}
-                            outerRadius={100}
+                            innerRadius={60}
+                            outerRadius={80}
                             paddingAngle={3}
                             dataKey="value"
                             stroke="none"
@@ -60,8 +60,8 @@ export function ResultChart({ data, totalCost }: ResultChartProps) {
                 </ResponsiveContainer>
                 {/* Center Text */}
                 <div className="absolute top-[45%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
-                    <div className="text-xs text-stone-500 font-serif mb-1">Total Cost</div>
-                    <div className="text-xl font-serif text-stone-900">{formattedTotal}원</div>
+                    <div className="text-[10px] md:text-xs text-stone-500 font-serif mb-1">Total Cost</div>
+                    <div className="text-lg md:text-xl font-serif text-stone-900">{formattedTotal}원</div>
                 </div>
             </div>
         </div>

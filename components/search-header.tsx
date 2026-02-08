@@ -124,7 +124,7 @@ export function SearchHeader({ title, leftSlot, actions, className, searchResult
         <div
             ref={containerRef}
             className={cn(
-                "sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur px-6 h-14 flex items-center justify-between transition-all duration-300",
+                "sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur px-6 h-14 md:h-14 flex items-center justify-between transition-all duration-300 pt-safe h-auto min-h-[3.5rem]",
                 className
             )}
         >
