@@ -31,7 +31,12 @@ export function RevenueChart({ data }: RevenueChartProps) {
                     <Tooltip
                         cursor={{ fill: '#f5f5f4' }}
                         contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
-                        formatter={(value: number) => new Intl.NumberFormat("ko-KR", { style: "currency", currency: "KRW" }).format(value)}
+                        formatter={(value: number | string | (number | string)[] | undefined) => {
+                            if (typeof value === 'number') {
+                                return new Intl.NumberFormat("ko-KR", { style: "currency", currency: "KRW" }).format(value);
+                            }
+                            return value?.toString() || "";
+                        }}
                     />
                     <Bar dataKey="revenueContribution" radius={[0, 4, 4, 0]} barSize={32} isAnimationActive={true}>
                         {sortedData.map((entry, index) => (

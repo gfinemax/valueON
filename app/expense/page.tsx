@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useCalculator } from "@/hooks/useCalculator";
 import { useSearchIndex } from "@/hooks/useSearchIndex";
 import { AdvancedInputSection } from "@/components/advanced-mode/advanced-input-section";
 import { SearchHeader } from "@/components/search-header";
 
-export default function ExpensePage() {
+function ExpensePageContent() {
     const [searchQuery, setSearchQuery] = useState("");
     const searchParams = useSearchParams();
 
@@ -87,6 +87,18 @@ export default function ExpensePage() {
                 </div>
             </div>
         </main>
+    );
+}
+
+export default function ExpensePage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-white flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-stone-800"></div>
+            </div>
+        }>
+            <ExpensePageContent />
+        </Suspense>
     );
 }
 

@@ -116,7 +116,7 @@ export function UnitMixStats({ unitTypes, allocations, unitPricing }: UnitMixSta
                                 ))}
                             </Pie>
                             <Tooltip
-                                formatter={(value) => [`${value}세대`, '']}
+                                formatter={(value: number | string | (number | string)[] | undefined) => [`${value || 0}세대`, '']}
                                 contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc' }}
                                 itemStyle={{ color: '#f8fafc' }}
                             />
@@ -158,7 +158,7 @@ export function UnitMixStats({ unitTypes, allocations, unitPricing }: UnitMixSta
                                 ))}
                             </Pie>
                             <Tooltip
-                                formatter={(value) => [formatKoreanCurrency(Number(value)) + '원', '']}
+                                formatter={(value: number | string | (number | string)[] | undefined) => [formatKoreanCurrency(Number(value || 0)) + '원', '']}
                                 contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc' }}
                                 itemStyle={{ color: '#f8fafc' }}
                             />

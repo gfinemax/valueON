@@ -2,29 +2,45 @@
 > temp_app@0.1.0 build C:\workspace\antigravity\ValueOn
 > next build
 
-⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+??Warning: Next.js inferred your workspace root, but it may not be correct.
  We detected multiple lockfiles and selected the directory of C:\workspace\package-lock.json as the root directory.
  To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
    See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
  Detected additional lockfiles: 
-   * C:\workspace\antigravity\ValueOn\package-lock.json
+   * C:\workspace\antigravity\ValueOn\pnpm-lock.yaml
 
-▲ Next.js 16.1.6 (Turbopack)
+??Next.js 16.1.6 (Turbopack)
 
   Creating an optimized production build ...
-✓ Compiled successfully in 2.6s
+??Compiled successfully in 2.9s
   Running TypeScript ...
-Failed to compile.
+  Collecting page data using 15 workers ...
+  Generating static pages using 15 workers (0/7) ...
+The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+  Generating static pages using 15 workers (1/7) 
+  Generating static pages using 15 workers (3/7) 
+  Generating static pages using 15 workers (5/7) 
+??Generating static pages using 15 workers (7/7) in 1555.8ms
+  Finalizing page optimization ...
 
-./app/expense/page.tsx:34:26
-Type error: Type '{ categories: CostCategory[]; projectTarget: ProjectTarget; unitAllocations: UnitAllocation[]; unitTypes: UnitType[]; totalIncome: number; ... 8 more ...; removeCostCategory: (id: string) => void; }' is missing the following properties from type 'AdvancedInputSectionProps': addSubItem, updateSubItem, removeSubItem
+Route (app)
+????/
+????/_not-found
+????/data
+????/expense
+????/income
 
-[0m [90m 32 |[39m                 [33m<[39m[33mdiv[39m className[33m=[39m[32m"grid grid-cols-1 lg:grid-cols-12 gap-6"[39m[33m>[39m
- [90m 33 |[39m                     [33m<[39m[33mdiv[39m className[33m=[39m[32m"lg:col-span-12 space-y-6"[39m[33m>[39m
-[31m[1m>[22m[39m[90m 34 |[39m                         [33m<[39m[33mAdvancedInputSection[39m
- [90m    |[39m                          [31m[1m^[22m[39m
- [90m 35 |[39m                             categories[33m=[39m{inputs[33m.[39madvancedCategories}
- [90m 36 |[39m                             projectTarget[33m=[39m{inputs[33m.[39mprojectTarget}
- [90m 37 |[39m                             unitAllocations[33m=[39m{inputs[33m.[39munitAllocations}[0m
-Next.js build worker exited with code: 1 and signal: null
- ELIFECYCLE  Command failed with exit code 1.
+
+?? (Static)  prerendered as static content
+

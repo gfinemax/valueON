@@ -88,9 +88,9 @@ export function SummaryDashboard({ result }: SummaryDashboardProps) {
         : 0;
 
     // 2. Revenue Driver (Best Unit)
-    const sortedUnits = [...(result.unitPricing || [])].sort((a, b) => b.revenueContribution - a.revenueContribution);
+    const sortedUnits = [...(result.unitPricing || [])].sort((a, b) => (b.revenueContribution || 0) - (a.revenueContribution || 0));
     const topUnit = sortedUnits[0];
-    const topUnitShare = result.totalRevenue ? (topUnit.revenueContribution / result.totalRevenue) * 100 : 0;
+    const topUnitShare = (result.totalRevenue && topUnit?.revenueContribution) ? (topUnit.revenueContribution / result.totalRevenue) * 100 : 0;
 
     // 3. Cost Driver (Land vs Construction)
     const landCost = result.costBreakdown.find(c => c.name.includes("토지"))?.value || 0;

@@ -43,9 +43,12 @@ export function ResultChart({ data, totalCost }: ResultChartProps) {
                         </Pie>
                         <Tooltip
                             contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
-                            formatter={(value: number | undefined) =>
-                                new Intl.NumberFormat("ko-KR", { style: "currency", currency: "KRW" }).format(value || 0)
-                            }
+                            formatter={(value: number | string | (number | string)[] | undefined) => {
+                                if (typeof value === 'number') {
+                                    return new Intl.NumberFormat("ko-KR", { style: "currency", currency: "KRW" }).format(value);
+                                }
+                                return value?.toString() || "";
+                            }}
                         />
                         <Legend
                             verticalAlign="bottom"
