@@ -124,7 +124,7 @@ export function SearchHeader({ title, leftSlot, actions, className, searchResult
         <div
             ref={containerRef}
             className={cn(
-                "sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur px-6 h-14 md:h-14 flex items-center justify-between transition-all duration-300 pt-safe h-auto min-h-[3.5rem]",
+                "sticky md:static top-0 z-50 w-full border-b bg-white/95 backdrop-blur px-6 h-14 md:h-14 flex items-center justify-between transition-all duration-300 pt-safe h-auto min-h-[3.5rem]",
                 className
             )}
         >
@@ -135,7 +135,7 @@ export function SearchHeader({ title, leftSlot, actions, className, searchResult
                     isOpen ? "hidden sm:flex" : "flex"
                 )}>
                     {leftSlot}
-                    <h1 className="text-2xl font-bold text-slate-900 whitespace-nowrap truncate">
+                    <h1 className="text-base md:text-2xl font-bold text-slate-900 whitespace-nowrap truncate">
                         {title}
                     </h1>
                 </div>
@@ -167,7 +167,7 @@ export function SearchHeader({ title, leftSlot, actions, className, searchResult
                         "flex items-center gap-2 overflow-visible transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] bg-slate-50 rounded-full border border-transparent focus-within:border-slate-300 focus-within:bg-white focus-within:shadow-sm relative",
                         isOpen ? "flex-1 pl-4 pr-2 py-1" : "w-0 border-0 p-0"
                     )}>
-                        <Search className="w-4 h-4 text-slate-400 min-w-[16px]" />
+                        <Search className={cn("w-4 h-4 text-slate-400 min-w-[16px]", !isOpen && "hidden")} />
                         <input
                             ref={inputRef}
                             type="text"
@@ -182,7 +182,10 @@ export function SearchHeader({ title, leftSlot, actions, className, searchResult
                         />
                         <button
                             onClick={handleCloseClick}
-                            className="p-1 hover:bg-slate-200 rounded-full text-slate-400 hover:text-slate-600 transition-colors"
+                            className={cn(
+                                "p-1 hover:bg-slate-200 rounded-full text-slate-400 hover:text-slate-600 transition-colors",
+                                !isOpen && "hidden"
+                            )}
                         >
                             <X className="w-4 h-4" />
                         </button>

@@ -15,30 +15,32 @@ export function RevenueChart({ data }: RevenueChartProps) {
     const COLORS = ['#d97757', '#8c9c8a', '#e3c086', '#6b7280', '#c2b280'];
 
     return (
-        <div className="w-full h-[250px] md:h-[300px]">
+        <div className="w-full h-[340px] md:h-[320px]">
             <h3 className="text-lg font-serif mb-4 text-stone-800">Revenue Contribution by Type</h3>
             <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={sortedData} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
+                <BarChart data={sortedData} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 25 }}>
                     <XAxis type="number" hide />
                     <YAxis
                         type="category"
                         dataKey="unitName"
-                        width={80}
-                        tick={{ fontSize: 12, fill: '#57534e' }}
+                        width={140}
+                        tick={{ fontSize: 13, fill: '#57534e' }}
+                        interval={0}
                         axisLine={false}
                         tickLine={false}
+                        tickFormatter={(value) => value.replace(/\n/g, ' ')}
                     />
                     <Tooltip
                         cursor={{ fill: '#f5f5f4' }}
                         contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
                         formatter={(value: number | string | (number | string)[] | undefined) => {
                             if (typeof value === 'number') {
-                                return new Intl.NumberFormat("ko-KR", { style: "currency", currency: "KRW" }).format(value);
+                                return new Intl.NumberFormat("ko-KR", { style: "currency", currency: "KRW", maximumFractionDigits: 0 }).format(value);
                             }
                             return value?.toString() || "";
                         }}
                     />
-                    <Bar dataKey="revenueContribution" radius={[0, 4, 4, 0]} barSize={32} isAnimationActive={true}>
+                    <Bar dataKey="revenueContribution" radius={[0, 4, 4, 0]} barSize={28} isAnimationActive={true}>
                         {sortedData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}

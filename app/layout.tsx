@@ -21,6 +21,7 @@ export const metadata: Metadata = {
 
 import { Sidebar } from "@/components/sidebar";
 import { MobileNav } from "@/components/mobile-nav";
+import { MobileStatusBar } from "@/components/mobile-status-bar";
 
 export default function RootLayout({
   children,
@@ -40,6 +41,7 @@ export default function RootLayout({
             {children}
           </main>
           <MobileNav />
+          <MobileStatusBar />
         </div>
       </body>
     </html>

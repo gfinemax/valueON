@@ -79,9 +79,9 @@ export function PricingResultTable({ pricing }: PricingResultTableProps) {
 
     return (
         <div className="w-full">
-            <h3 className="text-lg font-serif mb-4 text-stone-800 border-b border-stone-200 pb-2">
+            {/* <h3 className="text-lg font-serif mb-4 text-stone-800 border-b border-stone-200 pb-2">
                 예상 분양가 산출 결과
-            </h3>
+            </h3> */}
             <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                     <thead>
@@ -89,9 +89,9 @@ export function PricingResultTable({ pricing }: PricingResultTableProps) {
                             <th className="py-2 md:py-3 text-center font-medium whitespace-nowrap px-2">
                                 <SortButton column="unitName" label="Type" />
                             </th>
-                            <th className="py-2 md:py-3 text-center font-medium whitespace-nowrap px-2">
+                            {/* <th className="py-2 md:py-3 text-center font-medium whitespace-nowrap px-2">
                                 <SortButton column="supplyArea" label="평형" />
-                            </th>
+                            </th> */}
                             <th className="py-2 md:py-3 text-center font-medium whitespace-nowrap px-2">
                                 <SortButton column="tier" label="Category" />
                             </th>
@@ -106,10 +106,13 @@ export function PricingResultTable({ pricing }: PricingResultTableProps) {
                     <tbody className="divide-y divide-stone-100">
                         {sortedPricing.map((item) => (
                             <tr key={item.allocationId} className="group hover:bg-stone-50 transition-colors">
-                                <td className="py-2 md:py-3 text-center text-sm text-stone-800 whitespace-nowrap px-2">{item.unitName}</td>
                                 <td className="py-2 md:py-3 text-center text-sm text-stone-800 whitespace-nowrap px-2">
-                                    {item.supplyArea ? `${item.supplyArea}평` : '-'}
+                                    <span className="font-semibold">{item.unitName}</span>
+                                    <span className="text-xs text-stone-500 ml-1">({item.supplyArea}평)</span>
                                 </td>
+                                {/* <td className="py-2 md:py-3 text-center text-sm text-stone-800 whitespace-nowrap px-2">
+                                    {item.supplyArea ? `${item.supplyArea}평` : '-'}
+                                </td> */}
                                 <td className="py-2 md:py-3 text-center whitespace-nowrap px-2">
                                     <span className={`px-2 py-0.5 rounded text-xs ${item.tier === '1st' ? 'bg-[#e8f0fe] text-[#1967d2]' :
                                         item.tier === '2nd' ? 'bg-[#f3e8fd] text-[#7627bb]' :
