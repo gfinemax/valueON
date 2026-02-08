@@ -132,6 +132,7 @@ export function SearchHeader({ title, leftSlot, actions, className, searchResult
                 {/* Left Slot (e.g. Back Button) */}
                 <div className={cn(
                     "transition-all duration-300 ease-in-out flex items-center gap-4 min-w-0 mr-4",
+                    isOpen ? "hidden sm:flex" : "flex"
                 )}>
                     {leftSlot}
                     <h1 className="text-2xl font-bold text-slate-900 whitespace-nowrap truncate">

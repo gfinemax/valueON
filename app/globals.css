@@ -188,3 +188,14 @@
 .animate-pulse-once {
   animation: pulse-once 0.6s ease-out 2;
 }
+
+/* Mobile Safe Area Utilities */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@supports (padding: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}
