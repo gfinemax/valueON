@@ -16,6 +16,7 @@ import {
     useSensors,
     DragEndEvent
 } from "@dnd-kit/core";
+import { getCategoryHexColor } from "@/lib/colors";
 import {
     arrayMove,
     SortableContext,
@@ -143,26 +144,12 @@ export function AdvancedInputSection({
 
     const pieData = categoriesWithTotals
         .filter(cat => cat.totalAmount > 0)
-        .map(cat => ({
+        .map((cat, index) => ({
             name: cat.title,
             value: cat.totalAmount,
+            fill: getCategoryHexColor(cat.title, index)
         }));
 
-    // Helper for Hex Colors (Tailwind 500 equivalent)
-    const getHexColor = (title: string) => {
-        const map: Record<string, string> = {
-            '토지비': '#10b981',   // emerald-500
-            '공사비': '#3b82f6',   // blue-500
-            '인허가비': '#a855f7', // purple-500
-            '부(분)담금': '#f59e0b',   // amber-500
-            '분양제비용': '#ec4899', // pink-500
-            '기타개발비': '#06b6d4', // cyan-500
-            '보존등기비': '#6366f1', // indigo-500
-            '금융비용': '#f97316', // orange-500
-            '기타': '#64748b',     // slate-500
-        };
-        return map[title] || '#64748b';
-    };
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -251,7 +238,7 @@ export function AdvancedInputSection({
                                         dataKey="value"
                                     >
                                         {pieData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={getHexColor(entry.name)} stroke="none" />
+                                            <Cell key={`cell-${index}`} fill={entry.fill} stroke="none" />
                                         ))}
                                     </Pie>
                                     <Tooltip

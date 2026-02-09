@@ -1,8 +1,9 @@
 import { useState, useMemo, useEffect } from "react";
 import { AnalysisInputs, AnalysisResult, CostCategory, CostItem, UnitAllocation } from "@/types";
 import { defaultValues } from "@/constants/defaultValues";
+import { getCategoryHexColor } from "@/lib/colors";
 
-const STORAGE_KEY = "valueon-calculator-data-v7"; // Bump version to reset data
+const STORAGE_KEY = "valueon-calculator-data-v8"; // Bump version to sync platform differences
 
 export function useCalculator() {
     const [inputs, setInputs] = useState<AnalysisInputs>(defaultValues);
@@ -58,13 +59,41 @@ export function useCalculator() {
         field: string,
         value: number | boolean | CostCategory[] | UnitAllocation[]
     ) => {
-        setInputs((prev) => ({
-            ...prev,
-            [section]: {
-                ...(prev[section] as object),
-                [field]: value,
-            },
-        }));
+        setInputs((prev) => {
+            const next = {
+                ...prev,
+                [section]: {
+                    ...(prev[section] as object),
+                    [field]: value,
+                },
+            };
+
+            // Sync Simple Mode (variableCosts) to Advanced Mode (advancedCategories)
+            if (section === 'variableCosts') {
+                const newCategories = [...next.advancedCategories];
+
+                if (field === 'landPricePerPyung') {
+                    // Update 토지매입비 in land category
+                    const landCat = newCategories.find(c => c.id === 'land');
+                    if (landCat) {
+                        landCat.items = landCat.items.map(item =>
+                            item.id === 'l1' ? { ...item, amount: value as number, calculationBasis: 'per_site_pyung' } : item
+                        );
+                    }
+                } else if (field === 'constCostPerPyung') {
+                    // Update 직접공사비 in construction category
+                    const constCat = newCategories.find(c => c.id === 'construction');
+                    if (constCat) {
+                        constCat.items = constCat.items.map(item =>
+                            item.id === 'c1' ? { ...item, amount: value as number, calculationBasis: 'per_floor_pyung' } : item
+                        );
+                    }
+                }
+                next.advancedCategories = newCategories;
+            }
+
+            return next;
+        });
     };
 
     const toggleAdvancedMode = (isAdvanced: boolean) => {
@@ -400,15 +429,23 @@ export function useCalculator() {
         };
 
         // ALWAYS calculate using Advanced Categories for consistency with Expense Page
-        dynamicBreakdown = inputs.advancedCategories.map((cat, index) => {
+        const breakdownItems = inputs.advancedCategories.map((cat) => {
             const catSum = cat.items.reduce((acc, item) => acc + calculateItemAmount(item), 0);
-            totalProjectCost += catSum;
             return {
                 name: cat.title,
                 value: catSum,
-                fill: colors[index % colors.length]
             };
         });
+
+        totalProjectCost = breakdownItems.reduce((sum, item) => sum + item.value, 0);
+
+        dynamicBreakdown = breakdownItems
+            .filter(item => item.value > 0)
+            .sort((a, b) => b.value - a.value)
+            .map((item, index) => ({
+                ...item,
+                fill: getCategoryHexColor(item.name, index)
+            }));
 
         costPerPyung = inputs.projectTarget.totalFloorArea > 0
             ? totalProjectCost / inputs.projectTarget.totalFloorArea

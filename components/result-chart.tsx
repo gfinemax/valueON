@@ -44,7 +44,7 @@ export function ResultChart({ data, totalCost, hideTitle }: ResultChartProps) {
                             onMouseLeave={() => setHoveredData(null)}
                         >
                             {data.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                <Cell key={`cell-${index}`} fill={entry.fill || COLORS[index % COLORS.length]} />
                             ))}
                         </Pie>
                         <Legend

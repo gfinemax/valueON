@@ -26,10 +26,7 @@ const defaultAdvancedCategories: CostCategory[] = [
         id: "license",
         title: "인허가비",
         items: [
-            { id: "i1", name: "설계비", amount: 1074080000 },
-            { id: "i2", name: "감리비", amount: 1074080000 },
             { id: "i3", name: "기타 용역비", amount: 500000000 },
-            { id: "i4", name: "허가조건 이행공사비", amount: 500000000 },
         ],
     },
     {
@@ -72,11 +69,17 @@ const defaultAdvancedCategories: CostCategory[] = [
         ],
     },
     {
+        id: "registration",
+        title: "보존등기비",
+        items: [
+            { id: "r1", name: "보존등기비용", amount: 1075575000, calculationBasis: 'per_floor_pyung' },
+        ],
+    },
+    {
         id: "etc",
         title: "기타",
         items: [
             { id: "e1", name: "민원처리비", amount: 215115000 },
-            { id: "e2", name: "근저당설정비", amount: 926185000 },
         ],
     },
 ];
