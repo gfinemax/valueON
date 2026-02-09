@@ -34,6 +34,7 @@ interface AdvancedInputSectionProps {
     updateCategoryItemBasis: (catId: string, itemId: string, basis: CostItem['calculationBasis']) => void;
     updateCategoryItemCondition?: (catId: string, itemId: string, allocationId: string, amount: number) => void;
     updateCategoryItemRate: (catId: string, itemId: string, rate: number) => void;
+    updateCategoryItemArea?: (catId: string, itemId: string, area: number) => void;
     updateCategoryItemMemo: (catId: string, itemId: string, memo: string) => void;
     addCategoryItem: (catId: string, name: string, amount: number) => void;
     removeCategoryItem: (catId: string, itemId: string) => void;
@@ -65,6 +66,7 @@ export function AdvancedInputSection({
     updateCategoryItemBasis,
     updateCategoryItemCondition,
     updateCategoryItemRate,
+    updateCategoryItemArea,
     updateCategoryItemMemo,
     addCategoryItem,
     removeCategoryItem,
@@ -122,7 +124,10 @@ export function AdvancedInputSection({
             let val = item.amount;
             if (item.calculationBasis === 'per_unit') val *= projectTarget.totalHouseholds;
             else if (item.calculationBasis === 'per_site_pyung') val *= projectTarget.totalLandArea;
+            else if (item.calculationBasis === 'per_site_private') val *= (projectTarget.privateLandArea || 0);
+            else if (item.calculationBasis === 'per_site_public') val *= (projectTarget.publicLandArea || 0);
             else if (item.calculationBasis === 'per_floor_pyung') val *= projectTarget.totalFloorArea;
+            else if (item.calculationBasis === 'manual_pyeong') val *= (item.manualArea || 0);
             else if (item.calculationBasis === 'mix_linked' && item.mixConditions && unitAllocations) {
                 val = unitAllocations.reduce((sub, alloc) => {
                     const specific = item.mixConditions?.[alloc.id] || 0;
@@ -268,51 +273,86 @@ export function AdvancedInputSection({
             </div>
 
             {/* 2-Column Grid with DndContext */}
-            <DndContext
-                id="categories-dnd-context"
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-            >
-                <SortableContext
-                    items={categories}
-                    strategy={rectSortingStrategy}
+            {mounted ? (
+                <DndContext
+                    id="categories-dnd-context"
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
                 >
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        {categories.map((cat) => (
-                            <SortableCostCategoryCard
-                                key={cat.id}
-                                category={cat}
-                                projectTarget={projectTarget}
-                                unitAllocations={unitAllocations}
-                                unitTypes={unitTypes}
-                                totalExpense={totalExpense}
-                                onUpdateItem={updateCategoryItem}
-                                onUpdateItemBasis={updateCategoryItemBasis}
-                                onUpdateItemCondition={updateCategoryItemCondition}
-                                onUpdateItemRate={updateCategoryItemRate}
-                                onUpdateItemMemo={updateCategoryItemMemo}
-                                onAddItem={addCategoryItem}
-                                onRemoveItem={removeCategoryItem}
-                                onRemoveCategory={removeCostCategory}
-                                onAddSubItem={addSubItem}
-                                onUpdateSubItem={updateSubItem}
-                                onRemoveSubItem={removeSubItem}
-                                onUpdateCategoryMemo={updateCategoryMemo}
-                                onUpdateSubItemMemo={updateSubItemMemo}
-                                onUpdateItemName={updateCategoryItemName}
-                                onUpdateCategoryTitle={updateCategoryTitle}
-                                reorderCategoryItem={reorderCategoryItem}
-                                isExpanded={cat.id === expandCategoryId}
-                                highlightItemId={cat.id === expandCategoryId ? highlightItemId : undefined}
-                                allowItemMoving={allowItemMoving}
-                                allowCategoryAdding={allowCategoryAdding}
-                                allowItemDeleting={allowItemDeleting}
-                            />
-                        ))}
-                    </div>
-                </SortableContext>
-            </DndContext>
+                    <SortableContext
+                        items={categories}
+                        strategy={rectSortingStrategy}
+                    >
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            {categories.map((cat) => (
+                                <SortableCostCategoryCard
+                                    key={cat.id}
+                                    category={cat}
+                                    projectTarget={projectTarget}
+                                    unitAllocations={unitAllocations}
+                                    unitTypes={unitTypes}
+                                    totalExpense={totalExpense}
+                                    onUpdateItem={updateCategoryItem}
+                                    onUpdateItemBasis={updateCategoryItemBasis}
+                                    onUpdateItemCondition={updateCategoryItemCondition}
+                                    onUpdateItemRate={updateCategoryItemRate}
+                                    onUpdateItemArea={updateCategoryItemArea}
+                                    onUpdateItemMemo={updateCategoryItemMemo}
+                                    onAddItem={addCategoryItem}
+                                    onRemoveItem={removeCategoryItem}
+                                    onRemoveCategory={removeCostCategory}
+                                    onAddSubItem={addSubItem}
+                                    onUpdateSubItem={updateSubItem}
+                                    onRemoveSubItem={removeSubItem}
+                                    onUpdateCategoryMemo={updateCategoryMemo}
+                                    onUpdateSubItemMemo={updateSubItemMemo}
+                                    onUpdateItemName={updateCategoryItemName}
+                                    onUpdateCategoryTitle={updateCategoryTitle}
+                                    reorderCategoryItem={reorderCategoryItem}
+                                    isExpanded={cat.id === expandCategoryId}
+                                    highlightItemId={cat.id === expandCategoryId ? highlightItemId : undefined}
+                                    allowItemMoving={allowItemMoving}
+                                    allowCategoryAdding={allowCategoryAdding}
+                                    allowItemDeleting={allowItemDeleting}
+                                />
+                            ))}
+                        </div>
+                    </SortableContext>
+                </DndContext>
+            ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {categories.map((cat) => (
+                        <CostCategoryCard
+                            key={cat.id}
+                            category={cat}
+                            projectTarget={projectTarget}
+                            unitAllocations={unitAllocations}
+                            unitTypes={unitTypes}
+                            totalExpense={totalExpense}
+                            onUpdateItem={updateCategoryItem}
+                            onUpdateItemBasis={updateCategoryItemBasis}
+                            onUpdateItemCondition={updateCategoryItemCondition}
+                            onUpdateItemRate={updateCategoryItemRate}
+                            onUpdateItemMemo={updateCategoryItemMemo}
+                            onAddItem={addCategoryItem}
+                            onRemoveItem={removeCategoryItem}
+                            onRemoveCategory={removeCostCategory}
+                            onAddSubItem={addSubItem}
+                            onUpdateSubItem={updateSubItem}
+                            onRemoveSubItem={removeSubItem}
+                            onUpdateCategoryMemo={updateCategoryMemo}
+                            onUpdateSubItemMemo={updateSubItemMemo}
+                            onUpdateItemName={updateCategoryItemName}
+                            onUpdateCategoryTitle={updateCategoryTitle}
+                            reorderCategoryItem={reorderCategoryItem}
+                            allowItemMoving={allowItemMoving}
+                            allowCategoryAdding={allowCategoryAdding}
+                            allowItemDeleting={allowItemDeleting}
+                        />
+                    ))}
+                </div>
+            )}
 
             {/* Add Category Button */}
             {allowCategoryAdding && (

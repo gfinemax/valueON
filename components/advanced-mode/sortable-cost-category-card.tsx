@@ -15,6 +15,7 @@ interface SortableCostCategoryCardProps {
     onUpdateItemBasis: (catId: string, itemId: string, basis: CostItem['calculationBasis']) => void;
     onUpdateItemCondition?: (catId: string, itemId: string, allocationId: string, amount: number) => void;
     onUpdateItemRate: (catId: string, itemId: string, rate: number) => void;
+    onUpdateItemArea?: (catId: string, itemId: string, area: number) => void;
     onUpdateItemMemo: (catId: string, itemId: string, memo: string) => void;
     onAddItem: (catId: string, name: string, amount: number) => void;
     onRemoveCategory: (id: string) => void;

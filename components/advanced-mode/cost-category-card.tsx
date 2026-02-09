@@ -43,6 +43,7 @@ interface CostCategoryCardProps {
     onUpdateItemBasis: (catId: string, itemId: string, basis: CostItem['calculationBasis']) => void;
     onUpdateItemCondition?: (catId: string, itemId: string, allocationId: string, amount: number) => void;
     onUpdateItemRate: (catId: string, itemId: string, rate: number) => void;
+    onUpdateItemArea?: (catId: string, itemId: string, area: number) => void;
     onUpdateItemMemo: (catId: string, itemId: string, memo: string) => void;
     onAddItem: (catId: string, name: string, amount: number) => void;
     onRemoveCategory: (id: string) => void;
@@ -74,6 +75,7 @@ export function CostCategoryCard({
     onUpdateItemBasis,
     onUpdateItemCondition,
     onUpdateItemRate,
+    onUpdateItemArea,
     onUpdateItemMemo,
     onAddItem,
     onRemoveItem,
@@ -136,7 +138,10 @@ export function CostCategoryCard({
         let val = item.amount;
         if (item.calculationBasis === 'per_unit') val *= projectTarget.totalHouseholds;
         else if (item.calculationBasis === 'per_site_pyung') val *= projectTarget.totalLandArea;
+        else if (item.calculationBasis === 'per_site_private') val *= (projectTarget.privateLandArea || 0);
+        else if (item.calculationBasis === 'per_site_public') val *= (projectTarget.publicLandArea || 0);
         else if (item.calculationBasis === 'per_floor_pyung') val *= projectTarget.totalFloorArea;
+        else if (item.calculationBasis === 'manual_pyeong') val *= (item.manualArea || 0);
         else if (item.calculationBasis === 'mix_linked' && item.mixConditions && unitAllocations) {
             val = unitAllocations.reduce((sub, alloc) => {
                 const specific = item.mixConditions?.[alloc.id] || 0;
@@ -305,9 +310,11 @@ export function CostCategoryCard({
                                         onUpdateBasis={(itemId, basis) => onUpdateItemBasis(category.id, itemId, basis)}
                                         onUpdateCondition={(itemId, allocId, val) => onUpdateItemCondition?.(category.id, itemId, allocId, val)}
                                         onUpdateRate={(itemId, rate) => onUpdateItemRate(category.id, itemId, rate)}
+                                        onUpdateArea={(itemId, area) => onUpdateItemArea?.(category.id, itemId, area)}
                                         onUpdateMemo={(itemId, memo) => onUpdateItemMemo(category.id, itemId, memo)}
                                         onRemove={(itemId) => onRemoveItem(category.id, itemId)}
                                         applicationRate={item.applicationRate}
+                                        manualArea={item.manualArea}
                                         memo={item.note}
                                         subItems={item.subItems}
                                         onAddSubItem={(name, amount) => onAddSubItem(category.id, item.id, name, amount)}

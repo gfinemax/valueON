@@ -156,7 +156,7 @@ export function SummaryDashboard({ result }: SummaryDashboardProps) {
                             </p>
                         </div>
 
-                        <div className="bg-card p-4 md:p-10 rounded-2xl md:rounded-3xl border border-border shadow-sm md:shadow-xl shadow-border/50">
+                        <div className="bg-card p-4 md:p-6 rounded-2xl md:rounded-3xl border border-border shadow-sm md:shadow-xl shadow-border/50">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
                                 <div className="space-y-10">
                                     <div>
@@ -228,7 +228,7 @@ export function SummaryDashboard({ result }: SummaryDashboardProps) {
                             </div>
 
                             <div
-                                className="bg-card p-4 md:p-10 rounded-2xl md:rounded-3xl border border-border shadow-sm md:shadow-xl shadow-border/50 cursor-pointer group relative overflow-hidden"
+                                className="bg-card p-4 md:p-6 rounded-2xl md:rounded-3xl border border-border shadow-sm md:shadow-xl shadow-border/50 cursor-pointer group relative overflow-hidden"
                                 onClick={() => setIsRevenueDetailOpen(!isRevenueDetailOpen)}
                             >
                                 <div className="md:hidden absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-stone-100 shadow-sm active:scale-95 transition-all">
@@ -290,7 +290,7 @@ export function SummaryDashboard({ result }: SummaryDashboardProps) {
                         </div>
 
                         <div
-                            className="bg-card p-4 md:p-10 rounded-2xl md:rounded-3xl border border-border shadow-sm md:shadow-xl shadow-border/50 relative cursor-pointer group overflow-hidden"
+                            className="bg-card p-4 md:p-6 rounded-2xl md:rounded-3xl border border-border shadow-sm md:shadow-xl shadow-border/50 relative cursor-pointer group overflow-hidden"
                             onClick={() => setIsCostDetailOpen(!isCostDetailOpen)}
                         >
                             <div className="md:hidden absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-stone-100 shadow-sm active:scale-95 transition-all">
@@ -298,23 +298,23 @@ export function SummaryDashboard({ result }: SummaryDashboardProps) {
                             </div>
 
                             {/* Detailed View Toggle Button - Positioned like Revenue Section */}
-                            <div className="hidden md:flex absolute top-6 right-6 items-center gap-2 text-stone-400 group-hover:text-stone-600 transition-colors cursor-pointer" onClick={(e) => { e.stopPropagation(); setIsCostDetailOpen(!isCostDetailOpen); }}>
+                            <div className="hidden md:flex absolute top-4 right-6 items-center gap-2 text-stone-400 group-hover:text-stone-600 transition-colors cursor-pointer" onClick={(e) => { e.stopPropagation(); setIsCostDetailOpen(!isCostDetailOpen); }}>
                                 <span className="text-xs font-bold uppercase tracking-widest">{isCostDetailOpen ? 'Close Details' : 'View Details'}</span>
                                 <div className={`p-2 rounded-full border border-stone-200 bg-white shadow-sm transition-transform duration-500 ${isCostDetailOpen ? 'rotate-0' : '-rotate-90'}`}>
                                     <ChevronDown className="w-4 h-4" />
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 mb-0 items-center">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 mb-0 items-center">
                                 {/* Total Cost Box - Styled like Total Revenue */}
-                                <div className="space-y-4 md:space-y-6">
-                                    <div className="p-4 md:p-6 bg-stone-50 rounded-xl md:rounded-2xl border border-stone-100">
-                                        <div className="text-[10px] md:text-xs font-bold text-stone-400 uppercase tracking-widest mb-1 md:mb-2">Total Project Cost</div>
+                                <div className="space-y-3">
+                                    <div className="p-4 md:p-5 bg-stone-50 rounded-xl md:rounded-2xl border border-stone-100">
+                                        <div className="text-[10px] md:text-xs font-bold text-stone-400 uppercase tracking-widest mb-1">Total Project Cost</div>
                                         <div className="text-2xl md:text-5xl font-serif text-[#d97757] tracking-tight leading-tight">{formatMoney(result.totalProjectCost)}</div>
                                     </div>
                                 </div>
 
-                                <div className="h-[250px] md:h-[300px] w-full flex justify-center items-center">
+                                <div className="min-h-[300px] md:min-h-[330px] w-full flex flex-col justify-center">
                                     <ResultChart data={result.costBreakdown} totalCost={result.totalProjectCost} />
                                 </div>
                             </div>

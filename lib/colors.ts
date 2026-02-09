@@ -8,9 +8,10 @@ export const CATEGORY_COLORS: Record<string, string> = {
     '보존등기비': '#6366f1', // indigo-500
     '금융비용': '#f97316', // orange-500
     '기타': '#64748b',     // slate-500
-    '부담금': '#f59e0b',    // Alias for '부(분)담금'
-    '판매비(분양)': '#ec4899', // Alias for '분양제비용'
-    '일반관리비': '#06b6d4',  // Alias/Alternative
+    // Aliases for legacy naming
+    '부담금': '#f59e0b',
+    '판매비(분양)': '#ec4899',
+    '일반관리비': '#06b6d4',
 };
 
 export const DEFAULT_CHART_COLORS = [

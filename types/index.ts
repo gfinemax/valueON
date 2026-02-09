@@ -1,8 +1,11 @@
 export interface ProjectTarget {
   totalLandArea: number;   // 전체 사업부지 면적 (평)
+  privateLandArea?: number; // 사유지 면적 (평)
+  publicLandArea?: number;  // 국공유지 면적 (평)
   totalFloorArea: number;  // 연면적 (평)
   totalHouseholds: number; // 전체 세대수 (세대)
 }
+
 
 export interface AnalysisInputs {
   projectTarget: ProjectTarget;
@@ -71,11 +74,14 @@ export interface CostItem {
   note?: string;
   // Smart Cost Logic
   // per_pyung is deprecated in logic but kept for migration
-  calculationBasis?: 'fixed' | 'per_unit' | 'per_site_pyung' | 'per_floor_pyung' | 'mix_linked';
+  calculationBasis?: 'fixed' | 'per_unit' | 'per_site_pyung' | 'per_site_private' | 'per_site_public' | 'per_floor_pyung' | 'mix_linked' | 'manual_pyeong';
+
   // For mix_linked: maps allocationId -> amount (won/unit)
   mixConditions?: Record<string, number>;
   // NEW: Application Rate (%) - Default 100
   applicationRate?: number;
+  // NEW: Manual Area for manual_pyeong basis
+  manualArea?: number;
   // NEW: Sub-Items for detailed breakdown
   subItems?: SubItem[];
 }

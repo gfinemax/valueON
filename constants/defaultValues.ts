@@ -5,12 +5,13 @@ const defaultAdvancedCategories: CostCategory[] = [
         id: "land",
         title: "토지비",
         items: [
-            { id: "l1", name: "토지매입비", amount: 104490000000 },
-            { id: "l2", name: "국유지 매입비", amount: 4716000000 },
+            { id: "l1", name: "토지매입비", amount: 104490000000, calculationBasis: 'per_site_private' },
+            { id: "l2", name: "국유지 매입비", amount: 4716000000, calculationBasis: 'per_site_public' },
             { id: "l3", name: "취등록세 등", amount: 5023476000 },
             { id: "l4", name: "법무사비용", amount: 218412000 },
             { id: "l5", name: "지주작업비", amount: 1638090000 },
         ],
+
     },
     {
         id: "construction",
@@ -20,44 +21,9 @@ const defaultAdvancedCategories: CostCategory[] = [
             { id: "c2", name: "철거/토목공사비", amount: 4000000000 },
             { id: "c3", name: "인입공사비", amount: 335650000 },
             { id: "c4", name: "미술장식품", amount: 277835000 },
-        ],
-    },
-    {
-        id: "license",
-        title: "인허가비",
-        items: [
-            { id: "i3", name: "기타 용역비", amount: 500000000 },
-        ],
-    },
-    {
-        id: "contribution",
-        title: "부담금",
-        items: [
-            { id: "d1", name: "광역교통시설부담금", amount: 2424453000 },
-            { id: "d2", name: "학교용지분담금", amount: 1720920000 },
-            { id: "d3", name: "상하수도 분담금", amount: 508000000 },
-        ],
-    },
-    {
-        id: "sales",
-        title: "판매비(분양)",
-        items: [
-            { id: "s1", name: "M/H 임차료", amount: 240000000 },
-            { id: "s2", name: "M/H 건립비", amount: 900000000 },
-            { id: "s3", name: "운영관비", amount: 240000000 },
-            { id: "s4", name: "광고선전비", amount: 1075575000 },
-            { id: "s5", name: "분양수수료", amount: 3810000000 },
-        ],
-    },
-    {
-        id: "general",
-        title: "일반관리비",
-        items: [
-            { id: "g1", name: "신탁수수료", amount: 1075575000 },
-            { id: "g2", name: "조합/대행사 운영비", amount: 900000000 },
-            { id: "g3", name: "시행사 운영비", amount: 1400000000 },
-            { id: "g4", name: "예비비", amount: 1075575000 },
-            { id: "g5", name: "입주관리비", amount: 76200000 },
+            { id: "c5", name: "설계비", amount: 1074080000 },
+            { id: "c6", name: "감리비", amount: 1074080000 },
+            { id: "c7", name: "허가조건 이행공사비", amount: 500000000 },
         ],
     },
     {
@@ -69,17 +35,50 @@ const defaultAdvancedCategories: CostCategory[] = [
         ],
     },
     {
-        id: "registration",
-        title: "보존등기비",
+        id: "sales",
+        title: "분양제비용",
         items: [
-            { id: "r1", name: "보존등기비용", amount: 1075575000, calculationBasis: 'per_floor_pyung' },
+            { id: "s1", name: "M/H 임차료", amount: 240000000 },
+            { id: "s2", name: "M/H 건립비", amount: 900000000 },
+            { id: "s3", name: "운영관비", amount: 240000000 },
+            { id: "s4", name: "광고선전비", amount: 1075575000 },
+            { id: "s5", name: "분양수수료", amount: 3810000000 },
+            { id: "s6", name: "입주관리비", amount: 76200000 },
         ],
     },
     {
-        id: "etc",
-        title: "기타",
+        id: "general",
+        title: "기타개발비",
         items: [
-            { id: "e1", name: "민원처리비", amount: 215115000 },
+            { id: "g1", name: "신탁수수료", amount: 1075575000 },
+            { id: "g2", name: "조합/대행사 운영비", amount: 900000000 },
+            { id: "g3", name: "시행사 운영비", amount: 1400000000 },
+            { id: "g4", name: "예비비", amount: 1075575000 },
+            { id: "g5", name: "민원처리비", amount: 215115000 },
+            { id: "g6", name: "근저당설정비", amount: 926185000 },
+        ],
+    },
+    {
+        id: "contribution",
+        title: "부(분)담금",
+        items: [
+            { id: "d1", name: "광역교통시설부담금", amount: 2424453000 },
+            { id: "d2", name: "학교용지분담금", amount: 180000000 },
+            { id: "d3", name: "상하수도 분담금", amount: 0 },
+        ],
+    },
+    {
+        id: "license",
+        title: "인허가비",
+        items: [
+            { id: "i1", name: "기타 용역비", amount: 500000000 },
+        ],
+    },
+    {
+        id: "registration",
+        title: "보존등기비",
+        items: [
+            { id: "r1", name: "보존등기비용", amount: 0 },
         ],
     },
 ];
@@ -120,9 +119,12 @@ const defaultUnitAllocations: UnitAllocation[] = [
 export const defaultValues: AnalysisInputs = {
     projectTarget: {
         totalLandArea: 3876,
+        privateLandArea: 3483,
+        publicLandArea: 393,
         totalFloorArea: 13426,
         totalHouseholds: 254,
     },
+
     addedCosts: {
         operationFeePerUnit: 15000000,
         pmServiceFeeTotal: 3810000000,

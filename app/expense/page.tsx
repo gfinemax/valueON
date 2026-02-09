@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useCalculator } from "@/hooks/useCalculator";
 import { useSearchIndex } from "@/hooks/useSearchIndex";
 import { AdvancedInputSection } from "@/components/advanced-mode/advanced-input-section";
+import { ProjectInfoPanel } from "@/components/advanced-mode/project-info-panel";
 import { SearchHeader } from "@/components/search-header";
 import { useSettings } from "@/components/settings-context";
 
@@ -19,8 +20,10 @@ function ExpensePageContent() {
 
     const {
         inputs,
+        updateInput,
         updateCategoryItem,
         updateCategoryItemBasis,
+        updateCategoryItemArea,
         updateCategoryItemCondition,
         updateCategoryItemRate,
         updateCategoryItemMemo,
@@ -46,6 +49,12 @@ function ExpensePageContent() {
     // Use totalRevenue from calculator result
     const totalIncome = result?.totalRevenue || 0;
 
+    // Handler for ProjectInfoPanel updates
+    const handleProjectTargetUpdate = (field: keyof typeof inputs.projectTarget, value: number) => {
+        updateInput('projectTarget', field, value);
+    };
+
+
     return (
         <main className="min-h-screen bg-background pt-14">
             {/* Header with search */}
@@ -56,9 +65,16 @@ function ExpensePageContent() {
             />
 
             <div className="p-6 space-y-6 max-w-7xl mx-auto">
+                {/* Project Info Panel */}
+                <ProjectInfoPanel
+                    projectTarget={inputs.projectTarget}
+                    onUpdate={handleProjectTargetUpdate}
+                />
+
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                     <div className="lg:col-span-12 space-y-6">
                         <AdvancedInputSection
+
                             allowItemMoving={allowItemMoving}
                             allowCategoryAdding={allowCategoryAdding}
                             allowItemDeleting={allowItemDeleting}
@@ -87,6 +103,7 @@ function ExpensePageContent() {
                             reorderCostCategory={reorderCostCategory}
                             expandCategoryId={expandCategoryId}
                             highlightItemId={highlightItemId}
+                            updateCategoryItemArea={updateCategoryItemArea}
                         />
                     </div>
                 </div>

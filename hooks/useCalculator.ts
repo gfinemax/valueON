@@ -2,8 +2,10 @@ import { useState, useMemo, useEffect } from "react";
 import { AnalysisInputs, AnalysisResult, CostCategory, CostItem, UnitAllocation } from "@/types";
 import { defaultValues } from "@/constants/defaultValues";
 import { getCategoryHexColor } from "@/lib/colors";
+import { recommendCalculationBasis } from "@/utils/calculation-basis";
 
-const STORAGE_KEY = "valueon-calculator-data-v8"; // Bump version to sync platform differences
+
+const STORAGE_KEY = "valueon-calculator-data-v9"; // Bump version to fix platform data structure
 
 export function useCalculator() {
     const [inputs, setInputs] = useState<AnalysisInputs>(defaultValues);
@@ -135,6 +137,22 @@ export function useCalculator() {
         });
     };
 
+    const updateCategoryItemArea = (categoryId: string, itemId: string, area: number) => {
+        setInputs((prev) => {
+            const newCategories = prev.advancedCategories.map((cat) => {
+                if (cat.id !== categoryId) return cat;
+                return {
+                    ...cat,
+                    items: cat.items.map((item) => {
+                        if (item.id !== itemId) return item;
+                        return { ...item, manualArea: area };
+                    }),
+                };
+            });
+            return { ...prev, advancedCategories: newCategories };
+        });
+    };
+
     const addCategoryItem = (categoryId: string, name: string, amount: number) => {
         setInputs((prev) => {
             const newCategories = prev.advancedCategories.map((cat) => {
@@ -143,6 +161,7 @@ export function useCalculator() {
                     id: Math.random().toString(36).substr(2, 9),
                     name,
                     amount,
+                    calculationBasis: recommendCalculationBasis(name, categoryId),
                 };
                 return { ...cat, items: [...cat.items, newItem] };
             });
@@ -416,11 +435,18 @@ export function useCalculator() {
                 itemAmount = item.amount * inputs.projectTarget.totalFloorArea;
             } else if (item.calculationBasis === 'per_site_pyung') {
                 itemAmount = item.amount * inputs.projectTarget.totalLandArea;
+            } else if (item.calculationBasis === 'per_site_private') {
+                itemAmount = item.amount * (inputs.projectTarget.privateLandArea || 0);
+            } else if (item.calculationBasis === 'per_site_public') {
+                itemAmount = item.amount * (inputs.projectTarget.publicLandArea || 0);
             } else if (item.calculationBasis === 'mix_linked' && item.mixConditions) {
+
                 itemAmount = inputs.unitAllocations.reduce((subAcc, alloc) => {
                     const specificAmount = item.mixConditions?.[alloc.id] || 0;
                     return subAcc + (alloc.count * specificAmount);
                 }, 0);
+            } else if (item.calculationBasis === 'manual_pyeong') {
+                itemAmount = item.amount * (item.manualArea || 0);
             }
 
             // Apply Application Rate (Default 100%)
@@ -440,7 +466,7 @@ export function useCalculator() {
         totalProjectCost = breakdownItems.reduce((sum, item) => sum + item.value, 0);
 
         dynamicBreakdown = breakdownItems
-            .filter(item => item.value > 0)
+            .filter(item => item.value > 0 || item.name === '보존등기비')
             .sort((a, b) => b.value - a.value)
             .map((item, index) => ({
                 ...item,
@@ -728,6 +754,7 @@ export function useCalculator() {
         resetData,
         result,
         reorderCostCategory,
+        updateCategoryItemArea,
     };
 
 }
