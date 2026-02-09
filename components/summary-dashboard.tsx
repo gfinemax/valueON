@@ -118,28 +118,28 @@ export function SummaryDashboard({ result }: SummaryDashboardProps) {
     ];
 
     return (
-        <div className="space-y-6 md:space-y-24 py-4 md:py-12">
+        <div className="space-y-6 md:space-y-24 pt-0 pb-4 md:py-12">
             {/* Mobile Metrics */}
             <div className="grid grid-cols-2 gap-3 md:hidden mb-6">
-                <div className="bg-stone-50 p-4 rounded-2xl border border-stone-100">
-                    <div className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-1">Net Profit</div>
+                <div className="bg-muted/50 p-4 rounded-2xl border border-border">
+                    <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Net Profit</div>
                     <div className={`text-xl font-serif font-bold ${profit >= 0 ? 'text-[#8c9c8a]' : 'text-[#d97757]'}`}>
                         {profit >= 0 ? '+' : ''}{formatMoney(profit)}
                     </div>
                 </div>
-                <div className="bg-stone-50 p-4 rounded-2xl border border-stone-100">
-                    <div className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-1">Safe Margin</div>
-                    <div className="text-xl font-serif font-bold text-stone-700">
+                <div className="bg-muted/50 p-4 rounded-2xl border border-border">
+                    <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Safe Margin</div>
+                    <div className="text-xl font-serif font-bold text-foreground">
                         {profitMargin.toFixed(1)}%
                     </div>
                 </div>
-                <div className="bg-white p-4 rounded-2xl border border-stone-100 shadow-sm">
-                    <div className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-1">Revenue</div>
-                    <div className="text-lg font-serif text-stone-800">{formatMoney(result.totalRevenue || 0)}</div>
+                <div className="bg-card p-4 rounded-2xl border border-border shadow-sm">
+                    <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Revenue</div>
+                    <div className="text-lg font-serif text-foreground">{formatMoney(result.totalRevenue || 0)}</div>
                 </div>
-                <div className="bg-white p-4 rounded-2xl border border-stone-100 shadow-sm">
-                    <div className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-1">Cost</div>
-                    <div className="text-lg font-serif text-stone-800">{formatMoney(result.totalProjectCost)}</div>
+                <div className="bg-card p-4 rounded-2xl border border-border shadow-sm">
+                    <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Cost</div>
+                    <div className="text-lg font-serif text-foreground">{formatMoney(result.totalProjectCost)}</div>
                 </div>
             </div>
 
@@ -156,12 +156,12 @@ export function SummaryDashboard({ result }: SummaryDashboardProps) {
                             </p>
                         </div>
 
-                        <div className="bg-white p-4 md:p-10 rounded-2xl md:rounded-3xl border border-stone-200 shadow-sm md:shadow-xl shadow-stone-200/50">
+                        <div className="bg-card p-4 md:p-10 rounded-2xl md:rounded-3xl border border-border shadow-sm md:shadow-xl shadow-border/50">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
                                 <div className="space-y-10">
                                     <div>
                                         <div className="text-sm font-bold text-stone-400 uppercase tracking-widest mb-3">Net Profit Forecast</div>
-                                        <div className={`text-6xl font-serif tracking-tighter ${profit >= 0 ? 'text-[#8c9c8a]' : 'text-[#d97757]'}`}>
+                                        <div className={`text-4xl md:text-6xl font-serif tracking-tighter ${profit >= 0 ? 'text-[#8c9c8a]' : 'text-[#d97757]'}`}>
                                             {profit >= 0 ? '+' : ''}
                                             <CountUp end={profit} suffix="원" />
                                         </div>
@@ -178,7 +178,7 @@ export function SummaryDashboard({ result }: SummaryDashboardProps) {
                                     </div>
                                 </div>
 
-                                <div className="h-[200px] md:h-[240px] w-full relative flex items-center justify-center border-l border-stone-100 md:pl-12">
+                                <div className="h-[200px] md:h-[240px] w-full relative flex items-center justify-center border-l-0 md:border-l border-border md:pl-12">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <PieChart>
                                             <Pie
@@ -225,19 +225,18 @@ export function SummaryDashboard({ result }: SummaryDashboardProps) {
                         <div>
                             <div className="flex items-center justify-between mb-3 md:hidden">
                                 <h3 className="text-lg font-serif text-stone-900">Revenue Mix</h3>
-                                <span className="text-xs text-stone-400">Tap for details</span>
                             </div>
 
                             <div
-                                className="bg-white p-4 md:p-10 rounded-2xl md:rounded-3xl border border-stone-200 shadow-sm md:shadow-xl shadow-stone-200/50 cursor-pointer group relative overflow-hidden"
+                                className="bg-card p-4 md:p-10 rounded-2xl md:rounded-3xl border border-border shadow-sm md:shadow-xl shadow-border/50 cursor-pointer group relative overflow-hidden"
                                 onClick={() => setIsRevenueDetailOpen(!isRevenueDetailOpen)}
                             >
-                                <div className="md:hidden absolute top-4 right-4">
-                                    <ChevronDown className={`w-5 h-5 text-stone-400 transition-transform duration-300 ${isRevenueDetailOpen ? 'rotate-180' : ''}`} />
+                                <div className="md:hidden absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-stone-100 shadow-sm active:scale-95 transition-all">
+                                    <ChevronDown className={`w-5 h-5 text-stone-600 transition-transform duration-300 ${isRevenueDetailOpen ? '' : '-rotate-90'}`} />
                                 </div>
                                 <div className="hidden md:flex absolute top-6 right-6 items-center gap-2 text-stone-400 group-hover:text-stone-600 transition-colors">
                                     <span className="text-xs font-bold uppercase tracking-widest">{isRevenueDetailOpen ? 'Close Details' : 'View Pricing'}</span>
-                                    <div className={`p-2 rounded-full border border-stone-200 bg-white shadow-sm transition-transform duration-500 ${isRevenueDetailOpen ? 'rotate-180' : 'group-hover:translate-y-1'}`}>
+                                    <div className={`p-2 rounded-full border border-stone-200 bg-white shadow-sm transition-transform duration-500 ${isRevenueDetailOpen ? 'rotate-0' : '-rotate-90'}`}>
                                         <ChevronDown className="w-4 h-4" />
                                     </div>
                                 </div>
@@ -259,7 +258,7 @@ export function SummaryDashboard({ result }: SummaryDashboardProps) {
                                 <div
                                     ref={revenueDetailRef}
                                     className={`grid transition-all duration-500 ease-in-out ${isRevenueDetailOpen
-                                        ? 'grid-rows-[1fr] opacity-100 mt-6 pt-6 border-t border-stone-100'
+                                        ? 'grid-rows-[1fr] opacity-100 mt-6 pt-6 border-t border-border'
                                         : 'grid-rows-[0fr] opacity-0 mt-0 pt-0 border-none'
                                         }`}
                                     onClick={(e) => e.stopPropagation()}
@@ -286,38 +285,43 @@ export function SummaryDashboard({ result }: SummaryDashboardProps) {
                             </p>
                         </div>
 
-                        <div className="bg-white p-6 md:p-10 rounded-2xl md:rounded-3xl border border-stone-200 shadow-sm md:shadow-xl shadow-stone-200/50">
-                            <div className="hidden md:flex justify-between items-center mb-8 border-b border-stone-100 pb-4">
-                                <h3 className="text-xl font-serif text-stone-800">비용 구조 분석</h3>
-                                <button
-                                    onClick={() => setIsCostDetailOpen(!isCostDetailOpen)}
-                                    className="flex items-center gap-2 text-stone-400 hover:text-stone-600 transition-colors text-xs font-bold uppercase tracking-widest"
-                                >
-                                    {isCostDetailOpen ? 'Close Details' : 'View Details'}
-                                    <div className={`p-1.5 rounded-full border border-stone-200 bg-white transition-transform duration-300 ${isCostDetailOpen ? '' : 'rotate-180'}`}>
-                                        <ChevronDown className="w-3 h-3" />
-                                    </div>
-                                </button>
+                        <div className="md:hidden mb-1">
+                            <h3 className="text-lg font-serif text-stone-900">Cost Structure</h3>
+                        </div>
+
+                        <div
+                            className="bg-card p-4 md:p-10 rounded-2xl md:rounded-3xl border border-border shadow-sm md:shadow-xl shadow-border/50 relative cursor-pointer group overflow-hidden"
+                            onClick={() => setIsCostDetailOpen(!isCostDetailOpen)}
+                        >
+                            <div className="md:hidden absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-stone-100 shadow-sm active:scale-95 transition-all">
+                                <ChevronDown className={`w-5 h-5 text-stone-600 transition-transform duration-300 ${isCostDetailOpen ? '' : '-rotate-90'}`} />
                             </div>
 
-                            <div className="flex items-center justify-between mb-4 md:hidden cursor-pointer" onClick={() => setIsCostDetailOpen(!isCostDetailOpen)}>
-                                <h3 className="text-lg font-serif text-stone-900">Cost Structure</h3>
-                                <ChevronDown className={`w-5 h-5 text-stone-400 transition-transform duration-300 ${isCostDetailOpen ? 'rotate-180' : ''}`} />
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 mb-8 items-center">
-                                <div className="bg-stone-50 rounded-2xl p-6 md:p-10 flex flex-col justify-center h-full min-h-[160px] md:min-h-[240px]">
-                                    <div className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-3 md:mb-4">Total Project Cost</div>
-                                    <div className="text-3xl md:text-5xl font-serif text-[#d97757] tracking-tight leading-tight">{formatMoney(result.totalProjectCost)}</div>
+                            {/* Detailed View Toggle Button - Positioned like Revenue Section */}
+                            <div className="hidden md:flex absolute top-6 right-6 items-center gap-2 text-stone-400 group-hover:text-stone-600 transition-colors cursor-pointer" onClick={(e) => { e.stopPropagation(); setIsCostDetailOpen(!isCostDetailOpen); }}>
+                                <span className="text-xs font-bold uppercase tracking-widest">{isCostDetailOpen ? 'Close Details' : 'View Details'}</span>
+                                <div className={`p-2 rounded-full border border-stone-200 bg-white shadow-sm transition-transform duration-500 ${isCostDetailOpen ? 'rotate-0' : '-rotate-90'}`}>
+                                    <ChevronDown className="w-4 h-4" />
                                 </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 mb-0 items-center">
+                                {/* Total Cost Box - Styled like Total Revenue */}
+                                <div className="space-y-4 md:space-y-6">
+                                    <div className="p-4 md:p-6 bg-stone-50 rounded-xl md:rounded-2xl border border-stone-100">
+                                        <div className="text-[10px] md:text-xs font-bold text-stone-400 uppercase tracking-widest mb-1 md:mb-2">Total Project Cost</div>
+                                        <div className="text-2xl md:text-5xl font-serif text-[#d97757] tracking-tight leading-tight">{formatMoney(result.totalProjectCost)}</div>
+                                    </div>
+                                </div>
+
                                 <div className="h-[250px] md:h-[300px] w-full flex justify-center items-center">
-                                    <ResultChart data={result.costBreakdown} totalCost={result.totalProjectCost} hideTitle />
+                                    <ResultChart data={result.costBreakdown} totalCost={result.totalProjectCost} />
                                 </div>
                             </div>
 
                             <div
                                 ref={detailsSectionRef}
-                                className={`transition-all duration-500 ease-in-out overflow-hidden ${isCostDetailOpen ? 'max-h-[1000px] opacity-100 mt-4' : 'max-h-0 opacity-0'}`}
+                                className={`transition-all duration-500 ease-in-out overflow-hidden ${isCostDetailOpen ? 'max-h-[1000px] opacity-100 mt-6 pt-6 border-t border-stone-100' : 'max-h-0 opacity-0 mt-0 pt-0 border-none'}`}
                             >
                                 <div className="pt-6 border-t border-stone-100">
                                     <div className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-4">Cost Breakdown Details</div>

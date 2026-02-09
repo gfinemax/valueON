@@ -6,8 +6,10 @@ import { useCalculator } from "@/hooks/useCalculator";
 import { useSearchIndex } from "@/hooks/useSearchIndex";
 import { AdvancedInputSection } from "@/components/advanced-mode/advanced-input-section";
 import { SearchHeader } from "@/components/search-header";
+import { useSettings } from "@/components/settings-context";
 
 function ExpensePageContent() {
+    const { allowItemMoving, allowCategoryAdding, allowItemDeleting } = useSettings();
     const [searchQuery, setSearchQuery] = useState("");
     const searchParams = useSearchParams();
 
@@ -45,7 +47,7 @@ function ExpensePageContent() {
     const totalIncome = result?.totalRevenue || 0;
 
     return (
-        <main className="min-h-screen bg-white">
+        <main className="min-h-screen bg-background pt-14">
             {/* Header with search */}
             <SearchHeader
                 title="지출 관리"
@@ -57,6 +59,9 @@ function ExpensePageContent() {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                     <div className="lg:col-span-12 space-y-6">
                         <AdvancedInputSection
+                            allowItemMoving={allowItemMoving}
+                            allowCategoryAdding={allowCategoryAdding}
+                            allowItemDeleting={allowItemDeleting}
                             categories={inputs.advancedCategories}
                             projectTarget={inputs.projectTarget}
                             unitAllocations={inputs.unitAllocations}
@@ -93,8 +98,8 @@ function ExpensePageContent() {
 export default function ExpensePage() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen bg-white flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-stone-800"></div>
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
         }>
             <ExpensePageContent />

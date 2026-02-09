@@ -2,12 +2,30 @@
 
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from "recharts";
 import { AnalysisResult } from "@/types";
+import { useState, useEffect } from "react";
 
 interface RevenueChartProps {
     data: NonNullable<AnalysisResult['unitPricing']>;
 }
 
 export function RevenueChart({ data }: RevenueChartProps) {
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+
+        // Initial check
+        checkMobile();
+
+        // Add listener
+        window.addEventListener('resize', checkMobile);
+
+        // Cleanup
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
     // Sort logic 
     const sortedData = [...data].sort((a, b) => (b.revenueContribution || 0) - (a.revenueContribution || 0));
 
@@ -16,9 +34,18 @@ export function RevenueChart({ data }: RevenueChartProps) {
 
     return (
         <div className="w-full h-[340px] md:h-[320px]">
-            <h3 className="text-lg font-serif mb-4 text-stone-800">Revenue Contribution by Type</h3>
+            <h3 className="text-base md:text-lg font-serif mb-4 text-stone-800 whitespace-nowrap">Revenue Contribution by Type</h3>
             <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={sortedData} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 25 }}>
+                <BarChart
+                    data={sortedData}
+                    layout="vertical"
+                    margin={{
+                        top: 5,
+                        right: isMobile ? 10 : 30,
+                        left: isMobile ? 0 : 10,
+                        bottom: 25
+                    }}
+                >
                     <XAxis type="number" hide />
                     <YAxis
                         type="category"

@@ -59,6 +59,9 @@ interface CostCategoryCardProps {
     dragListeners?: any;
     isExpanded?: boolean;
     highlightItemId?: string;
+    allowItemMoving?: boolean;
+    allowCategoryAdding?: boolean;
+    allowItemDeleting?: boolean;
 }
 
 export function CostCategoryCard({
@@ -87,6 +90,9 @@ export function CostCategoryCard({
     dragListeners,
     isExpanded: initialExpanded,
     highlightItemId,
+    allowItemMoving = true,
+    allowCategoryAdding = true,
+    allowItemDeleting = true,
 }: CostCategoryCardProps) {
     const [isOpen, setIsOpen] = useState(initialExpanded || false);
     const cardRef = useRef<HTMLDivElement>(null);
@@ -104,11 +110,18 @@ export function CostCategoryCard({
     }, [initialExpanded]);
 
     const sensors = useSensors(
-        useSensor(PointerSensor),
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8,
+            },
+        }),
         useSensor(KeyboardSensor, {
             coordinateGetter: sortableKeyboardCoordinates,
         })
     );
+
+    // We always pass sensors to avoid Hook errors about changing array size.
+    // Dragging is disabled by not passing listeners to items.
 
     function handleDragEnd(event: DragEndEvent) {
         const { active, over } = event;
@@ -236,15 +249,17 @@ export function CostCategoryCard({
                                 </div>
                             </PopoverContent>
                         </Popover>
-                        <button
-                            onClick={handleDeleteCategory}
-                            className="text-slate-300 hover:text-red-500 p-1 rounded-full hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100"
-                            title="카테고리 삭제"
-                        >
-                            <Trash2 className="w-4 h-4" />
-                        </button>
+                        {allowItemDeleting && (
+                            <button
+                                onClick={handleDeleteCategory}
+                                className="text-slate-300 hover:text-red-500 p-1 rounded-full hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100"
+                                title="카테고리 삭제"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                        )}
                     </div>
-                    {isOpen ? <ChevronUp className="h-5 w-5 text-slate-400" /> : <ChevronDown className="h-5 w-5 text-slate-400" />}
+                    <ChevronDown className={`h-5 w-5 text-slate-400 transition-transform duration-300 ${isOpen ? 'rotate-0' : '-rotate-90'}`} />
                 </div>
 
                 {/* Bottom Row: Amount + Percentage */}
@@ -301,19 +316,23 @@ export function CostCategoryCard({
                                         onUpdateSubItemMemo={(subId, memo) => onUpdateSubItemMemo(category.id, item.id, subId, memo)}
                                         onUpdateName={(itemId, newName) => onUpdateItemName(category.id, itemId, newName)}
                                         isHighlighted={item.id === highlightItemId}
+                                        allowCategoryAdding={allowCategoryAdding}
+                                        allowItemDeleting={allowItemDeleting}
                                     />
                                 ))}
                             </SortableContext>
                         </DndContext>
                     </div>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        className="w-full text-blue-600 hover:bg-blue-100 hover:text-blue-700 py-2 h-auto border border-dashed border-blue-300 rounded-lg"
-                        onClick={handleAddItem}
-                    >
-                        <Plus className="h-4 w-4 mr-1" /> 항목 추가하기
-                    </Button>
+                    {allowCategoryAdding && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="w-full text-blue-600 hover:bg-blue-100 hover:text-blue-700 py-2 h-auto border border-dashed border-blue-300 rounded-lg"
+                            onClick={handleAddItem}
+                        >
+                            <Plus className="h-4 w-4 mr-1" /> 항목 추가하기
+                        </Button>
+                    )}
                 </CardContent>
             </div>
         </Card>

@@ -18,14 +18,14 @@ export default function Home() {
   const searchResults = groupedSearch(searchQuery);
 
   return (
-    <main className="min-h-screen bg-[#fcfbf9]">
+    <main className="min-h-screen bg-background pt-14">
       <SearchHeader
         title="대시보드"
         searchResults={searchResults}
         onSearch={setSearchQuery}
       />
 
-      <div className="p-6 space-y-6">
+      <div className="px-6 pt-6 md:pt-2 pb-6 space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="lg:col-span-12">
             <SummaryDashboard result={result} />

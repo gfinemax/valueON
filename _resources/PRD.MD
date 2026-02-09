@@ -102,8 +102,14 @@ Background: Clean White/Grey (bg-slate-50)
 **Layout Structure:**
 - **Sidebar (Left):**
   - 로고: 'Value On' (Power Icon)
-  - 내비게이션: 대시보드 (Home), 원시 데이터 (Data)
+  - 내비게이션: 대시보드 (Home), 원시 데이터 (Data), 설정 (Settings)
   - 버전 정보 표시
+
+**Settings (Settings):**
+- **Feature Settings:**
+  - 항목 이동 허용: 드래그 앤 드롭 활성화 여부.
+  - 카테고리/항목 추가 허용: 구조 편집 권한 제어.
+  - 항목 삭제 허용: 데이터 삭제 방지 및 안정성 확보.
 
 **Dashboard (Main):**
 - **Grid System:** 반응형 그리드 적용 (Desktop: 12 Columns)
@@ -115,6 +121,7 @@ Background: Clean White/Grey (bg-slate-50)
 
 **Input Interface:**
 - **Advanced Mode:** 세부 항목(Cost Category)별 관리 기능 강화.
-  - 카테고리 추가/삭제 기능 지원.
+  - 설정을 통한 카테고리/항목/세부항목의 추가 및 삭제 권한 일괄 제어.
+  - 카테고리 순서 드래그 앤 드롭 이동 지원.
   - 각 항목별 계산 기준(전체/평당/세대당) 설정 가능.
 - **Unit Mix:** 평형별 공급면적, 세대수, 조합원 분담금/일반분양가 설정.

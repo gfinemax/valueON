@@ -114,19 +114,19 @@ export function PricingResultTable({ pricing }: PricingResultTableProps) {
                 <table className="w-full text-sm">
                     <thead>
                         <tr className="border-b border-stone-200 text-stone-500 text-xs">
-                            <th className="py-2 md:py-3 text-center font-medium whitespace-nowrap px-2">
+                            <th className="py-2 md:py-3 text-center font-medium whitespace-nowrap px-1 md:px-2">
                                 <SortButton column="unitName" label="Type" />
                             </th>
-                            {/* <th className="py-2 md:py-3 text-center font-medium whitespace-nowrap px-2">
+                            {/* <th className="py-2 md:py-3 text-center font-medium whitespace-nowrap px-1 md:px-2">
                                 <SortButton column="supplyArea" label="평형" />
                             </th> */}
-                            <th className="py-2 md:py-3 text-center font-medium whitespace-nowrap px-2">
+                            <th className="py-2 md:py-3 text-center font-medium whitespace-nowrap px-1 md:px-2">
                                 <SortButton column="tier" label="Category" />
                             </th>
-                            <th className="py-2 md:py-3 text-center font-medium whitespace-nowrap px-2">
+                            <th className="py-2 md:py-3 text-center font-medium whitespace-nowrap px-1 md:px-2">
                                 <SortButton column="totalPrice" label="Price" />
                             </th>
-                            <th className="py-2 md:py-3 text-center font-medium whitespace-nowrap px-2">
+                            <th className="py-2 md:py-3 text-center font-medium whitespace-nowrap px-1 md:px-2">
                                 <SortButton column="pricePerPyung" label="Per Pyung" />
                             </th>
                         </tr>
@@ -134,14 +134,14 @@ export function PricingResultTable({ pricing }: PricingResultTableProps) {
                     <tbody className="divide-y divide-stone-100">
                         {sortedPricing.map((item) => (
                             <tr key={item.allocationId} className="group hover:bg-stone-50 transition-colors">
-                                <td className="py-2 md:py-3 text-center text-sm text-stone-800 whitespace-nowrap px-2">
+                                <td className="py-2 md:py-3 text-center text-sm text-stone-800 whitespace-nowrap px-1 md:px-2">
                                     <span className="font-semibold">{item.unitName}</span>
                                     <span className="text-xs text-stone-500 ml-1">({item.supplyArea}평)</span>
                                 </td>
-                                {/* <td className="py-2 md:py-3 text-center text-sm text-stone-800 whitespace-nowrap px-2">
+                                {/* <td className="py-2 md:py-3 text-center text-sm text-stone-800 whitespace-nowrap px-1 md:px-2">
                                     {item.supplyArea ? `${item.supplyArea}평` : '-'}
                                 </td> */}
-                                <td className="py-2 md:py-3 text-center whitespace-nowrap px-2">
+                                <td className="py-2 md:py-3 text-center whitespace-nowrap px-1 md:px-2">
                                     <span className={`px-2 py-0.5 rounded text-xs ${item.tier === '1st' ? 'bg-[#e8f0fe] text-[#1967d2]' :
                                         item.tier === '2nd' ? 'bg-[#f3e8fd] text-[#7627bb]' :
                                             'bg-stone-100 text-stone-600'
@@ -149,10 +149,10 @@ export function PricingResultTable({ pricing }: PricingResultTableProps) {
                                         {item.tier === '1st' ? "1차" : item.tier === '2nd' ? "2차" : "일반"}
                                     </span>
                                 </td>
-                                <td className="py-2 md:py-3 text-center text-sm text-stone-800 whitespace-nowrap px-2">
+                                <td className="py-2 md:py-3 text-center text-sm text-stone-800 whitespace-nowrap px-1 md:px-2 tracking-tighter">
                                     {formatMoney(item.totalPrice)}
                                 </td>
-                                <td className="py-2 md:py-3 text-center text-sm text-stone-800 whitespace-nowrap px-2">
+                                <td className="py-2 md:py-3 text-center text-sm text-stone-800 whitespace-nowrap px-1 md:px-2 tracking-tighter">
                                     {(item.pricePerPyung / 10000).toLocaleString()}만
                                 </td>
                             </tr>

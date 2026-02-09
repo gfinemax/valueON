@@ -93,14 +93,16 @@ function SubItemRow({
                     inputMode="numeric"
                 />
             </div>
-            <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0 text-slate-400 hover:text-red-500 shrink-0"
-                onClick={() => onRemove(sub.id)}
-            >
-                <Trash2 className="h-3 w-3" />
-            </Button>
+            {onRemove && (
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-slate-400 hover:text-red-500 shrink-0"
+                    onClick={() => onRemove(sub.id)}
+                >
+                    <Trash2 className="h-3 w-3" />
+                </Button>
+            )}
         </div>
     );
 }
@@ -133,6 +135,8 @@ export interface CostItemRowProps {
     dragAttributes?: any;
     dragListeners?: any;
     isHighlighted?: boolean;
+    allowCategoryAdding?: boolean;
+    allowItemDeleting?: boolean;
 }
 
 export function CostItemRow({
@@ -140,7 +144,9 @@ export function CostItemRow({
     mixConditions, unitAllocations, unitTypes,
     onUpdate, onUpdateBasis, onUpdateCondition, onUpdateRate, onUpdateMemo, onRemove, applicationRate = 100, memo,
     subItems = [], onAddSubItem, onUpdateSubItem, onRemoveSubItem, onUpdateSubItemMemo, onUpdateName,
-    dragAttributes, dragListeners, isHighlighted
+    dragAttributes, dragListeners, isHighlighted,
+    allowCategoryAdding = true,
+    allowItemDeleting = true,
 }: CostItemRowProps) {
     const rowRef = useRef<HTMLDivElement>(null);
     const [localValue, setLocalValue] = useState(new Intl.NumberFormat("ko-KR").format(amount));
@@ -205,7 +211,7 @@ export function CostItemRow({
     };
 
     const handleSubItemRemove = (subId: string) => {
-        if (onRemoveSubItem) {
+        if (onRemoveSubItem && allowItemDeleting) {
             onRemoveSubItem(subId);
         }
     };
@@ -324,30 +330,32 @@ export function CostItemRow({
                             >
                                 <Pencil className="w-4 h-4" />
                             </button>
-                            <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <button
-                                        className="text-slate-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition-all"
-                                        title="항목 삭제"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>항목 삭제</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            정말로 '{name}' 항목을 삭제하시겠습니까?
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel>취소</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => onRemove(id)} className="bg-red-500 hover:bg-red-600">
-                                            삭제
-                                        </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
+                            {allowItemDeleting && (
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <button
+                                            className="text-slate-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition-all"
+                                            title="항목 삭제"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>항목 삭제</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                정말로 '{name}' 항목을 삭제하시겠습니까?
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>취소</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => onRemove(id)} className="bg-red-500 hover:bg-red-600">
+                                                삭제
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            )}
                         </>
                     )}
                 </div>
@@ -456,16 +464,18 @@ export function CostItemRow({
             )}
 
             {/* Add Sub-Item Button (Start or Append) */}
-            <div className={`flex justify-end ${subItems && subItems.length > 0 ? 'mt-[-10px] mb-2' : 'mt-0'}`}>
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-[10px] text-blue-500 hover:text-blue-700 h-6 px-2"
-                    onClick={handleAddSubItemClick}
-                >
-                    + 세부항목 추가
-                </Button>
-            </div>
+            {allowCategoryAdding && (
+                <div className={`flex justify-end ${subItems && subItems.length > 0 ? 'mt-[-10px] mb-2' : 'mt-0'}`}>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-[10px] text-blue-500 hover:text-blue-700 h-6 px-2"
+                        onClick={handleAddSubItemClick}
+                    >
+                        + 세부항목 추가
+                    </Button>
+                </div>
+            )}
         </div>
     );
 }

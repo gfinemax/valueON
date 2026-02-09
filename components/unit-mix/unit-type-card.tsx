@@ -62,7 +62,7 @@ export function UnitTypeCard({
                         <span className={`text-sm font-bold ${textColor}`}>
                             {label} <span className="text-slate-600 font-normal ml-1">{alloc.count}세대</span>
                         </span>
-                        {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+                        <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${isExpanded ? 'rotate-0' : '-rotate-90'}`} />
                     </div>
                     {/* Line 2: Percentage + Price */}
                     <div className="flex items-center justify-between">

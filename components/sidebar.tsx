@@ -48,6 +48,13 @@ export function Sidebar({ className }: SidebarProps) {
             active: pathname === "/data",
             color: "text-violet-500",
         },
+        {
+            label: "설정",
+            icon: Settings,
+            href: "/settings",
+            active: pathname === "/settings",
+            color: "text-slate-400",
+        },
     ];
 
     return (

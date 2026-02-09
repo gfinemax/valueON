@@ -49,6 +49,9 @@ interface AdvancedInputSectionProps {
     reorderCostCategory: (activeId: string, overId: string) => void;
     expandCategoryId?: string;
     highlightItemId?: string;
+    allowItemMoving?: boolean;
+    allowCategoryAdding?: boolean;
+    allowItemDeleting?: boolean;
 }
 
 export function AdvancedInputSection({
@@ -77,30 +80,25 @@ export function AdvancedInputSection({
     reorderCostCategory,
     expandCategoryId,
     highlightItemId,
+    allowItemMoving = true,
+    allowCategoryAdding = true,
+    allowItemDeleting = true,
 }: AdvancedInputSectionProps) {
     const [mounted, setMounted] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
         setMounted(true);
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 1024); // lg breakpoint
+        };
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
-    // Calculate total expense for percentage calculation
-    const totalExpense = categories.reduce((total, cat) => {
-        return total + cat.items.reduce((catTotal, item) => {
-            let val = item.amount;
-            if (item.calculationBasis === 'per_unit') val *= projectTarget.totalHouseholds;
-            else if (item.calculationBasis === 'per_site_pyung') val *= projectTarget.totalLandArea;
-            else if (item.calculationBasis === 'per_floor_pyung') val *= projectTarget.totalFloorArea;
-            else if (item.calculationBasis === 'mix_linked' && item.mixConditions && unitAllocations) {
-                val = unitAllocations.reduce((sub, alloc) => {
-                    const specific = item.mixConditions?.[alloc.id] || 0;
-                    return sub + (alloc.count * specific);
-                }, 0);
-            }
-            const rate = item.applicationRate !== undefined ? item.applicationRate : 100;
-            return catTotal + (val * rate / 100);
-        }, 0);
-    }, 0);
+    // Helper for cx/left position
+    const centerPos = isMobile ? "50%" : "35%";
 
     const formatMoney = (val: number) =>
         new Intl.NumberFormat("ko-KR", {
@@ -117,8 +115,8 @@ export function AdvancedInputSection({
         }
     };
 
-    // Prepare Data for Pie Chart
-    const pieData = categories.map(cat => {
+    // 1. Calculate and Sort Categories by Amount
+    const categoriesWithTotals = categories.map(cat => {
         const amount = cat.items.reduce((acc, item) => {
             let val = item.amount;
             if (item.calculationBasis === 'per_unit') val *= projectTarget.totalHouseholds;
@@ -135,10 +133,20 @@ export function AdvancedInputSection({
         }, 0);
 
         return {
-            name: cat.title,
-            value: amount,
+            ...cat,
+            totalAmount: amount,
         };
-    }).filter(d => d.value > 0);
+    }).sort((a, b) => b.totalAmount - a.totalAmount);
+
+    // 2. Derive totalExpense and pieData from sorted list
+    const totalExpense = categoriesWithTotals.reduce((sum, cat) => sum + cat.totalAmount, 0);
+
+    const pieData = categoriesWithTotals
+        .filter(cat => cat.totalAmount > 0)
+        .map(cat => ({
+            name: cat.title,
+            value: cat.totalAmount,
+        }));
 
     // Helper for Hex Colors (Tailwind 500 equivalent)
     const getHexColor = (title: string) => {
@@ -157,11 +165,18 @@ export function AdvancedInputSection({
     };
 
     const sensors = useSensors(
-        useSensor(PointerSensor),
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8,
+            },
+        }),
         useSensor(KeyboardSensor, {
             coordinateGetter: sortableKeyboardCoordinates,
         })
     );
+
+    // We always pass sensors to avoid Hook errors about changing array size.
+    // Dragging is disabled by not passing listeners to items.
 
     function handleDragEnd(event: DragEndEvent) {
         const { active, over } = event;
@@ -174,61 +189,47 @@ export function AdvancedInputSection({
     return (
         <div className="space-y-4 pb-20">
             {/* Summary Header */}
-            <div className="bg-gradient-to-r from-slate-800 to-slate-700 p-5 rounded-xl text-white">
+            <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 p-5 rounded-xl text-white shadow-lg border border-white/5">
                 <div className="flex items-center justify-between">
                     <div>
-                        <p className="text-slate-300 text-sm mb-1">총 지출 예상</p>
-                        <div className="flex items-baseline gap-2">
-                            <p className="text-3xl font-extrabold">{formatMoney(totalExpense)}</p>
+                        <p className="text-slate-400 text-sm mb-1 uppercase tracking-wider font-bold">총 지출 예상</p>
+                        <div className="flex flex-col md:flex-row md:items-baseline gap-0 md:gap-2">
+                            <p className="text-3xl font-extrabold whitespace-nowrap tracking-tight">{formatMoney(totalExpense)}</p>
                             {totalIncome !== undefined && (
-                                <span className="text-lg text-slate-300 font-medium opacity-80">
+                                <span className="text-sm md:text-lg text-slate-400 font-medium opacity-80 whitespace-nowrap">
                                     (수입: {formatMoney(totalIncome)})
                                 </span>
                             )}
                         </div>
                     </div>
                     <div className="text-right">
-                        <p className="text-slate-300 text-sm mb-1">카테고리</p>
-                        <p className="text-2xl font-bold">{categories.length}개</p>
+                        <p className="text-slate-400 text-sm mb-1 uppercase tracking-wider font-bold">카테고리</p>
+                        <p className="text-2xl font-black">{categories.length}개</p>
                     </div>
                 </div>
             </div>
 
             {/* Statistics Dashboard */}
-            <div className="bg-gradient-to-r from-slate-800 to-slate-700 p-4 rounded-xl border border-slate-600 shadow-sm">
-                <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2 tracking-tight">
+            <div className="bg-card p-4 rounded-xl border border-border shadow-sm">
+                <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2 tracking-tight">
                     <span className="w-1 h-6 bg-emerald-500 rounded-full"></span>
                     지출 구성 분석
                 </h3>
 
                 <div className="flex flex-col lg:flex-row gap-8 items-center">
                     {/* Legend Grid */}
-                    <div className="flex-1 grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-4 content-start">
-                        {categories.map((cat) => {
-                            const amount = cat.items.reduce((acc, item) => {
-                                let val = item.amount;
-                                if (item.calculationBasis === 'per_unit') val *= projectTarget.totalHouseholds;
-                                else if (item.calculationBasis === 'per_site_pyung') val *= projectTarget.totalLandArea;
-                                else if (item.calculationBasis === 'per_floor_pyung') val *= projectTarget.totalFloorArea;
-                                else if (item.calculationBasis === 'mix_linked' && item.mixConditions && unitAllocations) {
-                                    val = unitAllocations.reduce((sub, alloc) => {
-                                        const specific = item.mixConditions?.[alloc.id] || 0;
-                                        return sub + (alloc.count * specific);
-                                    }, 0);
-                                }
-                                const rate = item.applicationRate !== undefined ? item.applicationRate : 100;
-                                return acc + (val * rate / 100);
-                            }, 0);
-                            const pct = totalExpense > 0 ? (amount / totalExpense) * 100 : 0;
+                    <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 content-start w-full">
+                        {categoriesWithTotals.map((cat) => {
+                            const pct = totalExpense > 0 ? (cat.totalAmount / totalExpense) * 100 : 0;
                             const colors = getCategoryColor(cat.title);
 
                             return (
                                 <div key={cat.id} className="flex items-center gap-2">
                                     <div className={`w-2 h-2 rounded-full flex-shrink-0 ${colors.bar}`} />
                                     <div className="flex items-baseline gap-1.5 overflow-hidden">
-                                        <span className="text-sm text-slate-300 font-medium tracking-tight whitespace-nowrap truncate">{cat.title}</span>
-                                        <span className="text-xs text-slate-500 tracking-tight whitespace-nowrap">({pct.toFixed(1)}%)</span>
-                                        <span className="text-sm font-bold text-white tracking-tight ml-1 whitespace-nowrap">{formatMoney(amount)}</span>
+                                        <span className="text-sm text-muted-foreground font-medium tracking-tight whitespace-nowrap truncate">{cat.title}</span>
+                                        <span className="text-xs text-muted-foreground/50 tracking-tight whitespace-nowrap">({pct.toFixed(1)}%)</span>
+                                        <span className="text-sm font-bold text-foreground tracking-tight ml-1 whitespace-nowrap">{formatMoney(cat.totalAmount)}</span>
                                     </div>
                                 </div>
                             );
@@ -242,8 +243,8 @@ export function AdvancedInputSection({
                                 <PieChart>
                                     <Pie
                                         data={pieData}
-                                        cx="35%"
-                                        cy="45%"
+                                        cx={centerPos}
+                                        cy="50%"
                                         innerRadius={58}
                                         outerRadius={80}
                                         paddingAngle={2}
@@ -256,6 +257,7 @@ export function AdvancedInputSection({
                                     <Tooltip
                                         formatter={(value: any) => formatMoney(Number(value))}
                                         contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                        wrapperStyle={{ zIndex: 100 }}
                                     />
                                 </PieChart>
                             </ResponsiveContainer>
@@ -265,10 +267,13 @@ export function AdvancedInputSection({
                             </div>
                         )}
                         {/* Center Text */}
-                        <div className="absolute top-[45%] left-[35%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center pointer-events-none">
+                        <div
+                            className="absolute top-[50%] flex flex-col items-center justify-center pointer-events-none z-0"
+                            style={{ left: centerPos, transform: 'translate(-50%, -50%)' }}
+                        >
                             <div className="text-center">
-                                <p className="text-[10px] text-slate-400 font-bold tracking-tight">Total</p>
-                                <p className="text-xs font-bold text-white tracking-tight">100%</p>
+                                <p className="text-[10px] text-muted-foreground font-bold tracking-tight">Total</p>
+                                <p className="text-xs font-bold text-foreground tracking-tight">100%</p>
                             </div>
                         </div>
                     </div>
@@ -313,6 +318,9 @@ export function AdvancedInputSection({
                                 reorderCategoryItem={reorderCategoryItem}
                                 isExpanded={cat.id === expandCategoryId}
                                 highlightItemId={cat.id === expandCategoryId ? highlightItemId : undefined}
+                                allowItemMoving={allowItemMoving}
+                                allowCategoryAdding={allowCategoryAdding}
+                                allowItemDeleting={allowItemDeleting}
                             />
                         ))}
                     </div>
@@ -320,13 +328,15 @@ export function AdvancedInputSection({
             </DndContext>
 
             {/* Add Category Button */}
-            <button
-                onClick={handleAddCategory}
-                className="w-full py-4 rounded-xl border-2 border-dashed border-slate-300 text-slate-400 font-bold hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 transition-all flex items-center justify-center gap-2"
-            >
-                <Plus className="w-5 h-5" />
-                <span>새로운 카테고리 추가</span>
-            </button>
+            {allowCategoryAdding && (
+                <button
+                    onClick={handleAddCategory}
+                    className="w-full py-4 rounded-xl border-2 border-dashed border-border text-muted-foreground font-bold hover:border-primary hover:text-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-2"
+                >
+                    <Plus className="w-5 h-5" />
+                    <span>새로운 카테고리 추가</span>
+                </button>
+            )}
         </div>
     );
 }

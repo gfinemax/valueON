@@ -29,6 +29,9 @@ interface SortableCostCategoryCardProps {
     reorderCategoryItem: (catId: string, activeId: string, overId: string) => void;
     isExpanded?: boolean;
     highlightItemId?: string;
+    allowItemMoving?: boolean;
+    allowCategoryAdding?: boolean;
+    allowItemDeleting?: boolean;
 }
 
 export function SortableCostCategoryCard(props: SortableCostCategoryCardProps) {
@@ -54,7 +57,7 @@ export function SortableCostCategoryCard(props: SortableCostCategoryCardProps) {
             <CostCategoryCard
                 {...props}
                 dragAttributes={attributes}
-                dragListeners={listeners}
+                dragListeners={props.allowItemMoving ? listeners : undefined}
             />
         </div>
     );
