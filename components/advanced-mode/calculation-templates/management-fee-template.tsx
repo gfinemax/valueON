@@ -122,7 +122,7 @@ export function ManagementFeeTemplate({
                                 {types.map(ut => {
                                     const feeData = feeByType.find(f => f.typeId === ut.id);
                                     const feePerUnit = feeData?.feePerUnit || 0;
-                                    const subtotal = feePerUnit * ut.totalUnits;
+                                    const subtotal = feePerUnit * (ut.totalUnits || 0);
 
                                     return (
                                         <div
