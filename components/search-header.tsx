@@ -36,11 +36,6 @@ export function SearchHeader({ title, leftSlot, actions, className, searchResult
         }
     }, [isOpen]);
 
-    // Reset selected index when results change
-    useEffect(() => {
-        setSelectedIndex(0);
-    }, [searchResults]);
-
     // Close on click outside
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
@@ -124,7 +119,7 @@ export function SearchHeader({ title, leftSlot, actions, className, searchResult
         <div
             ref={containerRef}
             className={cn(
-                "fixed top-0 left-0 md:left-20 right-0 z-50 border-b bg-white/95 backdrop-blur px-6 h-14 flex items-center justify-between transition-all duration-300 pt-safe h-auto min-h-[3.5rem]",
+                "fixed top-0 left-0 md:left-[var(--sidebar-offset)] right-0 z-50 border-b bg-white/95 backdrop-blur px-6 h-14 flex items-center justify-between transition-all duration-300 pt-safe h-auto min-h-[3.5rem]",
                 className
             )}
         >
@@ -174,6 +169,7 @@ export function SearchHeader({ title, leftSlot, actions, className, searchResult
                             value={query}
                             onChange={(e) => {
                                 setQuery(e.target.value);
+                                setSelectedIndex(0);
                                 onSearch?.(e.target.value);
                             }}
                             onKeyDown={handleKeyDown}

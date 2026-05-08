@@ -14,9 +14,10 @@ import {
 
 interface SidebarProps {
     className?: string;
+    expanded?: boolean;
 }
 
-export function Sidebar({ className }: SidebarProps) {
+export function Sidebar({ className, expanded = false }: SidebarProps) {
     const pathname = usePathname();
 
     const routes = [
@@ -64,7 +65,12 @@ export function Sidebar({ className }: SidebarProps) {
                     <div className="relative w-8 h-8 mr-4 flex-shrink-0">
                         <Power className="h-8 w-8 text-white" />
                     </div>
-                    <h1 className="text-2xl font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap absolute left-[60px]">
+                    <h1
+                        className={cn(
+                            "text-2xl font-bold transition-opacity duration-300 whitespace-nowrap absolute left-[60px]",
+                            expanded ? "opacity-100" : "opacity-0"
+                        )}
+                    >
                         Value On
                     </h1>
                 </Link>
@@ -80,7 +86,12 @@ export function Sidebar({ className }: SidebarProps) {
                         >
                             <div className="flex items-center flex-1 overflow-hidden">
                                 <route.icon className={cn("h-5 w-5 mr-[22px] flex-shrink-0", route.color)} />
-                                <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+                                <span
+                                    className={cn(
+                                        "transition-opacity duration-300 whitespace-nowrap",
+                                        expanded ? "opacity-100" : "opacity-0"
+                                    )}
+                                >
                                     {route.label}
                                 </span>
                             </div>
@@ -89,7 +100,12 @@ export function Sidebar({ className }: SidebarProps) {
                 </div>
             </div>
             <div className="px-3 py-2 overflow-hidden">
-                <div className="text-xs text-zinc-500 px-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+                <div
+                    className={cn(
+                        "text-xs text-zinc-500 px-3 transition-opacity duration-300 whitespace-nowrap",
+                        expanded ? "opacity-100" : "opacity-0"
+                    )}
+                >
                     Value On v1.0
                 </div>
             </div>
