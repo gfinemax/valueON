@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
-import { AnalysisInputs, AnalysisResult, CostCategory, CostItem, UnitAllocation } from "@/types";
+import { AnalysisInputs, CostCategory, CostItem, UnitAllocation } from "@/types";
 import { defaultValues } from "@/constants/defaultValues";
-import { getCategoryHexColor } from "@/lib/colors";
+import { calculateAnalysisResult } from "@/lib/analysis";
 import { recommendCalculationBasis } from "@/utils/calculation-basis";
 
 
@@ -11,41 +11,53 @@ export function useCalculator() {
     const [inputs, setInputs] = useState<AnalysisInputs>(defaultValues);
     const [isLoaded, setIsLoaded] = useState(false);
 
-    // Load from localStorage on mount
     useEffect(() => {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-            try {
-                const parsed = JSON.parse(saved);
-                // Merge with default values to ensure structure integrity
-                // For unitTypes and allocations, merge by ID to include new defaults
-                const mergedUnitTypes = defaultValues.unitTypes.map(dt => {
-                    const savedType = parsed.unitTypes?.find((st: { id: string }) => st.id === dt.id);
-                    return savedType ? { ...dt, ...savedType } : dt;
-                });
-                const mergedAllocations = defaultValues.unitAllocations.map(da => {
-                    const savedAlloc = parsed.unitAllocations?.find((sa: { id: string }) => sa.id === da.id);
-                    return savedAlloc ? { ...da, ...savedAlloc } : da;
-                });
-                // eslint-disable-next-line react-hooks/exhaustive-deps
-                setInputs({
-                    ...defaultValues,
-                    ...parsed,
-                    unitTypes: mergedUnitTypes,
-                    unitAllocations: mergedAllocations,
-                });
-            } catch (e) {
-                console.error("Failed to load saved data", e);
+        let cancelled = false;
+
+        const loadSavedData = () => {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    const mergedUnitTypes = defaultValues.unitTypes.map(dt => {
+                        const savedType = parsed.unitTypes?.find((st: { id: string }) => st.id === dt.id);
+                        return savedType ? { ...dt, ...savedType } : dt;
+                    });
+                    const mergedAllocations = defaultValues.unitAllocations.map(da => {
+                        const savedAlloc = parsed.unitAllocations?.find((sa: { id: string }) => sa.id === da.id);
+                        return savedAlloc ? { ...da, ...savedAlloc } : da;
+                    });
+
+                    if (!cancelled) {
+                        setInputs({
+                            ...defaultValues,
+                            ...parsed,
+                            unitTypes: mergedUnitTypes,
+                            unitAllocations: mergedAllocations,
+                        });
+                    }
+                } catch (e) {
+                    console.error("Failed to load saved data", e);
+                }
             }
-        }
-        setIsLoaded(true);
+
+            if (!cancelled) {
+                setIsLoaded(true);
+            }
+        };
+
+        const timer = window.setTimeout(loadSavedData, 0);
+
+        return () => {
+            cancelled = true;
+            window.clearTimeout(timer);
+        };
     }, []);
 
     // Save to localStorage whenever inputs change
     useEffect(() => {
-        if (isLoaded) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(inputs));
-        }
+        if (!isLoaded) return;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(inputs));
     }, [inputs, isLoaded]);
 
     const resetData = () => {
@@ -371,47 +383,41 @@ export function useCalculator() {
                 };
             }
 
-            // Linked adjustment for apartment count changes
-            const newCount = typeof value === 'number' ? value : parseInt(value as string, 10) || 0;
-            const oldCount = targetAlloc.count;
-            const diff = newCount - oldCount;
+            // Keep the selected apartment type allocated exactly across tiers.
+            const parsedCount = typeof value === 'number' ? value : parseInt(value as string, 10);
+            const newCount = Math.max(0, Math.min(unitType.totalUnits, Number.isFinite(parsedCount) ? parsedCount : 0));
+            const tierPriority: Record<UnitAllocation['tier'], number> = {
+                '2nd': 0,
+                General: 1,
+                '1st': 2,
+            };
+            const balancingAllocs = prev.unitAllocations
+                .filter(a => a.unitTypeId === targetAlloc.unitTypeId && a.id !== targetAlloc.id)
+                .sort((a, b) => tierPriority[a.tier] - tierPriority[b.tier]);
 
-            if (diff === 0) return prev;
+            const adjustedCounts: Record<string, number> = { [allocId]: newCount };
+            const currentTotal = newCount + balancingAllocs.reduce((sum, alloc) => sum + alloc.count, 0);
+            let remaining = unitType.totalUnits - currentTotal;
 
-            // Get all allocations for this unit type (same apartment type)
-            const sameTypeAllocs = prev.unitAllocations.filter(
-                a => a.unitTypeId === targetAlloc.unitTypeId && a.tier !== targetAlloc.tier
-            );
-
-            // Sort by priority: 2nd first, then General
-            const sortedOthers = sameTypeAllocs.sort((a, b) => {
-                if (a.tier === '2nd') return -1;
-                if (b.tier === '2nd') return 1;
-                return 0;
-            });
-
-            // Distribute the difference
-            let remaining = -diff; // negative because we take from others
-            const adjustments: Record<string, number> = {};
-
-            for (const other of sortedOthers) {
+            for (const other of balancingAllocs) {
                 if (remaining === 0) break;
-                const available = other.count;
-                const take = Math.min(available, Math.max(0, remaining));
-                const give = Math.max(-available, Math.min(0, remaining));
-                adjustments[other.id] = remaining > 0 ? -take : -give;
-                remaining -= remaining > 0 ? take : give;
+
+                const currentCount = adjustedCounts[other.id] ?? other.count;
+                if (remaining > 0) {
+                    adjustedCounts[other.id] = currentCount + remaining;
+                    remaining = 0;
+                } else {
+                    const decrease = Math.min(currentCount, -remaining);
+                    adjustedCounts[other.id] = currentCount - decrease;
+                    remaining += decrease;
+                }
             }
 
-            // Apply changes
             return {
                 ...prev,
                 unitAllocations: prev.unitAllocations.map((alloc) => {
-                    if (alloc.id === allocId) {
-                        return { ...alloc, count: newCount };
-                    }
-                    if (adjustments[alloc.id] !== undefined) {
-                        return { ...alloc, count: Math.max(0, alloc.count + adjustments[alloc.id]) };
+                    if (adjustedCounts[alloc.id] !== undefined) {
+                        return { ...alloc, count: adjustedCounts[alloc.id] };
                     }
                     return alloc;
                 }),
@@ -419,195 +425,7 @@ export function useCalculator() {
         });
     };
 
-    const result: AnalysisResult = useMemo(() => {
-        // 1. Calculate Total Project Cost
-        let totalProjectCost = 0;
-        let costPerPyung = 0;
-        let dynamicBreakdown: { name: string; value: number; fill: string; }[] = [];
-        const colors = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8", "#82ca9d", "#ffc658", "#ff7300", "#a4de6c", "#d0ed57"];
-
-        // Helper function to calculate sum for a single category item
-        const calculateItemAmount = (item: CostItem) => {
-            let itemAmount = item.amount;
-            if (item.calculationBasis === 'per_unit') {
-                itemAmount = item.amount * inputs.projectTarget.totalHouseholds;
-            } else if (item.calculationBasis === 'per_floor_pyung') {
-                itemAmount = item.amount * inputs.projectTarget.totalFloorArea;
-            } else if (item.calculationBasis === 'per_site_pyung') {
-                itemAmount = item.amount * inputs.projectTarget.totalLandArea;
-            } else if (item.calculationBasis === 'per_site_private') {
-                itemAmount = item.amount * (inputs.projectTarget.privateLandArea || 0);
-            } else if (item.calculationBasis === 'per_site_public') {
-                itemAmount = item.amount * (inputs.projectTarget.publicLandArea || 0);
-            } else if (item.calculationBasis === 'mix_linked' && item.mixConditions) {
-
-                itemAmount = inputs.unitAllocations.reduce((subAcc, alloc) => {
-                    const specificAmount = item.mixConditions?.[alloc.id] || 0;
-                    return subAcc + (alloc.count * specificAmount);
-                }, 0);
-            } else if (item.calculationBasis === 'manual_pyeong') {
-                itemAmount = item.amount * (item.manualArea || 0);
-            }
-
-            // Apply Application Rate (Default 100%)
-            const rate = item.applicationRate !== undefined ? item.applicationRate : 100;
-            return itemAmount * (rate / 100);
-        };
-
-        // ALWAYS calculate using Advanced Categories for consistency with Expense Page
-        const breakdownItems = inputs.advancedCategories.map((cat) => {
-            const catSum = cat.items.reduce((acc, item) => acc + calculateItemAmount(item), 0);
-            return {
-                name: cat.title,
-                value: catSum,
-            };
-        });
-
-        totalProjectCost = breakdownItems.reduce((sum, item) => sum + item.value, 0);
-
-        dynamicBreakdown = breakdownItems
-            .filter(item => item.value > 0 || item.name === '보존등기비')
-            .sort((a, b) => b.value - a.value)
-            .map((item, index) => ({
-                ...item,
-                fill: getCategoryHexColor(item.name, index)
-            }));
-
-        costPerPyung = inputs.projectTarget.totalFloorArea > 0
-            ? totalProjectCost / inputs.projectTarget.totalFloorArea
-            : 0;
-
-
-        // 2. Unit Mix Pricing Solver
-        // Initialize results array
-        const calculatedUnitPricing: NonNullable<AnalysisResult['unitPricing']> = [];
-
-        // Helper to get unit area
-        const getUnitArea = (typeId: string) => inputs.unitTypes.find(u => u.id === typeId)?.supplyArea || 0;
-        const getUnitName = (typeId: string) => inputs.unitTypes.find(u => u.id === typeId)?.name || "?";
-
-        // a. Calculate General Sales Revenue
-        let generalRevenue = 0;
-        inputs.unitAllocations.filter(a => a.tier === 'General').forEach(alloc => {
-            const area = getUnitArea(alloc.unitTypeId);
-            // Prioritize fixedTotalPrice if set
-            const calculatedPrice = area * (alloc.targetPricePerPyung || 0);
-            const finalPrice = alloc.fixedTotalPrice || calculatedPrice;
-            const revenue = alloc.count * finalPrice;
-            generalRevenue += revenue;
-
-            calculatedUnitPricing.push({
-                allocationId: alloc.id,
-                unitName: getUnitName(alloc.unitTypeId),
-                tier: 'General',
-                supplyArea: area,
-                totalPrice: finalPrice,
-                pricePerPyung: area > 0 ? finalPrice / area : 0,
-                revenueContribution: revenue
-            });
-        });
-
-        // b. Calculate Required Contribution from Members
-        const requiredMemberContribution = totalProjectCost - generalRevenue;
-
-        // c. Solve for Base Price (X)
-        // Required = (TotalMemberArea * X) + TotalPremiums
-        let totalMemberArea = 0;
-        let totalPremiums = 0;
-
-        const memberAllocations = inputs.unitAllocations.filter(a => a.tier === '1st' || a.tier === '2nd');
-
-        memberAllocations.forEach(alloc => {
-            const area = getUnitArea(alloc.unitTypeId);
-            totalMemberArea += alloc.count * area;
-
-            if (alloc.tier === '2nd') {
-                const premium = alloc.premium || 0;
-                totalPremiums += alloc.count * premium;
-            }
-        });
-
-        // Avoid division by zero
-        let basePricePerPyung = 0;
-        if (totalMemberArea > 0) {
-            // Required - TotalPremiums = X * TotalMemberArea
-            // X = (Required - TotalPremiums) / TotalMemberArea
-            basePricePerPyung = (requiredMemberContribution - totalPremiums) / totalMemberArea;
-        }
-
-        // d. Populate Pricing Results
-        memberAllocations.forEach(alloc => {
-            const area = getUnitArea(alloc.unitTypeId);
-            let calculatedPrice = area * basePricePerPyung;
-
-            if (alloc.tier === '2nd') {
-                calculatedPrice += (alloc.premium || 0);
-            }
-
-            // Prioritize fixedTotalPrice if set by user
-            const finalPrice = alloc.fixedTotalPrice || calculatedPrice;
-
-            calculatedUnitPricing.push({
-                allocationId: alloc.id,
-                unitName: getUnitName(alloc.unitTypeId),
-                tier: alloc.tier,
-                supplyArea: area,
-                totalPrice: finalPrice,
-                pricePerPyung: area > 0 ? finalPrice / area : 0,
-                revenueContribution: finalPrice * alloc.count
-            });
-        });
-
-        // Sort pricing for display consistency? (Optional)
-        // Map back to estimatedPrices for dashboard basic view (using 1st member 59/84 as reference)
-        const type59Alloc = calculatedUnitPricing?.find(p => p.unitName.includes("59") && p.tier === '1st');
-        const type84Alloc = calculatedUnitPricing?.find(p => p.unitName.includes("84") && p.tier === '1st');
-
-        const estType59 = type59Alloc ? type59Alloc.totalPrice : costPerPyung * 25;
-        const estType84 = type84Alloc ? type84Alloc.totalPrice : costPerPyung * 34;
-
-        // e. Calculate Total Revenue (Apartment + Rental)
-        // Matching UnitMixStats logic: Check Fixed Price -> Calculated Price -> Rental
-        let totalRevenue = 0;
-
-        inputs.unitAllocations.forEach(alloc => {
-            const ut = inputs.unitTypes.find(u => u.id === alloc.unitTypeId);
-            if (!ut) return;
-
-            // 1. Rental Logic (Always separate)
-            if (ut.category === 'RENTAL') {
-                if (alloc.targetPricePerPyung) {
-                    totalRevenue += alloc.targetPricePerPyung * ut.supplyArea * alloc.count;
-                }
-                return;
-            }
-
-            // 2. Fixed Price Logic (Overrides calculated pricing)
-            if (alloc.fixedTotalPrice) {
-                totalRevenue += alloc.fixedTotalPrice * alloc.count;
-                return;
-            }
-
-            // 3. Calculated Price Logic
-            const pricing = calculatedUnitPricing.find(p => p.allocationId === alloc.id);
-            if (pricing) {
-                totalRevenue += pricing.totalPrice * alloc.count;
-            }
-        });
-
-
-        return {
-            totalProjectCost,
-            costPerPyung,
-            estimatedPrices: {
-                type59: estType59,
-                type84: estType84,
-            },
-            costBreakdown: dynamicBreakdown,
-            unitPricing: calculatedUnitPricing,
-            totalRevenue // Return calculated revenue
-        };
-    }, [inputs]);
+    const result = useMemo(() => calculateAnalysisResult(inputs), [inputs]);
 
     const updateCategoryItemCondition = (categoryId: string, itemId: string, allocationId: string, amount: number) => {
         setInputs((prev) => {

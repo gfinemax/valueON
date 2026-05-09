@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { parseKoreanMoney, formatKoreanCurrency } from "@/utils/currency";
+import { parseKoreanMoney } from "@/utils/currency";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trash2, Settings, Pencil, Check, GripVertical, Calculator } from "lucide-react";
+import { Trash2, Pencil, Check, GripVertical, Calculator } from "lucide-react";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -17,7 +17,6 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ProjectTarget, UnitAllocation, UnitType } from "@/types";
 import { MixConditionDialog } from "./mix-condition-dialog";
@@ -140,11 +139,63 @@ export interface CostItemRowProps {
     onRemoveSubItem?: (subId: string) => void;
     onUpdateSubItemMemo?: (subId: string, memo: string) => void;
     onUpdateName?: (id: string, newName: string) => void;
-    dragAttributes?: any;
-    dragListeners?: any;
+    dragAttributes?: React.ButtonHTMLAttributes<HTMLButtonElement>;
+    dragListeners?: React.ButtonHTMLAttributes<HTMLButtonElement>;
     isHighlighted?: boolean;
+    compact?: boolean;
     allowCategoryAdding?: boolean;
     allowItemDeleting?: boolean;
+}
+
+type CalculationBasis = CostItemRowProps['calculationBasis'];
+
+const PYUNG_TO_SQUARE_METERS = 3.305785;
+const SQUARE_METER_BASES: CalculationBasis[] = [
+    'per_site_pyung',
+    'per_site_private',
+    'per_site_public',
+    'per_floor_pyung',
+    'manual_pyeong',
+];
+
+function usesSquareMeterDisplay(basis?: CalculationBasis) {
+    return !!basis && SQUARE_METER_BASES.includes(basis);
+}
+
+function toDisplayUnitAmount(amount: number, basis?: CalculationBasis) {
+    return usesSquareMeterDisplay(basis) ? amount / PYUNG_TO_SQUARE_METERS : amount;
+}
+
+function toSquareMeters(pyung: number) {
+    return pyung * PYUNG_TO_SQUARE_METERS;
+}
+
+function formatNumber(value: number) {
+    return new Intl.NumberFormat("ko-KR", { maximumFractionDigits: 0 }).format(value);
+}
+
+function formatArea(value: number) {
+    return new Intl.NumberFormat("ko-KR", { maximumFractionDigits: value >= 100 ? 0 : 2 }).format(value);
+}
+
+function getBasisValue(basis: CalculationBasis, projectTarget?: ProjectTarget, manualArea = 0) {
+    if (!projectTarget || !basis) return 0;
+
+    return basis === 'per_unit' ? projectTarget.totalHouseholds :
+        basis === 'per_site_pyung' ? projectTarget.totalLandArea :
+            basis === 'per_site_private' ? (projectTarget.privateLandArea || 0) :
+                basis === 'per_site_public' ? (projectTarget.publicLandArea || 0) :
+                    basis === 'per_floor_pyung' ? projectTarget.totalFloorArea :
+                        basis === 'manual_pyeong' ? manualArea : 0;
+}
+
+function getBasisLabel(basis: CalculationBasis) {
+    return basis === 'per_unit' ? "세대" :
+        basis === 'per_site_pyung' ? "대지면적" :
+            basis === 'per_site_private' ? "사유지" :
+                basis === 'per_site_public' ? "국유지" :
+                    basis === 'per_floor_pyung' ? "연면적" :
+                        basis === 'manual_pyeong' ? "직접입력" : "";
 }
 
 export function CostItemRow({
@@ -153,11 +204,12 @@ export function CostItemRow({
     onUpdate, onUpdateBasis, onUpdateCondition, onUpdateRate, onUpdateArea, onUpdateMemo, onRemove, applicationRate = 100, manualArea = 0, memo,
     subItems = [], onAddSubItem, onUpdateSubItem, onRemoveSubItem, onUpdateSubItemMemo, onUpdateName,
     dragAttributes, dragListeners, isHighlighted,
+    compact = false,
     allowCategoryAdding = true,
     allowItemDeleting = true,
 }: CostItemRowProps) {
     const rowRef = useRef<HTMLDivElement>(null);
-    const [localValue, setLocalValue] = useState(new Intl.NumberFormat("ko-KR").format(amount));
+    const [localValue, setLocalValue] = useState(formatNumber(amount));
     const [isMixDialogOpen, setIsMixDialogOpen] = useState(false);
     const [isSubItemsOpen, setIsSubItemsOpen] = useState(subItems && subItems.length > 0);
     const [isEditMode, setIsEditMode] = useState(false);
@@ -169,6 +221,7 @@ export function CostItemRow({
     const [isPFInterestOpen, setIsPFInterestOpen] = useState(false);
     const [isManagementFeeOpen, setIsManagementFeeOpen] = useState(false);
     const [isLandPurchaseOpen, setIsLandPurchaseOpen] = useState(false);
+    const subItemCount = subItems.length;
 
 
 
@@ -182,13 +235,13 @@ export function CostItemRow({
     }, [isHighlighted]);
 
     useEffect(() => {
-        if (subItems && subItems.length > 0) {
+        if (subItemCount > 0) {
             setIsSubItemsOpen(true);
         }
-    }, [subItems?.length]);
+    }, [subItemCount]);
 
     useEffect(() => {
-        setLocalValue(new Intl.NumberFormat("ko-KR").format(amount));
+        setLocalValue(formatNumber(amount));
     }, [amount]);
 
     // Sync edit state when entering edit mode
@@ -236,13 +289,13 @@ export function CostItemRow({
         const parsed = parseKoreanMoney(localValue);
         if (!isNaN(parsed) && parsed !== 0) {
             onUpdate(id, parsed);
-            setLocalValue(new Intl.NumberFormat("ko-KR").format(parsed));
+            setLocalValue(formatNumber(parsed));
         } else {
             if (parsed === 0) {
                 onUpdate(id, 0);
                 setLocalValue("0");
             } else {
-                setLocalValue(new Intl.NumberFormat("ko-KR").format(amount));
+                setLocalValue(formatNumber(amount));
             }
         }
     };
@@ -253,40 +306,28 @@ export function CostItemRow({
         }
     }
 
-    const formatMoney = (val: number) => new Intl.NumberFormat("ko-KR").format(val);
     const compactMoney = (val: number) => new Intl.NumberFormat("ko-KR", { notation: "compact", maximumFractionDigits: 1 }).format(val);
 
     // Calculate formula display
-    let formulaText = "";
+    let secondaryFormulaText = "";
     let calculatedTotal = 0;
 
     const formatCompact = (val: number) => new Intl.NumberFormat("ko-KR", { notation: "compact", maximumFractionDigits: 1 }).format(val);
+    const basisValue = getBasisValue(calculationBasis, projectTarget, manualArea);
+    const isSquareMeterBasis = usesSquareMeterDisplay(calculationBasis);
+    const displayBasisValue = isSquareMeterBasis ? toSquareMeters(basisValue) : basisValue;
+    const displayAmount = toDisplayUnitAmount(amount, calculationBasis);
+    const basisLabel = getBasisLabel(calculationBasis);
 
     if (projectTarget && calculationBasis && calculationBasis !== 'fixed') {
-        const basisValue =
-            calculationBasis === 'per_unit' ? projectTarget.totalHouseholds :
-                calculationBasis === 'per_site_pyung' ? projectTarget.totalLandArea :
-                    calculationBasis === 'per_site_private' ? (projectTarget.privateLandArea || 0) :
-                        calculationBasis === 'per_site_public' ? (projectTarget.publicLandArea || 0) :
-                            calculationBasis === 'per_floor_pyung' ? projectTarget.totalFloorArea :
-                                calculationBasis === 'manual_pyeong' ? (manualArea || 0) : 0;
-
-        const basisLabel =
-            calculationBasis === 'per_unit' ? "세대" :
-                calculationBasis === 'per_site_pyung' ? "대지평" :
-                    calculationBasis === 'per_site_private' ? "사유지" :
-                        calculationBasis === 'per_site_public' ? "국유지" :
-                            calculationBasis === 'per_floor_pyung' ? "연면적평" :
-                                calculationBasis === 'manual_pyeong' ? "평(입력)" : "";
-
         calculatedTotal = amount * basisValue * (applicationRate / 100);
 
-        // Generate formula text: (면적/세대수 × 단가 × 적용률)
-        formulaText = `${basisValue.toLocaleString()}${basisLabel} × ${formatCompact(amount)}원 × ${applicationRate}%`;
+        secondaryFormulaText = isSquareMeterBasis
+            ? `㎡ 환산: ${formatArea(displayBasisValue)}㎡ × ${formatCompact(displayAmount)}원/㎡ × ${applicationRate}%`
+            : "";
     } else {
         // Fixed or default - 항상 공식 표시
         calculatedTotal = amount * (applicationRate / 100);
-        formulaText = `고정금액 ${formatCompact(amount)}원 × ${applicationRate}%`;
     }
 
     const basisOptions = [
@@ -299,15 +340,23 @@ export function CostItemRow({
         { value: 'manual_pyeong', label: '평형입력', icon: '⌨️', color: 'bg-indigo-50 border-indigo-400 text-indigo-700', desc: '직접 평수 입력' },
     ] as const;
 
+    const rowPadding = compact ? "py-2.5 px-2" : "py-4 px-3";
+    const sectionGap = compact ? "mb-2" : "mb-3";
+    const titleSize = compact ? "text-base" : "text-lg";
+    const basisButtonClass = compact ? "text-[11px] px-2.5 py-1.5" : "text-xs px-3 py-2";
+    const calcBoxClass = compact ? "p-2 mb-2" : "p-3 mb-3";
+    const inputHeight = compact ? "h-9" : "h-10";
+    const resultTextSize = compact ? "text-lg" : "text-xl";
+
 
     return (
         <div
             ref={rowRef}
-            className={`py-4 border-b border-dashed border-slate-200 last:border-0 hover:bg-slate-50/50 transition-colors rounded-lg px-3 -mx-2 ${isHighlighted ? 'animate-highlight-pulse ring-2 ring-yellow-400 bg-yellow-50' : ''}`}
+            className={`${rowPadding} border-b border-dashed border-slate-200 last:border-0 hover:bg-slate-50/50 transition-colors rounded-lg -mx-2 ${isHighlighted ? 'animate-highlight-pulse ring-2 ring-yellow-400 bg-yellow-50' : ''}`}
         >
 
             {/* 1. Header Row: Name + Edit/Delete Buttons (Right) */}
-            <div className="flex items-center justify-between gap-2 mb-3">
+            <div className={`flex items-center justify-between gap-2 ${sectionGap}`}>
                 {/* Drag Handle */}
                 {/* Always show handle if listeners are provided, or maybe hide in edit mode if needed? User wants reorder. */}
                 {dragListeners && (
@@ -333,7 +382,7 @@ export function CostItemRow({
                     />
                 ) : (
                     // Normal Mode: Display name with memo indicator
-                    <div className="font-bold text-slate-800 text-lg tracking-tight flex-1">
+                    <div className={`font-bold text-slate-800 ${titleSize} tracking-tight flex-1`}>
                         {name}
                         {memo && <span className="ml-1.5 text-blue-400 text-xs">💬</span>}
                     </div>
@@ -373,7 +422,7 @@ export function CostItemRow({
                                         <AlertDialogHeader>
                                             <AlertDialogTitle>항목 삭제</AlertDialogTitle>
                                             <AlertDialogDescription>
-                                                정말로 '{name}' 항목을 삭제하시겠습니까?
+                                                정말로 &apos;{name}&apos; 항목을 삭제하시겠습니까?
                                             </AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
@@ -392,7 +441,7 @@ export function CostItemRow({
 
             {/* Edit Mode: Memo input */}
             {isEditMode && (
-                <div className="mb-3">
+                <div className={sectionGap}>
                     <label className="text-xs font-medium text-slate-500 mb-1 block">메모</label>
                     <Input
                         type="text"
@@ -406,14 +455,14 @@ export function CostItemRow({
             )}
 
             {/* 2. Basis Row: Basis Selection with Icons */}
-            <div className="flex gap-1.5 flex-wrap mb-3">
+            <div className={`flex gap-1.5 flex-wrap ${sectionGap}`}>
                 {basisOptions.map((option) => (
                     <button
                         key={option.value}
                         onClick={() => onUpdateBasis(id, option.value)}
                         title={option.desc}
                         className={`
-                            text-xs px-3 py-2 rounded-lg border font-bold transition-all flex items-center gap-1.5
+                            ${basisButtonClass} rounded-lg border font-bold transition-all flex items-center gap-1.5
                             ${(!calculationBasis && option.value === 'fixed') || calculationBasis === option.value
                                 ? `${option.color} shadow-sm`
                                 : 'border-slate-200 text-slate-400 bg-white hover:bg-slate-50 hover:text-slate-600'}
@@ -428,7 +477,7 @@ export function CostItemRow({
                 <Popover>
                     <PopoverTrigger asChild>
                         <button
-                            className="text-xs px-3 py-2 rounded-lg border border-dashed border-orange-300 bg-orange-50 text-orange-600 font-bold transition-all flex items-center gap-1.5 hover:bg-orange-100"
+                            className={`${basisButtonClass} rounded-lg border border-dashed border-orange-300 bg-orange-50 text-orange-600 font-bold transition-all flex items-center gap-1.5 hover:bg-orange-100`}
                             title="전용 계산기"
                         >
                             <Calculator className="w-3.5 h-3.5" />
@@ -474,7 +523,7 @@ export function CostItemRow({
             </div>
 
             {/* 3. Calculation Row - Template-based Layout */}
-            <div className="bg-white p-3 rounded-lg border border-slate-100 shadow-sm mb-3">
+            <div className={`bg-white ${calcBoxClass} rounded-lg border border-slate-100 shadow-sm`}>
                 {calculationBasis && calculationBasis !== 'fixed' && projectTarget ? (
                     // Template Mode: [기준값] × [단가] × [적용률] = [결과]
                     <div className="flex flex-wrap items-center gap-2">
@@ -486,7 +535,7 @@ export function CostItemRow({
                                     type="number"
                                     value={manualArea || ""}
                                     onChange={(e) => onUpdateArea?.(id, Number(e.target.value))}
-                                    className="h-10 text-right pr-8 font-bold bg-indigo-50 border-indigo-200 text-indigo-700 focus:border-indigo-400 focus:ring-indigo-400"
+                                    className={`${inputHeight} text-right pr-8 font-bold bg-indigo-50 border-indigo-200 text-indigo-700 focus:border-indigo-400 focus:ring-indigo-400`}
                                     placeholder="0"
                                 />
                                 <span className="absolute right-2 top-3 text-xs text-indigo-400">평</span>
@@ -494,18 +543,10 @@ export function CostItemRow({
                         ) : (
                             <div className="flex items-center gap-1 bg-slate-50 px-3 py-2 rounded-lg border border-slate-200">
                                 <span className="text-lg font-bold text-slate-700">
-                                    {calculationBasis === 'per_unit'
-                                        ? projectTarget.totalHouseholds.toLocaleString()
-                                        : calculationBasis === 'per_site_pyung'
-                                            ? projectTarget.totalLandArea.toLocaleString()
-                                            : calculationBasis === 'per_site_private'
-                                                ? (projectTarget.privateLandArea || 0).toLocaleString()
-                                                : calculationBasis === 'per_site_public'
-                                                    ? (projectTarget.publicLandArea || 0).toLocaleString()
-                                                    : projectTarget.totalFloorArea.toLocaleString()}
+                                    {basisValue.toLocaleString()}
                                 </span>
                                 <span className="text-xs text-slate-400 font-medium">
-                                    {calculationBasis === 'per_unit' ? '세대' : calculationBasis === 'per_site_pyung' ? '대지평' : calculationBasis === 'per_site_private' ? '사유지' : calculationBasis === 'per_site_public' ? '국유지' : '연면적평'}
+                                    {basisLabel}
                                 </span>
                             </div>
                         )}
@@ -522,7 +563,7 @@ export function CostItemRow({
                                 onKeyDown={handleKeyDown}
                                 readOnly={calculationBasis === 'mix_linked'}
                                 disabled={calculationBasis === 'mix_linked'}
-                                className={`h-10 text-right pr-14 font-mono font-bold ${calculationBasis === 'mix_linked' ? 'bg-slate-50 text-slate-500' : 'bg-white'} focus:border-blue-400 focus:ring-blue-400`}
+                                className={`${inputHeight} text-right pr-14 font-mono font-bold ${calculationBasis === 'mix_linked' ? 'bg-slate-50 text-slate-500' : 'bg-white'} focus:border-blue-400 focus:ring-blue-400`}
                                 placeholder="0"
                             />
 
@@ -539,7 +580,7 @@ export function CostItemRow({
                                 type="number"
                                 value={applicationRate}
                                 onChange={(e) => onUpdateRate?.(id, Number(e.target.value))}
-                                className="h-10 text-right pr-6 font-bold bg-slate-50 border-slate-200 focus:border-blue-400 focus:ring-blue-400"
+                                className={`${inputHeight} text-right pr-6 font-bold bg-slate-50 border-slate-200 focus:border-blue-400 focus:ring-blue-400`}
                             />
                             <span className="absolute right-2 top-3 text-xs text-slate-400">%</span>
                         </div>
@@ -547,9 +588,15 @@ export function CostItemRow({
                         <span className="text-slate-300 font-light text-lg">=</span>
 
                         {/* Total Result */}
-                        <div className="text-xl font-bold text-blue-600 tabular-nums tracking-tighter min-w-[100px] text-right">
+                        <div className={`${resultTextSize} font-bold text-blue-600 tabular-nums tracking-tighter min-w-[100px] text-right`}>
                             {compactMoney(calculatedTotal)}원
                         </div>
+
+                        {secondaryFormulaText && (
+                            <div className="basis-full text-xs text-slate-400 pl-1">
+                                {secondaryFormulaText}
+                            </div>
+                        )}
                     </div>
                 ) : (
                     // Fixed Mode: [적용률] × [금액] = [결과]
@@ -560,7 +607,7 @@ export function CostItemRow({
                                 type="number"
                                 value={applicationRate}
                                 onChange={(e) => onUpdateRate?.(id, Number(e.target.value))}
-                                className="h-10 text-right pr-6 text-lg font-bold bg-slate-50 border-slate-200 focus:border-blue-400 focus:ring-blue-400"
+                                className={`${inputHeight} text-right pr-6 text-lg font-bold bg-slate-50 border-slate-200 focus:border-blue-400 focus:ring-blue-400`}
                             />
                             <span className="absolute right-2 top-3 text-xs text-slate-400">%</span>
                         </div>
@@ -577,7 +624,7 @@ export function CostItemRow({
                                 onKeyDown={handleKeyDown}
                                 readOnly={calculationBasis === 'mix_linked' || (subItems && subItems.length > 0)}
                                 disabled={calculationBasis === 'mix_linked' || (subItems && subItems.length > 0)}
-                                className={`h-10 text-right font-mono font-bold ${(calculationBasis === 'mix_linked' || (subItems && subItems.length > 0)) ? 'bg-slate-50 text-slate-500' : 'bg-white'} focus:border-blue-400 focus:ring-blue-400`}
+                                className={`${inputHeight} text-right font-mono font-bold ${(calculationBasis === 'mix_linked' || (subItems && subItems.length > 0)) ? 'bg-slate-50 text-slate-500' : 'bg-white'} focus:border-blue-400 focus:ring-blue-400`}
                                 placeholder="0"
                             />
                         </div>
@@ -585,7 +632,7 @@ export function CostItemRow({
                         <span className="text-slate-300 font-light text-lg">=</span>
 
                         {/* Total Result */}
-                        <div className="text-xl font-bold text-blue-600 tabular-nums tracking-tighter min-w-[100px] text-right">
+                        <div className={`${resultTextSize} font-bold text-blue-600 tabular-nums tracking-tighter min-w-[100px] text-right`}>
                             {compactMoney(calculatedTotal)}원
                         </div>
                     </div>
@@ -608,7 +655,7 @@ export function CostItemRow({
 
             {/* Sub-Items List */}
             {isSubItemsOpen && subItems && subItems.length > 0 && (
-                <div className="pl-2 pr-2 pb-2 space-y-2 border-l-2 border-slate-100 ml-2 mb-4">
+                <div className={`${compact ? "pl-2 pr-1 pb-1 space-y-1 mb-2" : "pl-2 pr-2 pb-2 space-y-2 mb-4"} border-l-2 border-slate-100 ml-2`}>
                     {subItems.map((sub) => (
                         <SubItemRow
                             key={sub.id}

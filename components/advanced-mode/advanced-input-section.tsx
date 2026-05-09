@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { CostCategory, CostItem, ProjectTarget, UnitAllocation, UnitType } from "@/types";
-import { CostCategoryCard } from "./cost-category-card";
+import { CostCategoryCard, CostCategoryDetails } from "./cost-category-card";
 import { SortableCostCategoryCard } from "./sortable-cost-category-card";
-import { Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { getCategoryColor } from "@/constants/category-colors";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import {
@@ -18,11 +18,14 @@ import {
 } from "@dnd-kit/core";
 import { getCategoryHexColor } from "@/lib/colors";
 import {
-    arrayMove,
     SortableContext,
     sortableKeyboardCoordinates,
     rectSortingStrategy,
 } from "@dnd-kit/sortable";
+
+const subscribeToMount = () => () => {};
+const getMountedSnapshot = () => true;
+const getServerMountedSnapshot = () => false;
 
 interface AdvancedInputSectionProps {
     categories: CostCategory[];
@@ -87,21 +90,15 @@ export function AdvancedInputSection({
     allowCategoryAdding = true,
     allowItemDeleting = true,
 }: AdvancedInputSectionProps) {
-    const [mounted, setMounted] = useState(false);
-    const [isMobile, setIsMobile] = useState(false);
-
-    useEffect(() => {
-        setMounted(true);
-        const checkMobile = () => {
-            setIsMobile(window.innerWidth < 1024); // lg breakpoint
-        };
-        checkMobile();
-        window.addEventListener('resize', checkMobile);
-        return () => window.removeEventListener('resize', checkMobile);
-    }, []);
+    const mounted = useSyncExternalStore(
+        subscribeToMount,
+        getMountedSnapshot,
+        getServerMountedSnapshot
+    );
+    const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(expandCategoryId ?? null);
 
     // Helper for cx/left position
-    const centerPos = isMobile ? "50%" : "35%";
+    const centerPos = "50%";
 
     const formatMoney = (val: number) =>
         new Intl.NumberFormat("ko-KR", {
@@ -146,6 +143,10 @@ export function AdvancedInputSection({
 
     // 2. Derive totalExpense and pieData from sorted list
     const totalExpense = categoriesWithTotals.reduce((sum, cat) => sum + cat.totalAmount, 0);
+    const selectedCategory = categories.find((cat) => cat.id === selectedCategoryId);
+    const selectedCategoryTotal = categoriesWithTotals.find((cat) => cat.id === selectedCategoryId)?.totalAmount ?? 0;
+    const selectedCategoryPercent = totalExpense > 0 ? (selectedCategoryTotal / totalExpense) * 100 : 0;
+    const selectedCategoryColors = selectedCategory ? getCategoryColor(selectedCategory.title) : undefined;
 
     const pieData = categoriesWithTotals
         .filter(cat => cat.totalAmount > 0)
@@ -178,58 +179,102 @@ export function AdvancedInputSection({
         }
     }
 
-    return (
-        <div className="space-y-4 pb-20">
-            {/* Summary Header */}
-            <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 p-5 rounded-xl text-white shadow-lg border border-white/5">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <p className="text-slate-400 text-sm mb-1 uppercase tracking-wider font-bold">총 지출 예상</p>
-                        <div className="flex flex-col md:flex-row md:items-baseline gap-0 md:gap-2">
-                            <p className="text-3xl font-extrabold whitespace-nowrap tracking-tight">{formatMoney(totalExpense)}</p>
-                            {totalIncome !== undefined && (
-                                <span className="text-sm md:text-lg text-slate-400 font-medium opacity-80 whitespace-nowrap">
-                                    (수입: {formatMoney(totalIncome)})
-                                </span>
-                            )}
+    const detailPanel = selectedCategory && selectedCategoryColors ? (
+        <aside
+            id={`${selectedCategory.id}-detail-panel`}
+            className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm lg:sticky lg:top-4"
+        >
+            <div className={`border-l-[5px] ${selectedCategoryColors.border} border-b border-slate-100 bg-white p-4`}>
+                <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                        <div className="flex min-w-0 items-center gap-2">
+                            <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${selectedCategoryColors.bar}`} />
+                            <h4 className="truncate text-base font-extrabold tracking-tight text-slate-900">
+                                {selectedCategory.title}
+                            </h4>
+                        </div>
+                        <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm">
+                            <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                                {selectedCategoryPercent.toFixed(1)}%
+                            </span>
+                            <span className="font-bold text-slate-900 tabular-nums">
+                                {formatMoney(selectedCategoryTotal)}
+                            </span>
+                            <span className="text-xs text-slate-400">
+                                항목 {selectedCategory.items.length}개
+                            </span>
                         </div>
                     </div>
-                    <div className="text-right">
-                        <p className="text-slate-400 text-sm mb-1 uppercase tracking-wider font-bold">카테고리</p>
-                        <p className="text-2xl font-black">{categories.length}개</p>
-                    </div>
+                    <button
+                        type="button"
+                        onClick={() => setSelectedCategoryId(null)}
+                        className="shrink-0 rounded-full border border-slate-200 p-2 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900"
+                        aria-label="상세 패널 닫기"
+                    >
+                        <X className="h-4 w-4" />
+                    </button>
                 </div>
             </div>
+            <div className="max-h-[calc(100vh-11rem)] overflow-y-auto">
+                <CostCategoryDetails
+                    category={selectedCategory}
+                    projectTarget={projectTarget}
+                    unitAllocations={unitAllocations}
+                    unitTypes={unitTypes}
+                    onUpdateItem={updateCategoryItem}
+                    onUpdateItemBasis={updateCategoryItemBasis}
+                    onUpdateItemCondition={updateCategoryItemCondition}
+                    onUpdateItemRate={updateCategoryItemRate}
+                    onUpdateItemArea={updateCategoryItemArea}
+                    onUpdateItemMemo={updateCategoryItemMemo}
+                    onAddItem={addCategoryItem}
+                    onRemoveItem={removeCategoryItem}
+                    onRemoveCategory={removeCostCategory}
+                    onAddSubItem={addSubItem}
+                    onUpdateSubItem={updateSubItem}
+                    onRemoveSubItem={removeSubItem}
+                    onUpdateCategoryMemo={updateCategoryMemo}
+                    onUpdateSubItemMemo={updateSubItemMemo}
+                    onUpdateItemName={updateCategoryItemName}
+                    onUpdateCategoryTitle={updateCategoryTitle}
+                    reorderCategoryItem={reorderCategoryItem}
+                    highlightItemId={selectedCategory.id === expandCategoryId ? highlightItemId : undefined}
+                    allowItemMoving={allowItemMoving}
+                    allowCategoryAdding={allowCategoryAdding}
+                    allowItemDeleting={allowItemDeleting}
+                />
+            </div>
+        </aside>
+    ) : null;
 
-            {/* Statistics Dashboard */}
+    return (
+        <div className={detailPanel ? "grid grid-cols-1 gap-3 pb-10 lg:grid-cols-[minmax(0,1fr)_minmax(420px,500px)] lg:items-start" : "pb-10"}>
+            <div className="min-w-0 space-y-3">
+            {/* Compact Statistics Dashboard */}
             <div className="bg-card p-4 rounded-xl border border-border shadow-sm">
-                <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2 tracking-tight">
-                    <span className="w-1 h-6 bg-emerald-500 rounded-full"></span>
-                    지출 구성 분석
-                </h3>
-
-                <div className="flex flex-col lg:flex-row gap-8 items-center">
-                    {/* Legend Grid */}
-                    <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 content-start w-full">
-                        {categoriesWithTotals.map((cat) => {
-                            const pct = totalExpense > 0 ? (cat.totalAmount / totalExpense) * 100 : 0;
-                            const colors = getCategoryColor(cat.title);
-
-                            return (
-                                <div key={cat.id} className="flex items-center gap-2">
-                                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${colors.bar}`} />
-                                    <div className="flex items-baseline gap-1.5 overflow-hidden">
-                                        <span className="text-sm text-muted-foreground font-medium tracking-tight whitespace-nowrap truncate">{cat.title}</span>
-                                        <span className="text-xs text-muted-foreground/50 tracking-tight whitespace-nowrap">({pct.toFixed(1)}%)</span>
-                                        <span className="text-sm font-bold text-foreground tracking-tight ml-1 whitespace-nowrap">{formatMoney(cat.totalAmount)}</span>
-                                    </div>
-                                </div>
-                            );
-                        })}
+                <div className="mb-3 flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+                    <div>
+                        <h3 className="text-lg font-bold text-foreground flex items-center gap-2 tracking-tight">
+                            <span className="w-1 h-6 bg-emerald-500 rounded-full"></span>
+                            지출 구성 분석
+                        </h3>
+                        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+                            <span className="font-bold text-slate-900">
+                                총 지출 <span className="text-lg">{formatMoney(totalExpense)}</span>
+                            </span>
+                            {totalIncome !== undefined && (
+                                <span className="text-slate-500">
+                                    수입 {formatMoney(totalIncome)}
+                                </span>
+                            )}
+                            <span className="text-slate-500">카테고리 {categories.length}개</span>
+                        </div>
                     </div>
+                </div>
 
+                <div className="flex flex-col lg:flex-row gap-4 lg:gap-4 items-center lg:items-stretch">
                     {/* Pie Chart */}
-                    <div className="w-full lg:w-[240px] h-[180px] relative flex-shrink-0 flex justify-center">
+                    <div className="w-full lg:w-[210px] h-[132px] relative flex-shrink-0 flex justify-center px-6 lg:border-r lg:border-slate-100">
                         {mounted ? (
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
@@ -237,8 +282,8 @@ export function AdvancedInputSection({
                                         data={pieData}
                                         cx={centerPos}
                                         cy="50%"
-                                        innerRadius={58}
-                                        outerRadius={80}
+                                        innerRadius={40}
+                                        outerRadius={58}
                                         paddingAngle={2}
                                         dataKey="value"
                                     >
@@ -247,7 +292,7 @@ export function AdvancedInputSection({
                                         ))}
                                     </Pie>
                                     <Tooltip
-                                        formatter={(value: any) => formatMoney(Number(value))}
+                                        formatter={(value: unknown) => formatMoney(Number(value))}
                                         contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                                         wrapperStyle={{ zIndex: 100 }}
                                     />
@@ -269,24 +314,86 @@ export function AdvancedInputSection({
                             </div>
                         </div>
                     </div>
+
+                    {/* Legend Grid */}
+                    <div className="relative flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-1.5 content-center w-full min-w-0 py-0.5">
+                        <span className="pointer-events-none absolute left-1/2 top-1/2 hidden h-16 w-px -translate-y-1/2 bg-slate-200 md:block lg:hidden" />
+                        <span className="pointer-events-none absolute left-1/3 top-1/2 hidden h-16 w-px -translate-y-1/2 bg-slate-200 lg:block" />
+                        <span className="pointer-events-none absolute left-2/3 top-1/2 hidden h-16 w-px -translate-y-1/2 bg-slate-200 lg:block" />
+                        {categoriesWithTotals.map((cat) => {
+                            const pct = totalExpense > 0 ? (cat.totalAmount / totalExpense) * 100 : 0;
+                            const colors = getCategoryColor(cat.title);
+
+                            return (
+                                <div key={cat.id} className="grid grid-cols-[minmax(0,1fr)_5.5rem] items-baseline gap-2 border-b border-slate-100 pb-1.5">
+                                    <div className="flex min-w-0 items-baseline gap-1.5">
+                                        <div className={`h-2 w-2 shrink-0 rounded-full ${colors.bar}`} />
+                                        <span className="truncate text-sm font-bold tracking-tight text-slate-700">{cat.title}</span>
+                                        <span className="shrink-0 text-xs tracking-tight text-muted-foreground/50">{pct.toFixed(1)}%</span>
+                                    </div>
+                                    <span className="justify-self-end text-right text-sm font-medium text-slate-700 tracking-tight whitespace-nowrap tabular-nums">{formatMoney(cat.totalAmount)}</span>
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
             </div>
 
-            {/* 2-Column Grid with DndContext */}
-            {mounted ? (
-                <DndContext
-                    id="categories-dnd-context"
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={handleDragEnd}
-                >
-                    <SortableContext
-                        items={categories}
-                        strategy={rectSortingStrategy}
-                    >
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Category grid */}
+                <div className="min-w-0">
+                    {mounted ? (
+                        <DndContext
+                            id="categories-dnd-context"
+                            sensors={sensors}
+                            collisionDetection={closestCenter}
+                            onDragEnd={handleDragEnd}
+                        >
+                            <SortableContext
+                                items={categories}
+                                strategy={rectSortingStrategy}
+                            >
+                                <div className={`grid grid-cols-1 md:grid-cols-2 gap-3 ${detailPanel ? "2xl:grid-cols-2" : "xl:grid-cols-3"}`}>
+                                    {categories.map((cat) => (
+                                        <SortableCostCategoryCard
+                                            key={cat.id}
+                                            category={cat}
+                                            projectTarget={projectTarget}
+                                            unitAllocations={unitAllocations}
+                                            unitTypes={unitTypes}
+                                            totalExpense={totalExpense}
+                                            onUpdateItem={updateCategoryItem}
+                                            onUpdateItemBasis={updateCategoryItemBasis}
+                                            onUpdateItemCondition={updateCategoryItemCondition}
+                                            onUpdateItemRate={updateCategoryItemRate}
+                                            onUpdateItemArea={updateCategoryItemArea}
+                                            onUpdateItemMemo={updateCategoryItemMemo}
+                                            onAddItem={addCategoryItem}
+                                            onRemoveItem={removeCategoryItem}
+                                            onRemoveCategory={removeCostCategory}
+                                            onAddSubItem={addSubItem}
+                                            onUpdateSubItem={updateSubItem}
+                                            onRemoveSubItem={removeSubItem}
+                                            onUpdateCategoryMemo={updateCategoryMemo}
+                                            onUpdateSubItemMemo={updateSubItemMemo}
+                                            onUpdateItemName={updateCategoryItemName}
+                                            onUpdateCategoryTitle={updateCategoryTitle}
+                                            reorderCategoryItem={reorderCategoryItem}
+                                            isExpanded={cat.id === expandCategoryId}
+                                            isSelected={cat.id === selectedCategoryId}
+                                            onSelect={() => setSelectedCategoryId(cat.id)}
+                                            highlightItemId={cat.id === expandCategoryId ? highlightItemId : undefined}
+                                            allowItemMoving={allowItemMoving}
+                                            allowCategoryAdding={allowCategoryAdding}
+                                            allowItemDeleting={allowItemDeleting}
+                                        />
+                                    ))}
+                                </div>
+                            </SortableContext>
+                        </DndContext>
+                    ) : (
+                        <div className={`grid grid-cols-1 md:grid-cols-2 gap-3 ${detailPanel ? "2xl:grid-cols-2" : "xl:grid-cols-3"}`}>
                             {categories.map((cat) => (
-                                <SortableCostCategoryCard
+                                <CostCategoryCard
                                     key={cat.id}
                                     category={cat}
                                     projectTarget={projectTarget}
@@ -310,49 +417,16 @@ export function AdvancedInputSection({
                                     onUpdateItemName={updateCategoryItemName}
                                     onUpdateCategoryTitle={updateCategoryTitle}
                                     reorderCategoryItem={reorderCategoryItem}
-                                    isExpanded={cat.id === expandCategoryId}
-                                    highlightItemId={cat.id === expandCategoryId ? highlightItemId : undefined}
+                                    isSelected={cat.id === selectedCategoryId}
+                                    onSelect={() => setSelectedCategoryId(cat.id)}
                                     allowItemMoving={allowItemMoving}
                                     allowCategoryAdding={allowCategoryAdding}
                                     allowItemDeleting={allowItemDeleting}
                                 />
                             ))}
                         </div>
-                    </SortableContext>
-                </DndContext>
-            ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    {categories.map((cat) => (
-                        <CostCategoryCard
-                            key={cat.id}
-                            category={cat}
-                            projectTarget={projectTarget}
-                            unitAllocations={unitAllocations}
-                            unitTypes={unitTypes}
-                            totalExpense={totalExpense}
-                            onUpdateItem={updateCategoryItem}
-                            onUpdateItemBasis={updateCategoryItemBasis}
-                            onUpdateItemCondition={updateCategoryItemCondition}
-                            onUpdateItemRate={updateCategoryItemRate}
-                            onUpdateItemMemo={updateCategoryItemMemo}
-                            onAddItem={addCategoryItem}
-                            onRemoveItem={removeCategoryItem}
-                            onRemoveCategory={removeCostCategory}
-                            onAddSubItem={addSubItem}
-                            onUpdateSubItem={updateSubItem}
-                            onRemoveSubItem={removeSubItem}
-                            onUpdateCategoryMemo={updateCategoryMemo}
-                            onUpdateSubItemMemo={updateSubItemMemo}
-                            onUpdateItemName={updateCategoryItemName}
-                            onUpdateCategoryTitle={updateCategoryTitle}
-                            reorderCategoryItem={reorderCategoryItem}
-                            allowItemMoving={allowItemMoving}
-                            allowCategoryAdding={allowCategoryAdding}
-                            allowItemDeleting={allowItemDeleting}
-                        />
-                    ))}
-                </div>
-            )}
+                    )}
+            </div>
 
             {/* Add Category Button */}
             {allowCategoryAdding && (
@@ -364,6 +438,9 @@ export function AdvancedInputSection({
                     <span>새로운 카테고리 추가</span>
                 </button>
             )}
+            </div>
+
+            {mounted && detailPanel}
         </div>
     );
 }

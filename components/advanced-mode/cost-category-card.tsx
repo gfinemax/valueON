@@ -1,14 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { ChevronDown, ChevronUp, Plus, Trash2, GripVertical } from "lucide-react";
+import { useEffect, useRef } from "react";
+import { Plus, Trash2, GripVertical, PanelRight } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CostCategory, CostItem, ProjectTarget, UnitAllocation, UnitType } from "@/types";
 
-import { CostItemRow } from "./cost-item-row";
 import { SortableCostItemRow } from "./sortable-cost-item-row";
 import {
     DndContext,
@@ -20,25 +19,23 @@ import {
     DragEndEvent
 } from "@dnd-kit/core";
 import {
-    arrayMove,
     SortableContext,
     sortableKeyboardCoordinates,
     verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { parseKoreanMoney } from "@/utils/currency";
 
-import { CATEGORY_COLORS, getCategoryColor } from "@/constants/category-colors";
+import { getCategoryColor } from "@/constants/category-colors";
 
 // Remove local CATEGORY_COLORS definition
 // const getColors = ... removed
 
 
-interface CostCategoryCardProps {
+interface CostCategoryDetailsProps {
     category: CostCategory;
     projectTarget: ProjectTarget;
     unitAllocations?: UnitAllocation[];
     unitTypes?: UnitType[];
-    totalExpense?: number;
     onUpdateItem: (catId: string, itemId: string, val: number) => void;
     onUpdateItemBasis: (catId: string, itemId: string, basis: CostItem['calculationBasis']) => void;
     onUpdateItemCondition?: (catId: string, itemId: string, allocationId: string, amount: number) => void;
@@ -56,21 +53,26 @@ interface CostCategoryCardProps {
     onUpdateItemName: (catId: string, itemId: string, newName: string) => void;
     onUpdateCategoryTitle: (catId: string, newTitle: string) => void;
     reorderCategoryItem: (catId: string, activeId: string, overId: string) => void;
-    dragAttributes?: any;
-    dragListeners?: any;
-    isExpanded?: boolean;
     highlightItemId?: string;
     allowItemMoving?: boolean;
     allowCategoryAdding?: boolean;
     allowItemDeleting?: boolean;
 }
 
-export function CostCategoryCard({
+interface CostCategoryCardProps extends CostCategoryDetailsProps {
+    totalExpense?: number;
+    dragAttributes?: React.HTMLAttributes<HTMLDivElement>;
+    dragListeners?: React.HTMLAttributes<HTMLDivElement>;
+    isExpanded?: boolean;
+    isSelected?: boolean;
+    onSelect?: () => void;
+}
+
+export function CostCategoryDetails({
     category,
     projectTarget,
     unitAllocations,
     unitTypes,
-    totalExpense = 0,
     onUpdateItem,
     onUpdateItemBasis,
     onUpdateItemCondition,
@@ -79,37 +81,17 @@ export function CostCategoryCard({
     onUpdateItemMemo,
     onAddItem,
     onRemoveItem,
-    onRemoveCategory,
     onAddSubItem,
     onUpdateSubItem,
     onRemoveSubItem,
-    onUpdateCategoryMemo,
     onUpdateSubItemMemo,
     onUpdateItemName,
-    onUpdateCategoryTitle,
     reorderCategoryItem,
-    dragAttributes,
-    dragListeners,
-    isExpanded: initialExpanded,
     highlightItemId,
-    allowItemMoving = true,
     allowCategoryAdding = true,
     allowItemDeleting = true,
-}: CostCategoryCardProps) {
-    const [isOpen, setIsOpen] = useState(initialExpanded || false);
-    const cardRef = useRef<HTMLDivElement>(null);
+}: CostCategoryDetailsProps) {
     const colors = getCategoryColor(category.title);
-
-    // Auto-expand and scroll when navigating from search
-    useEffect(() => {
-        if (initialExpanded) {
-            setIsOpen(true);
-            // Scroll to card after a brief delay for DOM update
-            setTimeout(() => {
-                cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 100);
-        }
-    }, [initialExpanded]);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -132,6 +114,108 @@ export function CostCategoryCard({
             reorderCategoryItem(category.id, active.id as string, over.id as string);
         }
     }
+
+    const handleAddItem = () => {
+        const name = prompt("추가할 항목명을 입력하세요:", "새 항목");
+        if (!name) return;
+        const amountStr = prompt("금액을 입력하세요 (예: 1000만원, 1.5억, 500000 등):", "0");
+        if (amountStr === null) return;
+        const amount = parseKoreanMoney(amountStr);
+        if (!isNaN(amount)) {
+            onAddItem(category.id, name, amount);
+        } else {
+            alert("올바른 금액 형식이 아닙니다.");
+        }
+    };
+
+    return (
+        <CardContent className={`p-3 ${colors.bg}`}>
+            <div className="space-y-1.5 mb-2">
+                <DndContext
+                    id={`dnd-context-${category.id}`}
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                >
+                    <SortableContext
+                        items={category.items}
+                        strategy={verticalListSortingStrategy}
+                    >
+                        {category.items.map((item) => (
+                            <SortableCostItemRow
+                                key={item.id}
+                                id={item.id}
+                                name={item.name}
+                                amount={item.amount}
+                                calculationBasis={item.calculationBasis}
+                                mixConditions={item.mixConditions}
+                                projectTarget={projectTarget}
+                                unitAllocations={unitAllocations}
+                                unitTypes={unitTypes}
+                                onUpdate={(itemId, val) => onUpdateItem(category.id, itemId, val)}
+                                onUpdateBasis={(itemId, basis) => onUpdateItemBasis(category.id, itemId, basis)}
+                                onUpdateCondition={(itemId, allocId, val) => onUpdateItemCondition?.(category.id, itemId, allocId, val)}
+                                onUpdateRate={(itemId, rate) => onUpdateItemRate(category.id, itemId, rate)}
+                                onUpdateArea={(itemId, area) => onUpdateItemArea?.(category.id, itemId, area)}
+                                onUpdateMemo={(itemId, memo) => onUpdateItemMemo(category.id, itemId, memo)}
+                                onRemove={(itemId) => onRemoveItem(category.id, itemId)}
+                                applicationRate={item.applicationRate}
+                                manualArea={item.manualArea}
+                                memo={item.note}
+                                subItems={item.subItems}
+                                onAddSubItem={(name, amount) => onAddSubItem(category.id, item.id, name, amount)}
+                                onUpdateSubItem={(subId, field, val) => onUpdateSubItem(category.id, item.id, subId, field, val)}
+                                onRemoveSubItem={(subId) => onRemoveSubItem(category.id, item.id, subId)}
+                                onUpdateSubItemMemo={(subId, memo) => onUpdateSubItemMemo(category.id, item.id, subId, memo)}
+                                onUpdateName={(itemId, newName) => onUpdateItemName(category.id, itemId, newName)}
+                                isHighlighted={item.id === highlightItemId}
+                                compact
+                                allowCategoryAdding={allowCategoryAdding}
+                                allowItemDeleting={allowItemDeleting}
+                            />
+                        ))}
+                    </SortableContext>
+                </DndContext>
+            </div>
+            {allowCategoryAdding && (
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full text-blue-600 hover:bg-blue-100 hover:text-blue-700 py-1.5 h-auto border border-dashed border-blue-300 rounded-lg"
+                    onClick={handleAddItem}
+                >
+                    <Plus className="h-4 w-4 mr-1" /> 항목 추가하기
+                </Button>
+            )}
+        </CardContent>
+    );
+}
+
+export function CostCategoryCard({
+    category,
+    projectTarget,
+    unitAllocations,
+    totalExpense = 0,
+    onRemoveCategory,
+    onUpdateCategoryMemo,
+    onUpdateCategoryTitle,
+    dragAttributes,
+    dragListeners,
+    isExpanded: initialExpanded,
+    isSelected = false,
+    onSelect,
+    allowItemDeleting = true,
+}: CostCategoryCardProps) {
+    const cardRef = useRef<HTMLDivElement>(null);
+    const colors = getCategoryColor(category.title);
+
+    useEffect(() => {
+        if (initialExpanded || isSelected) {
+            setTimeout(() => {
+                cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+        }
+    }, [initialExpanded, isSelected]);
 
     // Calculate actual total value
     const totalAmount = category.items.reduce((acc, item) => {
@@ -165,19 +249,6 @@ export function CostCategoryCard({
             maximumFractionDigits: 1,
         }).format(val);
 
-    const handleAddItem = () => {
-        const name = prompt("추가할 항목명을 입력하세요:", "새 항목");
-        if (!name) return;
-        const amountStr = prompt("금액을 입력하세요 (예: 1000만원, 1.5억, 500000 등):", "0");
-        if (amountStr === null) return;
-        const amount = parseKoreanMoney(amountStr);
-        if (!isNaN(amount)) {
-            onAddItem(category.id, name, amount);
-        } else {
-            alert("올바른 금액 형식이 아닙니다.");
-        }
-    };
-
     const handleDeleteCategory = (e: React.MouseEvent) => {
         e.stopPropagation();
         if (confirm(`'${category.title}' 카테고리를 삭제하시겠습니까? 포함된 모든 항목이 삭제됩니다.`)) {
@@ -187,18 +258,29 @@ export function CostCategoryCard({
 
     return (
         <Card ref={cardRef} className={`
-            group overflow-hidden transition-all duration-300 ease-out border-l-[6px]
+            group overflow-hidden py-0 gap-0 transition-all duration-300 ease-out border-l-[5px]
             ${colors.border}
-            ${isOpen ? "ring-2 ring-blue-400 shadow-xl" : "hover:shadow-lg border-y-slate-200 border-r-slate-200"}
-            ${initialExpanded ? "animate-pulse-once" : ""}
+            ${isSelected ? "min-h-[86px] ring-2 ring-blue-400 shadow-md border-y-slate-200 border-r-slate-200" : "min-h-[86px] hover:shadow-md border-y-slate-200 border-r-slate-200"}
+            ${initialExpanded || isSelected ? "animate-pulse-once" : ""}
         `}>
             <CardHeader
-                className="p-3 cursor-pointer"
-                onClick={() => setIsOpen(!isOpen)}
+                role="button"
+                tabIndex={0}
+                aria-pressed={isSelected}
+                aria-controls={`${category.id}-detail-panel`}
+                className="p-3 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30"
+                onClick={onSelect}
+                onKeyDown={(e) => {
+                    if (e.target !== e.currentTarget) return;
+                    if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        onSelect?.();
+                    }
+                }}
             >
                 {/* Top Row: Title + Drag + Delete */}
-                <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between gap-2">
+                    <div className="flex min-w-0 items-center gap-2">
                         {/* Drag Handle */}
                         {dragListeners && (
                             <div
@@ -214,7 +296,7 @@ export function CostCategoryCard({
                         <Popover>
                             <PopoverTrigger asChild>
                                 <span
-                                    className="text-base font-bold text-slate-800 tracking-tight cursor-pointer hover:text-blue-600 transition-colors"
+                                    className="truncate text-base font-bold text-slate-800 tracking-tight cursor-pointer hover:text-blue-600 transition-colors"
                                     onClick={(e) => e.stopPropagation()}
                                 >
                                     {category.title}
@@ -264,84 +346,32 @@ export function CostCategoryCard({
                             </button>
                         )}
                     </div>
-                    <ChevronDown className={`h-5 w-5 text-slate-400 transition-transform duration-300 ${isOpen ? 'rotate-0' : '-rotate-90'}`} />
+                    <span
+                        className={`
+                            flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-xs font-bold transition-colors
+                            ${isSelected
+                                ? "border-blue-500 bg-blue-600 text-white shadow-sm"
+                                : "border-slate-200 bg-slate-50 text-slate-500 group-hover:border-blue-200 group-hover:bg-blue-50 group-hover:text-blue-700"}
+                        `}
+                    >
+                        <PanelRight className="h-3.5 w-3.5" aria-hidden="true" />
+                        <span>{isSelected ? "열림" : "상세"}</span>
+                    </span>
                 </div>
 
                 {/* Bottom Row: Amount + Percentage */}
-                <div className="flex items-baseline justify-between">
+                <div className="mt-2 grid grid-cols-[auto_auto_minmax(0,1fr)] items-center gap-2">
                     <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
                         {percentage.toFixed(1)}%
                     </span>
-                    <span className={`text-xl font-extrabold ${totalAmount === 0 ? 'text-slate-300' : 'text-slate-900'}`}>
+                    <span className="text-xs text-slate-400">
+                        항목 {category.items.length}개
+                    </span>
+                    <span className={`justify-self-end text-lg font-extrabold ${totalAmount === 0 ? 'text-slate-300' : 'text-slate-900'}`}>
                         {formatMoney(totalAmount)}
                     </span>
                 </div>
             </CardHeader>
-
-            {/* Expandable Content with Animation */}
-            <div className={`
-                overflow-hidden transition-all duration-300 ease-out
-                ${isOpen ? 'max-h-[15000px] opacity-100' : 'max-h-0 opacity-0'}
-            `}>
-                <CardContent className={`p-3 pt-0 border-t ${colors.bg}`}>
-                    <div className="space-y-2 mb-3 pt-3">
-                        <DndContext
-                            id={`dnd-context-${category.id}`}
-                            sensors={sensors}
-                            collisionDetection={closestCenter}
-                            onDragEnd={handleDragEnd}
-                        >
-                            <SortableContext
-                                items={category.items}
-                                strategy={verticalListSortingStrategy}
-                            >
-                                {category.items.map((item) => (
-                                    <SortableCostItemRow
-                                        key={item.id}
-                                        id={item.id}
-                                        name={item.name}
-                                        amount={item.amount}
-                                        calculationBasis={item.calculationBasis}
-                                        mixConditions={item.mixConditions}
-                                        projectTarget={projectTarget}
-                                        unitAllocations={unitAllocations}
-                                        unitTypes={unitTypes}
-                                        onUpdate={(itemId, val) => onUpdateItem(category.id, itemId, val)}
-                                        onUpdateBasis={(itemId, basis) => onUpdateItemBasis(category.id, itemId, basis)}
-                                        onUpdateCondition={(itemId, allocId, val) => onUpdateItemCondition?.(category.id, itemId, allocId, val)}
-                                        onUpdateRate={(itemId, rate) => onUpdateItemRate(category.id, itemId, rate)}
-                                        onUpdateArea={(itemId, area) => onUpdateItemArea?.(category.id, itemId, area)}
-                                        onUpdateMemo={(itemId, memo) => onUpdateItemMemo(category.id, itemId, memo)}
-                                        onRemove={(itemId) => onRemoveItem(category.id, itemId)}
-                                        applicationRate={item.applicationRate}
-                                        manualArea={item.manualArea}
-                                        memo={item.note}
-                                        subItems={item.subItems}
-                                        onAddSubItem={(name, amount) => onAddSubItem(category.id, item.id, name, amount)}
-                                        onUpdateSubItem={(subId, field, val) => onUpdateSubItem(category.id, item.id, subId, field, val)}
-                                        onRemoveSubItem={(subId) => onRemoveSubItem(category.id, item.id, subId)}
-                                        onUpdateSubItemMemo={(subId, memo) => onUpdateSubItemMemo(category.id, item.id, subId, memo)}
-                                        onUpdateName={(itemId, newName) => onUpdateItemName(category.id, itemId, newName)}
-                                        isHighlighted={item.id === highlightItemId}
-                                        allowCategoryAdding={allowCategoryAdding}
-                                        allowItemDeleting={allowItemDeleting}
-                                    />
-                                ))}
-                            </SortableContext>
-                        </DndContext>
-                    </div>
-                    {allowCategoryAdding && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="w-full text-blue-600 hover:bg-blue-100 hover:text-blue-700 py-2 h-auto border border-dashed border-blue-300 rounded-lg"
-                            onClick={handleAddItem}
-                        >
-                            <Plus className="h-4 w-4 mr-1" /> 항목 추가하기
-                        </Button>
-                    )}
-                </CardContent>
-            </div>
         </Card>
     );
 }

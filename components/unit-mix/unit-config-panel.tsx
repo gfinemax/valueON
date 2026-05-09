@@ -1,9 +1,10 @@
 "use client";
 
-import { UnitType, AnalysisInputs } from "@/types";
+import { UnitType } from "@/types";
 import { Input } from "@/components/ui/input";
+import { ExpandToggle } from "@/components/ui/expand-toggle";
 import { useState } from "react";
-import { ChevronDown, ChevronUp, Settings } from "lucide-react";
+import { Settings } from "lucide-react";
 
 interface UnitConfigPanelProps {
     unitTypes: UnitType[];
@@ -25,7 +26,9 @@ export function UnitConfigPanel({ unitTypes, onUpdateUnitTypeTotalUnits }: UnitC
             {/* Header - Always Visible */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-200 transition-colors"
+                aria-expanded={isOpen}
+                aria-controls="unit-config-panel-details"
+                className="group w-full px-4 py-3 flex items-center justify-between gap-3 text-left transition-colors hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30"
             >
                 <div className="flex items-center gap-2">
                     <Settings className="w-4 h-4 text-slate-500" />
@@ -34,16 +37,12 @@ export function UnitConfigPanel({ unitTypes, onUpdateUnitTypeTotalUnits }: UnitC
                         총 {grandTotal}세대
                     </span>
                 </div>
-                {isOpen ? (
-                    <ChevronUp className="w-4 h-4 text-slate-400" />
-                ) : (
-                    <ChevronDown className="w-4 h-4 text-slate-400" />
-                )}
+                <ExpandToggle expanded={isOpen} />
             </button>
 
             {/* Expandable Content */}
             {isOpen && (
-                <div className="px-4 pb-4 pt-2 border-t border-slate-200">
+                <div id="unit-config-panel-details" className="px-4 pb-4 pt-2 border-t border-slate-200">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Apartment Types */}
                         <div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutDashboard, Receipt, Settings, TrendingUp, User } from "lucide-react";
+import { LayoutDashboard, Receipt, Settings, SlidersHorizontal, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -9,6 +9,7 @@ const navItems = [
     { label: "대시보드", icon: LayoutDashboard, href: "/" },
     { label: "수입", icon: TrendingUp, href: "/income" },
     { label: "지출", icon: Receipt, href: "/expense" },
+    { label: "시뮬", icon: SlidersHorizontal, href: "/simulation" },
     { label: "설정", icon: Settings, href: "/settings" },
 ];
 
@@ -46,7 +47,7 @@ export function MobileNav() {
     return (
         <div className={`fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border pb-safe md:hidden transition-transform duration-500 ease-in-out ${isVisible ? "translate-y-0" : "translate-y-full"
             }`}>
-            <div className="grid grid-cols-4 h-16">
+            <div className="grid grid-cols-5 h-16">
                 {navItems.map((item) => {
                     const isActive = pathname === item.href;
                     const Icon = item.icon;

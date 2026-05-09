@@ -29,6 +29,8 @@ interface SortableCostCategoryCardProps {
     onUpdateCategoryTitle: (catId: string, newTitle: string) => void;
     reorderCategoryItem: (catId: string, activeId: string, overId: string) => void;
     isExpanded?: boolean;
+    isSelected?: boolean;
+    onSelect?: () => void;
     highlightItemId?: string;
     allowItemMoving?: boolean;
     allowCategoryAdding?: boolean;
@@ -50,7 +52,7 @@ export function SortableCostCategoryCard(props: SortableCostCategoryCardProps) {
         transition,
         opacity: isDragging ? 0.5 : 1,
         zIndex: isDragging ? 50 : "auto",
-        position: 'relative' as 'relative',
+        position: 'relative' as const,
     };
 
     return (

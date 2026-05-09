@@ -19,7 +19,7 @@ export function SortableCostItemRow(props: CostItemRowProps) {
         transition,
         opacity: isDragging ? 0.3 : 1, // Make it semi-transparent while dragging
         zIndex: isDragging ? 50 : "auto", // Ensure it's above other items
-        position: 'relative' as 'relative',
+        position: 'relative' as const,
     };
 
     return (

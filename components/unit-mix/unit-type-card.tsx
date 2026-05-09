@@ -3,9 +3,9 @@
 import { UnitType, UnitAllocation, AnalysisResult } from "@/types";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { ExpandToggle } from "@/components/ui/expand-toggle";
 import { formatKoreanCurrency, parseKoreanMoney } from "@/utils/currency";
 import { useState } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface UnitTypeCardProps {
     unitType: UnitType;
@@ -43,6 +43,7 @@ export function UnitTypeCard({
 
         const tierRevenue = salesPrice * alloc.count;
         const isExpanded = expandedTiers[tier] || false;
+        const panelId = `${alloc.id}-details`;
 
         // 비율 계산
         const percentage = totalRevenue > 0 ? (tierRevenue / totalRevenue) * 100 : 0;
@@ -55,14 +56,16 @@ export function UnitTypeCard({
                 {/* Summary Row - 2 Line Layout */}
                 <button
                     onClick={() => toggleTier(tier)}
-                    className="w-full p-3 pl-5 hover:bg-black/5 transition-colors text-left"
+                    aria-expanded={isExpanded}
+                    aria-controls={panelId}
+                    className="group w-full p-3 pl-5 text-left transition-colors hover:bg-slate-100/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30"
                 >
                     {/* Line 1: Tier + Count */}
-                    <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center justify-between gap-3 mb-1.5">
                         <span className={`text-sm font-bold ${textColor}`}>
                             {label} <span className="text-slate-600 font-normal ml-1">{alloc.count}세대</span>
                         </span>
-                        <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${isExpanded ? 'rotate-0' : '-rotate-90'}`} />
+                        <ExpandToggle expanded={isExpanded} />
                     </div>
                     {/* Line 2: Percentage + Price */}
                     <div className="flex items-center justify-between">
@@ -77,7 +80,7 @@ export function UnitTypeCard({
 
                 {/* Expandable Details */}
                 {isExpanded && (
-                    <div className="px-3 pb-3 pt-1 pl-5 border-t border-black/5 bg-white">
+                    <div id={panelId} className="px-3 pb-3 pt-1 pl-5 border-t border-black/5 bg-white">
                         {/* 1차 조합원 - 초기분양가/추가분담금 표시 */}
                         {tier === '1st' && alloc.fixedTotalPrice && (
                             <div className="mb-3 p-2 bg-slate-50 rounded-md border border-slate-100">

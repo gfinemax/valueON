@@ -9,7 +9,8 @@ import {
     Power,
     Settings,
     Banknote,
-    Wallet
+    Wallet,
+    SlidersHorizontal
 } from "lucide-react";
 
 interface SidebarProps {
@@ -41,6 +42,13 @@ export function Sidebar({ className, expanded = false }: SidebarProps) {
             href: "/expense",
             active: pathname === "/expense",
             color: "text-rose-500",
+        },
+        {
+            label: "시뮬레이션",
+            icon: SlidersHorizontal,
+            href: "/simulation",
+            active: pathname === "/simulation",
+            color: "text-amber-400",
         },
         {
             label: "원시 데이터",

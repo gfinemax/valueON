@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useCalculator } from "@/hooks/useCalculator";
 import { useSearchIndex } from "@/hooks/useSearchIndex";
@@ -62,17 +62,17 @@ function ExpensePageContent() {
                 title="지출 관리"
                 searchResults={searchResults}
                 onSearch={setSearchQuery}
+                actions={(
+                    <ProjectInfoPanel
+                        projectTarget={inputs.projectTarget}
+                        onUpdate={handleProjectTargetUpdate}
+                    />
+                )}
             />
 
-            <div className="p-6 space-y-6 max-w-7xl mx-auto">
-                {/* Project Info Panel */}
-                <ProjectInfoPanel
-                    projectTarget={inputs.projectTarget}
-                    onUpdate={handleProjectTargetUpdate}
-                />
-
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    <div className="lg:col-span-12 space-y-6">
+            <div className="p-4 space-y-4 max-w-7xl mx-auto">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                    <div className="lg:col-span-12 space-y-4">
                         <AdvancedInputSection
 
                             allowItemMoving={allowItemMoving}

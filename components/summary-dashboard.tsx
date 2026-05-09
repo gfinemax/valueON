@@ -2,10 +2,10 @@ import { AnalysisResult } from "@/types";
 import { ResultChart } from "./result-chart";
 import { PricingResultTable } from "./unit-mix/pricing-result-table";
 import { RevenueChart } from "./revenue-chart";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from "recharts";
+import { ResponsiveContainer, Cell, PieChart, Pie } from "recharts";
 import { useState, useEffect, useRef } from "react";
-import { ChevronDown } from "lucide-react";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
+import { ExpandToggle } from "@/components/ui/expand-toggle";
 
 interface SummaryDashboardProps {
     result: AnalysisResult;
@@ -60,18 +60,8 @@ export function SummaryDashboard({ result }: SummaryDashboardProps) {
     const { profit, profitMargin } = calculateNetProfit(result);
     const [isCostDetailOpen, setIsCostDetailOpen] = useState(false);
     const [isRevenueDetailOpen, setIsRevenueDetailOpen] = useState(false);
-    const costDetailRef = useRef<HTMLDivElement>(null);
     const detailsSectionRef = useRef<HTMLDivElement>(null);
     const revenueDetailRef = useRef<HTMLDivElement>(null);
-
-    const [hoveredBar, setHoveredBar] = useState<{
-        value: number;
-        label: string;
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-    } | null>(null);
 
     const formatMoney = (val: number) => {
         if (Math.abs(val) >= 100000000) {
@@ -111,11 +101,6 @@ export function SummaryDashboard({ result }: SummaryDashboardProps) {
     const majorCostName = landCost > constCost ? "Land Acquisition" : "Construction";
     const majorCostValue = Math.max(landCost, constCost);
     const majorCostShare = result.totalProjectCost ? (majorCostValue / result.totalProjectCost) * 100 : 0;
-
-    const overviewData = [
-        { name: "Total Revenue", value: result.totalRevenue || 0, fill: "#8c9c8a" },
-        { name: "Total Cost", value: result.totalProjectCost, fill: "#d97757" },
-    ];
 
     return (
         <div className="space-y-6 md:space-y-24 pt-0 pb-4 md:py-12">
@@ -231,14 +216,10 @@ export function SummaryDashboard({ result }: SummaryDashboardProps) {
                                 className="bg-card p-4 md:p-6 rounded-2xl md:rounded-3xl border border-border shadow-sm md:shadow-xl shadow-border/50 cursor-pointer group relative overflow-hidden"
                                 onClick={() => setIsRevenueDetailOpen(!isRevenueDetailOpen)}
                             >
-                                <div className="md:hidden absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-stone-100 shadow-sm active:scale-95 transition-all">
-                                    <ChevronDown className={`w-5 h-5 text-stone-600 transition-transform duration-300 ${isRevenueDetailOpen ? '' : '-rotate-90'}`} />
-                                </div>
+                                <ExpandToggle expanded={isRevenueDetailOpen} className="absolute top-4 right-4 md:hidden active:scale-95" />
                                 <div className="hidden md:flex absolute top-6 right-6 items-center gap-2 text-stone-400 group-hover:text-stone-600 transition-colors">
                                     <span className="text-xs font-bold uppercase tracking-widest">{isRevenueDetailOpen ? 'Close Details' : 'View Pricing'}</span>
-                                    <div className={`p-2 rounded-full border border-stone-200 bg-white shadow-sm transition-transform duration-500 ${isRevenueDetailOpen ? 'rotate-0' : '-rotate-90'}`}>
-                                        <ChevronDown className="w-4 h-4" />
-                                    </div>
+                                    <ExpandToggle expanded={isRevenueDetailOpen} />
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 items-center">
@@ -293,16 +274,12 @@ export function SummaryDashboard({ result }: SummaryDashboardProps) {
                             className="bg-card p-4 md:p-6 rounded-2xl md:rounded-3xl border border-border shadow-sm md:shadow-xl shadow-border/50 relative cursor-pointer group overflow-hidden"
                             onClick={() => setIsCostDetailOpen(!isCostDetailOpen)}
                         >
-                            <div className="md:hidden absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-stone-100 shadow-sm active:scale-95 transition-all">
-                                <ChevronDown className={`w-5 h-5 text-stone-600 transition-transform duration-300 ${isCostDetailOpen ? '' : '-rotate-90'}`} />
-                            </div>
+                            <ExpandToggle expanded={isCostDetailOpen} className="absolute top-4 right-4 md:hidden active:scale-95" />
 
                             {/* Detailed View Toggle Button - Positioned like Revenue Section */}
                             <div className="hidden md:flex absolute top-4 right-6 items-center gap-2 text-stone-400 group-hover:text-stone-600 transition-colors cursor-pointer" onClick={(e) => { e.stopPropagation(); setIsCostDetailOpen(!isCostDetailOpen); }}>
                                 <span className="text-xs font-bold uppercase tracking-widest">{isCostDetailOpen ? 'Close Details' : 'View Details'}</span>
-                                <div className={`p-2 rounded-full border border-stone-200 bg-white shadow-sm transition-transform duration-500 ${isCostDetailOpen ? 'rotate-0' : '-rotate-90'}`}>
-                                    <ChevronDown className="w-4 h-4" />
-                                </div>
+                                <ExpandToggle expanded={isCostDetailOpen} />
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 mb-0 items-center">
