@@ -1,7 +1,12 @@
 import { AnalysisInputs, AnalysisResult, CostItem } from "@/types";
 import { getCategoryHexColor } from "@/lib/colors";
 
-export function calculateCostItemAmount(item: CostItem, inputs: AnalysisInputs) {
+type CostCalculationContext = {
+  projectTarget: AnalysisInputs["projectTarget"];
+  unitAllocations?: AnalysisInputs["unitAllocations"];
+};
+
+export function calculateCostItemAmount(item: CostItem, inputs: CostCalculationContext) {
   let itemAmount = item.amount;
 
   if (item.calculationBasis === "per_unit") {
@@ -15,7 +20,7 @@ export function calculateCostItemAmount(item: CostItem, inputs: AnalysisInputs) 
   } else if (item.calculationBasis === "per_site_public") {
     itemAmount = item.amount * (inputs.projectTarget.publicLandArea || 0);
   } else if (item.calculationBasis === "mix_linked" && item.mixConditions) {
-    itemAmount = inputs.unitAllocations.reduce((subAcc, alloc) => {
+    itemAmount = (inputs.unitAllocations ?? []).reduce((subAcc, alloc) => {
       const specificAmount = item.mixConditions?.[alloc.id] || 0;
       return subAcc + alloc.count * specificAmount;
     }, 0);

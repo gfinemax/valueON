@@ -22,6 +22,7 @@ import {
     sortableKeyboardCoordinates,
     rectSortingStrategy,
 } from "@dnd-kit/sortable";
+import { calculateCostItemAmount } from "@/lib/analysis";
 
 const subscribeToMount = () => () => {};
 const getMountedSnapshot = () => true;
@@ -117,23 +118,10 @@ export function AdvancedInputSection({
 
     // 1. Calculate and Sort Categories by Amount
     const categoriesWithTotals = categories.map(cat => {
-        const amount = cat.items.reduce((acc, item) => {
-            let val = item.amount;
-            if (item.calculationBasis === 'per_unit') val *= projectTarget.totalHouseholds;
-            else if (item.calculationBasis === 'per_site_pyung') val *= projectTarget.totalLandArea;
-            else if (item.calculationBasis === 'per_site_private') val *= (projectTarget.privateLandArea || 0);
-            else if (item.calculationBasis === 'per_site_public') val *= (projectTarget.publicLandArea || 0);
-            else if (item.calculationBasis === 'per_floor_pyung') val *= projectTarget.totalFloorArea;
-            else if (item.calculationBasis === 'manual_pyeong') val *= (item.manualArea || 0);
-            else if (item.calculationBasis === 'mix_linked' && item.mixConditions && unitAllocations) {
-                val = unitAllocations.reduce((sub, alloc) => {
-                    const specific = item.mixConditions?.[alloc.id] || 0;
-                    return sub + (alloc.count * specific);
-                }, 0);
-            }
-            const rate = item.applicationRate !== undefined ? item.applicationRate : 100;
-            return acc + (val * rate / 100);
-        }, 0);
+        const amount = cat.items.reduce(
+            (acc, item) => acc + calculateCostItemAmount(item, { projectTarget, unitAllocations }),
+            0
+        );
 
         return {
             ...cat,

@@ -5,7 +5,64 @@ import { calculateAnalysisResult } from "@/lib/analysis";
 import { recommendCalculationBasis } from "@/utils/calculation-basis";
 
 
-const STORAGE_KEY = "valueon-calculator-data-v9"; // Bump version to fix platform data structure
+const STORAGE_KEY = "valueon-calculator-data-v10";
+const LEGACY_STORAGE_KEYS = ["valueon-calculator-data-v9"];
+const PERSISTED_DATA_VERSION = 10;
+
+function normalizeInputs(
+    inputs: Partial<AnalysisInputs>,
+    options: { preserveSavedDefaultItemBasis?: boolean } = {}
+): AnalysisInputs {
+    const savedCategories = Array.isArray(inputs.advancedCategories) ? inputs.advancedCategories : [];
+    const savedCategoryById = new Map(savedCategories.map((category) => [category.id, category]));
+    const defaultCategoryIds = new Set(defaultValues.advancedCategories.map((category) => category.id));
+
+    const mergedCategories = defaultValues.advancedCategories.map((defaultCategory) => {
+        const savedCategory = savedCategoryById.get(defaultCategory.id);
+        if (!savedCategory) return defaultCategory;
+
+        const savedItemById = new Map(savedCategory.items?.map((item) => [item.id, item]) ?? []);
+        const mergedItems = defaultCategory.items.map((defaultItem) => {
+            const savedItem = savedItemById.get(defaultItem.id);
+            if (!savedItem) return defaultItem;
+
+            return {
+                ...defaultItem,
+                ...savedItem,
+                calculationBasis: options.preserveSavedDefaultItemBasis
+                    ? (savedItem.calculationBasis ?? defaultItem.calculationBasis ?? 'fixed')
+                    : (defaultItem.calculationBasis ?? 'fixed'),
+            };
+        });
+        const customItems = (savedCategory.items ?? []).filter(
+            (item) => !defaultCategory.items.some((defaultItem) => defaultItem.id === item.id)
+        );
+
+        return {
+            ...defaultCategory,
+            ...savedCategory,
+            items: [...mergedItems, ...customItems],
+        };
+    });
+    const customCategories = savedCategories.filter((category) => !defaultCategoryIds.has(category.id));
+
+    const mergedUnitTypes = defaultValues.unitTypes.map((defaultType) => {
+        const savedType = inputs.unitTypes?.find((type) => type.id === defaultType.id);
+        return savedType ? { ...defaultType, ...savedType } : defaultType;
+    });
+    const mergedAllocations = defaultValues.unitAllocations.map((defaultAllocation) => {
+        const savedAllocation = inputs.unitAllocations?.find((allocation) => allocation.id === defaultAllocation.id);
+        return savedAllocation ? { ...defaultAllocation, ...savedAllocation } : defaultAllocation;
+    });
+
+    return {
+        ...defaultValues,
+        ...inputs,
+        advancedCategories: [...mergedCategories, ...customCategories],
+        unitTypes: mergedUnitTypes,
+        unitAllocations: mergedAllocations,
+    };
+}
 
 export function useCalculator() {
     const [inputs, setInputs] = useState<AnalysisInputs>(defaultValues);
@@ -19,26 +76,20 @@ export function useCalculator() {
             if (saved) {
                 try {
                     const parsed = JSON.parse(saved);
-                    const mergedUnitTypes = defaultValues.unitTypes.map(dt => {
-                        const savedType = parsed.unitTypes?.find((st: { id: string }) => st.id === dt.id);
-                        return savedType ? { ...dt, ...savedType } : dt;
-                    });
-                    const mergedAllocations = defaultValues.unitAllocations.map(da => {
-                        const savedAlloc = parsed.unitAllocations?.find((sa: { id: string }) => sa.id === da.id);
-                        return savedAlloc ? { ...da, ...savedAlloc } : da;
-                    });
-
+                    const savedInputs = parsed?.inputs && typeof parsed.inputs === 'object'
+                        ? parsed.inputs
+                        : parsed;
+                    const loadedInputs = parsed?.version === PERSISTED_DATA_VERSION
+                        ? normalizeInputs(savedInputs, { preserveSavedDefaultItemBasis: true })
+                        : normalizeInputs(savedInputs);
                     if (!cancelled) {
-                        setInputs({
-                            ...defaultValues,
-                            ...parsed,
-                            unitTypes: mergedUnitTypes,
-                            unitAllocations: mergedAllocations,
-                        });
+                        setInputs(loadedInputs);
                     }
                 } catch (e) {
                     console.error("Failed to load saved data", e);
                 }
+            } else {
+                LEGACY_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
             }
 
             if (!cancelled) {
@@ -57,13 +108,17 @@ export function useCalculator() {
     // Save to localStorage whenever inputs change
     useEffect(() => {
         if (!isLoaded) return;
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(inputs));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            version: PERSISTED_DATA_VERSION,
+            inputs,
+        }));
     }, [inputs, isLoaded]);
 
     const resetData = () => {
         if (confirm("모든 데이터를 초기값으로 되돌리시겠습니까? 입력한 내용이 모두 사라집니다.")) {
             setInputs(defaultValues);
             localStorage.removeItem(STORAGE_KEY);
+            LEGACY_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
         }
     };
 

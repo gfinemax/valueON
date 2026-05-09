@@ -5,8 +5,8 @@ const defaultAdvancedCategories: CostCategory[] = [
         id: "land",
         title: "토지비",
         items: [
-            { id: "l1", name: "토지매입비", amount: 104490000000, calculationBasis: 'per_site_private' },
-            { id: "l2", name: "국유지 매입비", amount: 4716000000, calculationBasis: 'per_site_public' },
+            { id: "l1", name: "토지매입비", amount: 104490000000, calculationBasis: 'fixed' },
+            { id: "l2", name: "국유지 매입비", amount: 4716000000, calculationBasis: 'fixed' },
             { id: "l3", name: "취등록세 등", amount: 5023476000 },
             { id: "l4", name: "법무사비용", amount: 218412000 },
             { id: "l5", name: "지주작업비", amount: 1638090000 },
