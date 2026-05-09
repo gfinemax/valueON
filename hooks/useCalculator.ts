@@ -5,9 +5,9 @@ import { calculateAnalysisResult } from "@/lib/analysis";
 import { recommendCalculationBasis } from "@/utils/calculation-basis";
 
 
-const STORAGE_KEY = "valueon-calculator-data-v10";
-const LEGACY_STORAGE_KEYS = ["valueon-calculator-data-v9"];
-const PERSISTED_DATA_VERSION = 10;
+const STORAGE_KEY = "valueon-calculator-data-v11";
+const LEGACY_STORAGE_KEYS = ["valueon-calculator-data-v9", "valueon-calculator-data-v10"];
+const PERSISTED_DATA_VERSION = 11;
 
 function normalizeInputs(
     inputs: Partial<AnalysisInputs>,

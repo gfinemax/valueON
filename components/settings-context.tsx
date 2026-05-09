@@ -12,45 +12,58 @@ interface SettingsContextType {
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
+const SETTINGS_KEYS = {
+    allowItemMoving: 'valueon-allow-item-moving-v2',
+    allowCategoryAdding: 'valueon-allow-category-adding-v2',
+    allowItemDeleting: 'valueon-allow-item-deleting-v2',
+};
+const LEGACY_SETTINGS_KEYS = [
+    'valueon-allow-item-moving',
+    'valueon-allow-category-adding',
+    'valueon-allow-item-deleting',
+];
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
     const [allowItemMoving, setAllowItemMovingState] = useState<boolean>(true);
     const [allowCategoryAdding, setAllowCategoryAddingState] = useState<boolean>(true);
     const [allowItemDeleting, setAllowItemDeletingState] = useState<boolean>(true);
-    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
-        const savedMove = localStorage.getItem('valueon-allow-item-moving');
-        if (savedMove !== null) {
-            setAllowItemMovingState(savedMove === 'true');
-        }
+        const timer = window.setTimeout(() => {
+            LEGACY_SETTINGS_KEYS.forEach((key) => localStorage.removeItem(key));
 
-        const savedAdd = localStorage.getItem('valueon-allow-category-adding');
-        if (savedAdd !== null) {
-            setAllowCategoryAddingState(savedAdd === 'true');
-        }
+            const savedMove = localStorage.getItem(SETTINGS_KEYS.allowItemMoving);
+            if (savedMove !== null) {
+                setAllowItemMovingState(savedMove === 'true');
+            }
 
-        const savedDelete = localStorage.getItem('valueon-allow-item-deleting');
-        if (savedDelete !== null) {
-            setAllowItemDeletingState(savedDelete === 'true');
-        }
+            const savedAdd = localStorage.getItem(SETTINGS_KEYS.allowCategoryAdding);
+            if (savedAdd !== null) {
+                setAllowCategoryAddingState(savedAdd === 'true');
+            }
 
-        setMounted(true);
+            const savedDelete = localStorage.getItem(SETTINGS_KEYS.allowItemDeleting);
+            if (savedDelete !== null) {
+                setAllowItemDeletingState(savedDelete === 'true');
+            }
+        }, 0);
+
+        return () => window.clearTimeout(timer);
     }, []);
 
     const setAllowItemMoving = (value: boolean) => {
         setAllowItemMovingState(value);
-        localStorage.setItem('valueon-allow-item-moving', String(value));
+        localStorage.setItem(SETTINGS_KEYS.allowItemMoving, String(value));
     };
 
     const setAllowCategoryAdding = (value: boolean) => {
         setAllowCategoryAddingState(value);
-        localStorage.setItem('valueon-allow-category-adding', String(value));
+        localStorage.setItem(SETTINGS_KEYS.allowCategoryAdding, String(value));
     };
 
     const setAllowItemDeleting = (value: boolean) => {
         setAllowItemDeletingState(value);
-        localStorage.setItem('valueon-allow-item-deleting', String(value));
+        localStorage.setItem(SETTINGS_KEYS.allowItemDeleting, String(value));
     };
 
     return (
