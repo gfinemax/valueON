@@ -18,7 +18,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { formatKoreanCurrency } from "@/utils/currency";
+import { formatKrwThousands } from "@/utils/currency";
 import type { FundingCategory, FundingPlanItem } from "@/types";
 
 const EOK = 100000000;
@@ -67,9 +67,8 @@ function getFundingCost(item: FundingPlanItem) {
 }
 
 function formatWon(amount: number) {
-    const rounded = Math.round(amount);
-    const sign = rounded < 0 ? "-" : "";
-    return `${sign}${formatKoreanCurrency(Math.abs(rounded))}원`;
+    const sign = amount < 0 ? "-" : "";
+    return `${sign}${formatKrwThousands(Math.abs(amount))}`;
 }
 
 function formatPercent(value: number) {

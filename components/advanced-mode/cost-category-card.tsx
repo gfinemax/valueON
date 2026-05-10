@@ -23,7 +23,7 @@ import {
     sortableKeyboardCoordinates,
     verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { parseKoreanMoney } from "@/utils/currency";
+import { formatKrwThousands, parseKoreanMoney } from "@/utils/currency";
 import { calculateCostItemAmount } from "@/lib/analysis";
 
 import { getCategoryColor } from "@/constants/category-colors";
@@ -226,13 +226,7 @@ export function CostCategoryCard({
 
     const percentage = totalExpense > 0 ? (totalAmount / totalExpense) * 100 : 0;
 
-    const formatMoney = (val: number) =>
-        new Intl.NumberFormat("ko-KR", {
-            style: "currency",
-            currency: "KRW",
-            notation: "compact",
-            maximumFractionDigits: 1,
-        }).format(val);
+    const formatMoney = (val: number) => formatKrwThousands(val);
 
     const handleDeleteCategory = (e: React.MouseEvent) => {
         e.stopPropagation();

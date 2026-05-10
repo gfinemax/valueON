@@ -5,7 +5,7 @@ import { GripVertical, PanelRightOpen, X } from "lucide-react";
 import { AnalysisResult, MemberTier, UnitAllocation, UnitType } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { formatKoreanCurrency, parseKoreanMoney } from "@/utils/currency";
+import { formatKoreanCurrency, formatKrwThousands, parseKoreanMoney } from "@/utils/currency";
 
 type IncomeCategoryId = "member" | "general" | "rental" | "other";
 
@@ -73,9 +73,7 @@ const TIER_LABELS: Record<MemberTier, string> = {
 };
 
 function formatEok(amount: number) {
-    return `${new Intl.NumberFormat("ko-KR", {
-        maximumFractionDigits: 1,
-    }).format(amount / 100000000)}억원`;
+    return formatKrwThousands(amount);
 }
 
 function getRows(
@@ -278,7 +276,7 @@ function IncomeDetailRow({
                     </p>
                 </div>
                 <div className="text-right text-base font-extrabold text-slate-950">
-                    {formatKoreanCurrency(row.revenue)}원
+                    {formatKrwThousands(row.revenue)}
                 </div>
             </div>
 
@@ -309,7 +307,7 @@ function IncomeDetailRow({
                         />
                     ) : (
                         <div className="text-right text-sm font-semibold text-slate-700">
-                            {formatKoreanCurrency(row.pricePerPyung)}원
+                            {formatKrwThousands(row.pricePerPyung)}
                         </div>
                     )}
                 </div>

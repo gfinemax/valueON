@@ -20,7 +20,7 @@ import { ClientOnlyChart } from "@/components/client-only-chart";
 import { useCalculator } from "@/hooks/useCalculator";
 import { calculateAnalysisResult, calculateCostItemAmount } from "@/lib/analysis";
 import { AnalysisInputs } from "@/types";
-import { formatKoreanCurrency } from "@/utils/currency";
+import { formatKrwThousands } from "@/utils/currency";
 
 type SimulationDriverId =
   | "land-price"
@@ -116,14 +116,11 @@ const DRIVER_OPTIONS: SimulationDriver[] = [
 const LINE_COLORS = ["#0f766e", "#2563eb", "#d97706", "#dc2626", "#7c3aed", "#475569"];
 
 function formatWon(amount: number) {
-  return `${formatKoreanCurrency(Math.max(0, Math.round(amount)))}원`;
+  return formatKrwThousands(Math.max(0, Math.round(amount)));
 }
 
 function formatCompactWon(amount: number) {
-  return new Intl.NumberFormat("ko-KR", {
-    notation: "compact",
-    maximumFractionDigits: 1,
-  }).format(amount);
+  return formatKrwThousands(amount);
 }
 
 function formatPercent(value: number) {
@@ -1343,7 +1340,7 @@ export default function SimulationPage() {
                     <YAxis
                       stroke="#64748b"
                       tickFormatter={(value) =>
-                        `${formatCompactWon(Number(value))}원`
+                        formatCompactWon(Number(value))
                       }
                       width={90}
                     />

@@ -3,6 +3,7 @@
 import { SearchResult, SearchResultType } from "@/hooks/useSearchIndex";
 import { useRouter } from "next/navigation";
 import { Folder, DollarSign, Home, Tag } from "lucide-react";
+import { formatKrwThousands } from "@/utils/currency";
 
 interface SearchResultDropdownProps {
     results: {
@@ -31,10 +32,7 @@ export function SearchResultDropdown({
 
     const formatMoney = (value?: number) => {
         if (!value) return '';
-        const eok = Math.floor(value / 100000000);
-        const man = Math.floor((value % 100000000) / 10000);
-        if (eok > 0) return `₩${eok}억${man > 0 ? ` ${man.toLocaleString()}만` : ''}`;
-        return `₩${man.toLocaleString()}만`;
+        return formatKrwThousands(value);
     };
 
     const handleClick = (result: SearchResult) => {

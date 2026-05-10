@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { formatKrwThousands } from "@/utils/currency";
 
 interface AcquisitionTaxTemplateProps {
     open: boolean;
@@ -76,8 +77,7 @@ export function AcquisitionTaxTemplate({
     const formatMoney = (val: number) =>
         new Intl.NumberFormat("ko-KR").format(val);
 
-    const formatCompact = (val: number) =>
-        new Intl.NumberFormat("ko-KR", { notation: "compact", maximumFractionDigits: 1 }).format(val);
+    const formatCompact = (val: number) => formatKrwThousands(val);
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -129,7 +129,7 @@ export function AcquisitionTaxTemplate({
                             />
                             <span className="absolute right-3 top-4 text-sm text-slate-400">원</span>
                         </div>
-                        <p className="text-xs text-slate-400">= {formatCompact(purchasePrice)}원</p>
+                        <p className="text-xs text-slate-400">= {formatCompact(purchasePrice)}</p>
                     </div>
 
                     {/* 세율 직접 입력 */}
@@ -163,10 +163,10 @@ export function AcquisitionTaxTemplate({
                         <p className="text-xs text-slate-500 mb-2">계산 결과</p>
                         <div className="flex items-baseline justify-between">
                             <div className="text-sm text-slate-600">
-                                {formatCompact(purchasePrice)}원 × {totalRate.toFixed(1)}%
+                                {formatCompact(purchasePrice)} × {totalRate.toFixed(1)}%
                             </div>
                             <div className="text-2xl font-bold text-blue-600">
-                                {formatCompact(calculatedAmount)}원
+                                {formatCompact(calculatedAmount)}
                             </div>
                         </div>
                     </div>

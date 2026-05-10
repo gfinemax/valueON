@@ -1,7 +1,7 @@
 "use client";
 
 import { UnitType, UnitAllocation, AnalysisResult } from "@/types";
-import { formatKoreanCurrency } from "@/utils/currency";
+import { formatKrwThousands } from "@/utils/currency";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { ClientOnlyChart } from "@/components/client-only-chart";
 import { ManagementHeroSummary } from "@/components/management/management-hero-summary";
@@ -28,15 +28,11 @@ const TIER_LABELS: Record<string, string> = {
 };
 
 function formatEok(amount: number) {
-    return `${new Intl.NumberFormat("ko-KR", {
-        maximumFractionDigits: 1,
-    }).format(amount / 100000000)}억원`;
+    return formatKrwThousands(amount);
 }
 
 function formatSalePrice(amount: number) {
-    return `${new Intl.NumberFormat("ko-KR", {
-        maximumFractionDigits: 2,
-    }).format(amount / 100000000)}억`;
+    return formatKrwThousands(amount);
 }
 
 function getUnitShortName(name: string) {
@@ -215,7 +211,7 @@ export function UnitMixStats({ unitTypes, allocations, unitPricing }: UnitMixSta
                                     </Pie>
                                     <Tooltip
                                         formatter={(value: number | string | (number | string)[] | undefined) => [
-                                            `${formatKoreanCurrency(Number(value || 0))}원`,
+                                            formatKrwThousands(Number(value || 0)),
                                             "",
                                         ]}
                                         contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}

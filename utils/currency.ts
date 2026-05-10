@@ -100,3 +100,13 @@ export function formatKoreanCurrency(amount: number): string {
 
     return result;
 }
+
+export function formatKrwThousands(amount: number): string {
+    const roundedThousands = Math.round(amount / 1000);
+    return `${new Intl.NumberFormat("ko-KR").format(roundedThousands)}천원`;
+}
+
+export function formatKrwThousandsSigned(amount: number): string {
+    const sign = amount > 0 ? "+" : amount < 0 ? "-" : "";
+    return `${sign}${formatKrwThousands(Math.abs(amount))}`;
+}

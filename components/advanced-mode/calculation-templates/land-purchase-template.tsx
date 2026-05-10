@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Trash2, Plus } from "lucide-react";
+import { formatKrwThousands } from "@/utils/currency";
 
 interface LandType {
     id: string;
@@ -144,8 +145,7 @@ export function LandPurchaseTemplate({
     const formatMoney = (val: number) =>
         new Intl.NumberFormat("ko-KR").format(val);
 
-    const formatCompact = (val: number) =>
-        new Intl.NumberFormat("ko-KR", { notation: "compact", maximumFractionDigits: 1 }).format(val);
+    const formatCompact = (val: number) => formatKrwThousands(val);
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -214,7 +214,7 @@ export function LandPurchaseTemplate({
                                 </div>
                                 {/* Subtotal */}
                                 <div className="col-span-2 text-right text-sm font-bold text-slate-700">
-                                    {subtotal > 0 ? formatCompact(subtotal) + '원' : '-'}
+                                    {subtotal > 0 ? formatCompact(subtotal) : '-'}
                                 </div>
                                 {/* Delete */}
                                 <div className="col-span-1 flex justify-center">
@@ -263,7 +263,7 @@ export function LandPurchaseTemplate({
                     <div className="flex items-baseline justify-between">
                         <div className="text-sm text-slate-600">계산된 총액</div>
                         <div className="text-2xl font-bold text-emerald-600">
-                            {formatCompact(totalAmount)}원
+                            {formatCompact(totalAmount)}
                         </div>
                     </div>
                     <p className="text-xs text-slate-500 mt-1">

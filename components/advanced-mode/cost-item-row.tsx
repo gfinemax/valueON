@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { parseKoreanMoney } from "@/utils/currency";
+import { formatKrwThousands, parseKoreanMoney } from "@/utils/currency";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -306,13 +306,13 @@ export function CostItemRow({
         }
     }
 
-    const compactMoney = (val: number) => new Intl.NumberFormat("ko-KR", { notation: "compact", maximumFractionDigits: 1 }).format(val);
+    const compactMoney = (val: number) => formatKrwThousands(val);
 
     // Calculate formula display
     let secondaryFormulaText = "";
     let calculatedTotal = 0;
 
-    const formatCompact = (val: number) => new Intl.NumberFormat("ko-KR", { notation: "compact", maximumFractionDigits: 1 }).format(val);
+    const formatCompact = (val: number) => formatKrwThousands(val);
     const basisValue = getBasisValue(calculationBasis, projectTarget, manualArea);
     const isSquareMeterBasis = usesSquareMeterDisplay(calculationBasis);
     const displayBasisValue = isSquareMeterBasis ? toSquareMeters(basisValue) : basisValue;
@@ -323,7 +323,7 @@ export function CostItemRow({
         calculatedTotal = amount * basisValue * (applicationRate / 100);
 
         secondaryFormulaText = isSquareMeterBasis
-            ? `㎡ 환산: ${formatArea(displayBasisValue)}㎡ × ${formatCompact(displayAmount)}원/㎡ × ${applicationRate}%`
+            ? `㎡ 환산: ${formatArea(displayBasisValue)}㎡ × ${formatCompact(displayAmount)}/㎡ × ${applicationRate}%`
             : "";
     } else {
         // Fixed or default - 항상 공식 표시
@@ -589,7 +589,7 @@ export function CostItemRow({
 
                         {/* Total Result */}
                         <div className={`${resultTextSize} font-bold text-blue-600 tabular-nums tracking-tighter min-w-[100px] text-right`}>
-                            {compactMoney(calculatedTotal)}원
+                            {compactMoney(calculatedTotal)}
                         </div>
 
                         {secondaryFormulaText && (
@@ -633,7 +633,7 @@ export function CostItemRow({
 
                         {/* Total Result */}
                         <div className={`${resultTextSize} font-bold text-blue-600 tabular-nums tracking-tighter min-w-[100px] text-right`}>
-                            {compactMoney(calculatedTotal)}원
+                            {compactMoney(calculatedTotal)}
                         </div>
                     </div>
                 )}

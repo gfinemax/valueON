@@ -3,6 +3,7 @@
 import { AnalysisResult } from "@/types";
 import { useState } from "react";
 import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { formatKrwThousands } from "@/utils/currency";
 
 interface PricingResultTableProps {
     pricing: AnalysisResult['unitPricing'];
@@ -71,14 +72,7 @@ export function PricingResultTable({ pricing }: PricingResultTableProps) {
         return 0;
     });
 
-    const formatMoney = (val: number) => {
-        const unit = 100000000;
-        const eok = Math.floor(val / unit);
-        const thousands = Math.round((val % unit) / 10000);
-
-        if (eok > 0) return `${eok}억 ${thousands > 0 ? thousands.toLocaleString() : ""}만`;
-        return `${thousands.toLocaleString()}만`;
-    };
+    const formatMoney = (val: number) => formatKrwThousands(val);
 
     const SortButton = ({ column, label }: { column: SortKey; label: string }) => {
         const sortIndex = sorts.findIndex(s => s.key === column);
@@ -153,7 +147,7 @@ export function PricingResultTable({ pricing }: PricingResultTableProps) {
                                     {formatMoney(item.totalPrice)}
                                 </td>
                                 <td className="py-2 md:py-3 text-center text-sm text-stone-800 whitespace-nowrap px-1 md:px-2 tracking-tighter">
-                                    {(item.pricePerPyung / 10000).toLocaleString()}만
+                                    {formatMoney(item.pricePerPyung)}
                                 </td>
                             </tr>
                         ))}

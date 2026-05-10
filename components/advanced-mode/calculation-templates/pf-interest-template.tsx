@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { formatKrwThousands } from "@/utils/currency";
 
 interface PFInterestTemplateProps {
     open: boolean;
@@ -78,8 +79,7 @@ export function PFInterestTemplate({
     const formatMoney = (val: number) =>
         new Intl.NumberFormat("ko-KR").format(val);
 
-    const formatCompact = (val: number) =>
-        new Intl.NumberFormat("ko-KR", { notation: "compact", maximumFractionDigits: 1 }).format(val);
+    const formatCompact = (val: number) => formatKrwThousands(val);
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -112,7 +112,7 @@ export function PFInterestTemplate({
                             />
                             <span className="absolute right-3 top-4 text-sm text-slate-400">원</span>
                         </div>
-                        <p className="text-xs text-slate-400">= {formatCompact(principal)}원</p>
+                        <p className="text-xs text-slate-400">= {formatCompact(principal)}</p>
                     </div>
 
                     {/* 이자율 선택 */}
@@ -176,14 +176,14 @@ export function PFInterestTemplate({
                     <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-4 rounded-xl border border-amber-100">
                         <p className="text-xs text-slate-500 mb-2">계산 결과 (단순이자)</p>
                         <div className="text-sm text-slate-600 mb-1">
-                            {formatCompact(principal)}원 × {interestRate}% × ({durationMonths}개월 ÷ 12)
+                            {formatCompact(principal)} × {interestRate}% × ({durationMonths}개월 ÷ 12)
                         </div>
                         <div className="flex items-baseline justify-between">
                             <div className="text-sm text-slate-500">
                                 예상 이자 금액
                             </div>
                             <div className="text-2xl font-bold text-amber-600">
-                                {formatCompact(calculatedInterest)}원
+                                {formatCompact(calculatedInterest)}
                             </div>
                         </div>
                     </div>

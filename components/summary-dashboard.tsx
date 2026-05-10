@@ -7,6 +7,7 @@ import { useState, useEffect, useRef } from "react";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { ExpandToggle } from "@/components/ui/expand-toggle";
 import { ClientOnlyChart } from "@/components/client-only-chart";
+import { formatKrwThousands } from "@/utils/currency";
 
 interface SummaryDashboardProps {
     result: AnalysisResult;
@@ -42,7 +43,7 @@ function CountUp({ end, duration = 2000, suffix = "" }: { end: number, duration?
 
     return (
         <span>
-            {new Intl.NumberFormat("ko-KR", { notation: "compact", maximumFractionDigits: 1 }).format(count)}
+            {formatKrwThousands(count)}
             {suffix}
         </span>
     );
@@ -64,18 +65,7 @@ export function SummaryDashboard({ result }: SummaryDashboardProps) {
     const detailsSectionRef = useRef<HTMLDivElement>(null);
     const revenueDetailRef = useRef<HTMLDivElement>(null);
 
-    const formatMoney = (val: number) => {
-        if (Math.abs(val) >= 100000000) {
-            return new Intl.NumberFormat("ko-KR", {
-                maximumFractionDigits: 1,
-            }).format(val / 100000000) + "억원";
-        }
-        return new Intl.NumberFormat("ko-KR", {
-            style: "currency",
-            currency: "KRW",
-            maximumFractionDigits: 0,
-        }).format(val);
-    };
+    const formatMoney = (val: number) => formatKrwThousands(val);
 
     useEffect(() => {
         if (isCostDetailOpen && detailsSectionRef.current) {
@@ -149,17 +139,17 @@ export function SummaryDashboard({ result }: SummaryDashboardProps) {
                                         <div className="text-sm font-bold text-stone-400 uppercase tracking-widest mb-3">Net Profit Forecast</div>
                                         <div className={`text-4xl md:text-6xl font-serif tracking-tighter ${profit >= 0 ? 'text-[#8c9c8a]' : 'text-[#d97757]'}`}>
                                             {profit >= 0 ? '+' : ''}
-                                            <CountUp end={profit} suffix="원" />
+                                            <CountUp end={profit} />
                                         </div>
                                     </div>
                                     <div className="grid grid-cols-2 gap-8 border-t border-stone-100 pt-8">
                                         <div>
                                             <div className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-1">Total Revenue</div>
-                                            <div className="text-2xl font-serif text-stone-800">{new Intl.NumberFormat("ko-KR", { notation: "compact", maximumFractionDigits: 1 }).format(result.totalRevenue || 0)}</div>
+                                            <div className="text-2xl font-serif text-stone-800">{formatMoney(result.totalRevenue || 0)}</div>
                                         </div>
                                         <div>
                                             <div className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-1">Total Cost</div>
-                                            <div className="text-2xl font-serif text-stone-800">{new Intl.NumberFormat("ko-KR", { notation: "compact", maximumFractionDigits: 1 }).format(result.totalProjectCost)}</div>
+                                            <div className="text-2xl font-serif text-stone-800">{formatMoney(result.totalProjectCost)}</div>
                                         </div>
                                     </div>
                                 </div>

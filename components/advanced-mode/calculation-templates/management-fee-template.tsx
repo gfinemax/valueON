@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UnitType } from "@/types";
+import { formatKrwThousands } from "@/utils/currency";
 
 interface ManagementFeeTemplateProps {
     open: boolean;
@@ -81,8 +82,7 @@ export function ManagementFeeTemplate({
     const formatMoney = (val: number) =>
         new Intl.NumberFormat("ko-KR").format(val);
 
-    const formatCompact = (val: number) =>
-        new Intl.NumberFormat("ko-KR", { notation: "compact", maximumFractionDigits: 1 }).format(val);
+    const formatCompact = (val: number) => formatKrwThousands(val);
 
     // 카테고리별 그룹핑
     const groupedTypes = unitTypes.reduce((acc, ut) => {
@@ -155,7 +155,7 @@ export function ManagementFeeTemplate({
                                             {/* 소계 */}
                                             <div className="text-right min-w-[80px]">
                                                 <div className="text-sm font-bold text-slate-700">
-                                                    {formatCompact(subtotal)}원
+                                                    {formatCompact(subtotal)}
                                                 </div>
                                             </div>
                                         </div>
@@ -171,7 +171,7 @@ export function ManagementFeeTemplate({
                     <div className="flex items-baseline justify-between">
                         <div className="text-sm text-slate-600">계산된 총액</div>
                         <div className="text-2xl font-bold text-indigo-600">
-                            {formatCompact(calculatedTotal)}원
+                            {formatCompact(calculatedTotal)}
                         </div>
                     </div>
                     <p className="text-xs text-slate-500 mt-1">

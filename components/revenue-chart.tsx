@@ -4,6 +4,7 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 
 import { AnalysisResult } from "@/types";
 import { useState, useEffect } from "react";
 import { ClientOnlyChart } from "@/components/client-only-chart";
+import { formatKrwThousands } from "@/utils/currency";
 
 interface RevenueChartProps {
     data: NonNullable<AnalysisResult['unitPricing']>;
@@ -64,7 +65,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
                             contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
                             formatter={(value: number | string | (number | string)[] | undefined) => {
                                 if (typeof value === 'number') {
-                                    return new Intl.NumberFormat("ko-KR", { style: "currency", currency: "KRW", maximumFractionDigits: 0 }).format(value);
+                                    return formatKrwThousands(value);
                                 }
                                 return value?.toString() || "";
                             }}
