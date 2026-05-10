@@ -31,15 +31,6 @@ function formatEok(amount: number) {
     return formatKrwThousands(amount);
 }
 
-function formatSalePrice(amount: number) {
-    return formatKrwThousands(amount);
-}
-
-function getUnitShortName(name: string) {
-    const match = name.match(/\d+/);
-    return match ? match[0] : name.replace("Type", "").replace("임대", "").trim();
-}
-
 export function UnitMixStats({ unitTypes, allocations, unitPricing }: UnitMixStatsProps) {
     // Separate apartment and rental types
     const apartmentTypeIds = unitTypes.filter(u => u.category === 'APARTMENT').map(u => u.id);
@@ -60,30 +51,12 @@ export function UnitMixStats({ unitTypes, allocations, unitPricing }: UnitMixSta
             }
         });
 
-        const priceSummary = tierAllocations
-            .map((alloc) => {
-                const unitType = unitTypes.find((u) => u.id === alloc.unitTypeId);
-                const pricing = unitPricing?.find(p => p.allocationId === alloc.id);
-                const pricePerPyung = alloc.targetPricePerPyung ?? pricing?.pricePerPyung ?? 0;
-                const totalPrice = pricing?.totalPrice ?? ((unitType?.supplyArea ?? 0) * pricePerPyung);
-
-                return {
-                    label: unitType ? getUnitShortName(unitType.name) : "?",
-                    supplyArea: unitType?.supplyArea ?? 0,
-                    totalPrice,
-                };
-            })
-            .sort((a, b) => a.supplyArea - b.supplyArea)
-            .map((item) => `${item.label} ${formatSalePrice(item.totalPrice)}`)
-            .join(" · ");
-
         return {
             tier,
             name: TIER_LABELS[tier],
             count: totalCount,
             revenue: totalRevenue,
             color: TIER_COLORS[tier],
-            priceSummary,
         };
     });
 
@@ -97,26 +70,9 @@ export function UnitMixStats({ unitTypes, allocations, unitPricing }: UnitMixSta
             rentalRevenue += alloc.targetPricePerPyung * ut.supplyArea * alloc.count;
         }
     });
-    const rentalPriceSummary = rentalAllocations
-        .map((alloc) => {
-            const unitType = unitTypes.find(u => u.id === alloc.unitTypeId);
-            const pricing = unitPricing?.find(p => p.allocationId === alloc.id);
-            const pricePerPyung = alloc.targetPricePerPyung ?? pricing?.pricePerPyung ?? 0;
-            const totalPrice = pricing?.totalPrice ?? ((unitType?.supplyArea ?? 0) * pricePerPyung);
-
-            return {
-                label: unitType ? getUnitShortName(unitType.name) : "?",
-                supplyArea: unitType?.supplyArea ?? 0,
-                totalPrice,
-            };
-        })
-        .sort((a, b) => a.supplyArea - b.supplyArea)
-        .map((item) => `${item.label} ${formatSalePrice(item.totalPrice)}`)
-        .join(" · ");
-
     const allStats = [
         ...tierStats,
-        { tier: 'Rental', name: '임대주택', count: rentalCount, revenue: rentalRevenue, color: TIER_COLORS['Rental'], priceSummary: rentalPriceSummary }
+        { tier: 'Rental', name: '임대주택', count: rentalCount, revenue: rentalRevenue, color: TIER_COLORS['Rental'] }
     ];
 
     const totalUnits = allStats.reduce((sum, s) => sum + s.count, 0);
@@ -182,9 +138,6 @@ export function UnitMixStats({ unitTypes, allocations, unitPricing }: UnitMixSta
                                         <span className="truncate text-sm font-bold tracking-tight text-slate-700">{stat.name}</span>
                                         <span className="shrink-0 text-xs tracking-tight text-slate-500">{stat.count}세대</span>
                                         <span className="shrink-0 text-xs tracking-tight text-muted-foreground/50">{percent.toFixed(1)}%</span>
-                                    </div>
-                                    <div className="mt-1 truncate pl-3.5 text-sm font-semibold tracking-tight text-slate-900 tabular-nums">
-                                        {stat.priceSummary || "-"}
                                     </div>
                                 </div>
                             );

@@ -114,7 +114,7 @@ export function IncomeCategorySection({
     isEditMode = true,
     summaryContent,
 }: IncomeCategorySectionProps) {
-    const [selectedCategoryId, setSelectedCategoryId] = useState<IncomeCategoryId | null>("member1");
+    const [selectedCategoryId, setSelectedCategoryId] = useState<IncomeCategoryId | null>(null);
 
     const summaries = useMemo<IncomeCategorySummary[]>(() => {
         const rows = getRows(unitTypes, allocations, unitPricing);
@@ -162,27 +162,30 @@ export function IncomeCategorySection({
                     {summaries.map((summary) => {
                         const percent = totalRevenue > 0 ? (summary.revenue / totalRevenue) * 100 : 0;
                         const selected = summary.id === selectedCategory?.id;
+                        const priceRows = summary.rows
+                            .slice()
+                            .sort((a, b) => a.unitType.supplyArea - b.unitType.supplyArea);
 
                         return (
                             <button
                                 key={summary.id}
                                 type="button"
                                 onClick={() => setSelectedCategoryId(summary.id)}
-                                className={`group min-h-[104px] rounded-xl border border-slate-200 border-l-4 bg-white p-4 text-left shadow-sm transition hover:border-slate-300 hover:shadow-md ${summary.border} ${selected ? "ring-2 ring-slate-900/10" : ""}`}
+                                className={`group min-h-[168px] rounded-xl border border-slate-200 border-l-4 bg-white p-4 text-left shadow-sm transition hover:border-slate-300 hover:shadow-md ${summary.border} ${selected ? "ring-2 ring-slate-900/10" : ""}`}
                             >
                                 <div className="flex items-start justify-between gap-3">
                                     <div className="flex min-w-0 items-start gap-3">
                                         <GripVertical className="mt-0.5 h-4 w-4 shrink-0 text-slate-300" />
-                                        <div className="min-w-0">
-                                            <h4 className="truncate text-lg font-extrabold tracking-tight text-slate-950">
-                                                {summary.title}
-                                            </h4>
-                                            <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+                                                <h4 className="truncate text-lg font-extrabold tracking-tight text-slate-950">
+                                                    {summary.title}
+                                                </h4>
                                                 <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
                                                     {percent.toFixed(1)}%
                                                 </span>
-                                                <span className="text-slate-400">항목 {summary.itemCount}개</span>
-                                                <span className="text-slate-400">{summary.householdCount}세대</span>
+                                                <span className="text-sm text-slate-400">항목 {summary.itemCount}개</span>
+                                                <span className="text-sm text-slate-400">{summary.householdCount}세대</span>
                                             </div>
                                         </div>
                                     </div>
@@ -193,7 +196,22 @@ export function IncomeCategorySection({
                                     </span>
                                 </div>
 
-                                <div className="mt-3 text-right text-2xl font-extrabold tracking-tight text-slate-950">
+                                {priceRows.length > 0 && (
+                                    <div className="mt-5 space-y-1.5 border-t border-slate-100 pt-3">
+                                        {priceRows.map((row) => (
+                                            <div key={row.allocation.id} className="flex min-w-0 items-center justify-between gap-3 text-sm">
+                                                <span className="truncate font-semibold text-slate-600">
+                                                    {row.unitType.name}
+                                                </span>
+                                                <span className="shrink-0 font-bold tabular-nums text-slate-900">
+                                                    {formatKrwThousands(row.totalPrice)}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                <div className="mt-4 text-right text-2xl font-extrabold tracking-tight text-slate-950">
                                     {formatEok(summary.revenue)}
                                 </div>
                             </button>
