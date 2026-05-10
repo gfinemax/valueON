@@ -3,6 +3,7 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState } from "react";
+import { ClientOnlyChart } from "@/components/client-only-chart";
 
 interface ResultChartProps {
     data: {
@@ -32,27 +33,29 @@ export function ResultChart({ data, totalCost, hideTitle }: ResultChartProps) {
         <div className="w-full h-full flex flex-col">
             {!hideTitle && <h3 className="text-sm md:text-base font-serif mb-4 text-stone-800 whitespace-nowrap">Cost Structure Analysis</h3>}
             <div className="h-[240px] md:h-[270px] w-full relative">
-                <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                        <Pie
-                            data={sortedData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={70}
-                            outerRadius={95}
-                            paddingAngle={3}
-                            dataKey="value"
-                            stroke="none"
-                            onMouseEnter={(_, index) => setHoveredData(sortedData[index])}
-                            onMouseLeave={() => setHoveredData(null)}
-                        >
-                            {sortedData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.fill || COLORS[index % COLORS.length]} />
-                            ))}
-                        </Pie>
-                        {/* Remove legacy Legend and use custom one below for guaranteed sorting */}
-                    </PieChart>
-                </ResponsiveContainer>
+                <ClientOnlyChart>
+                    <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                            <Pie
+                                data={sortedData}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={70}
+                                outerRadius={95}
+                                paddingAngle={3}
+                                dataKey="value"
+                                stroke="none"
+                                onMouseEnter={(_, index) => setHoveredData(sortedData[index])}
+                                onMouseLeave={() => setHoveredData(null)}
+                            >
+                                {sortedData.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={entry.fill || COLORS[index % COLORS.length]} />
+                                ))}
+                            </Pie>
+                            {/* Remove legacy Legend and use custom one below for guaranteed sorting */}
+                        </PieChart>
+                    </ResponsiveContainer>
+                </ClientOnlyChart>
                 {/* Center Text */}
                 <div className="absolute top-[50%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none transition-all duration-300">
                     <div className="text-[9px] md:text-[10px] text-stone-400 font-serif mb-0.5">

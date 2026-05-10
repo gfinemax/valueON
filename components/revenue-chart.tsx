@@ -3,6 +3,7 @@
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from "recharts";
 import { AnalysisResult } from "@/types";
 import { useState, useEffect } from "react";
+import { ClientOnlyChart } from "@/components/client-only-chart";
 
 interface RevenueChartProps {
     data: NonNullable<AnalysisResult['unitPricing']>;
@@ -33,47 +34,49 @@ export function RevenueChart({ data }: RevenueChartProps) {
     const COLORS = ['#d97757', '#8c9c8a', '#e3c086', '#6b7280', '#c2b280'];
 
     return (
-        <div className="w-full h-[340px] md:h-[320px]">
+        <div className="w-full h-[340px] md:h-[320px] flex flex-col">
             <h3 className="text-base md:text-lg font-serif mb-4 text-stone-800 whitespace-nowrap">Revenue Contribution by Type</h3>
-            <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                    data={sortedData}
-                    layout="vertical"
-                    margin={{
-                        top: 5,
-                        right: isMobile ? 10 : 30,
-                        left: isMobile ? 0 : 10,
-                        bottom: 25
-                    }}
-                >
-                    <XAxis type="number" hide />
-                    <YAxis
-                        type="category"
-                        dataKey="unitName"
-                        width={140}
-                        tick={{ fontSize: 13, fill: '#57534e' }}
-                        interval={0}
-                        axisLine={false}
-                        tickLine={false}
-                        tickFormatter={(value) => value.replace(/\n/g, ' ')}
-                    />
-                    <Tooltip
-                        cursor={{ fill: '#f5f5f4' }}
-                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
-                        formatter={(value: number | string | (number | string)[] | undefined) => {
-                            if (typeof value === 'number') {
-                                return new Intl.NumberFormat("ko-KR", { style: "currency", currency: "KRW", maximumFractionDigits: 0 }).format(value);
-                            }
-                            return value?.toString() || "";
+            <ClientOnlyChart className="min-h-0 flex-1">
+                <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                        data={sortedData}
+                        layout="vertical"
+                        margin={{
+                            top: 5,
+                            right: isMobile ? 10 : 30,
+                            left: isMobile ? 0 : 10,
+                            bottom: 25
                         }}
-                    />
-                    <Bar dataKey="revenueContribution" radius={[0, 4, 4, 0]} barSize={28} isAnimationActive={true}>
-                        {sortedData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                    </Bar>
-                </BarChart>
-            </ResponsiveContainer>
+                    >
+                        <XAxis type="number" hide />
+                        <YAxis
+                            type="category"
+                            dataKey="unitName"
+                            width={140}
+                            tick={{ fontSize: 13, fill: '#57534e' }}
+                            interval={0}
+                            axisLine={false}
+                            tickLine={false}
+                            tickFormatter={(value) => value.replace(/\n/g, ' ')}
+                        />
+                        <Tooltip
+                            cursor={{ fill: '#f5f5f4' }}
+                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
+                            formatter={(value: number | string | (number | string)[] | undefined) => {
+                                if (typeof value === 'number') {
+                                    return new Intl.NumberFormat("ko-KR", { style: "currency", currency: "KRW", maximumFractionDigits: 0 }).format(value);
+                                }
+                                return value?.toString() || "";
+                            }}
+                        />
+                        <Bar dataKey="revenueContribution" radius={[0, 4, 4, 0]} barSize={28} isAnimationActive={true}>
+                            {sortedData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                        </Bar>
+                    </BarChart>
+                </ResponsiveContainer>
+            </ClientOnlyChart>
         </div>
     );
 }

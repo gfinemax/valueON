@@ -6,6 +6,7 @@ import { ResponsiveContainer, Cell, PieChart, Pie } from "recharts";
 import { useState, useEffect, useRef } from "react";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { ExpandToggle } from "@/components/ui/expand-toggle";
+import { ClientOnlyChart } from "@/components/client-only-chart";
 
 interface SummaryDashboardProps {
     result: AnalysisResult;
@@ -164,26 +165,28 @@ export function SummaryDashboard({ result }: SummaryDashboardProps) {
                                 </div>
 
                                 <div className="h-[200px] md:h-[240px] w-full relative flex items-center justify-center border-l-0 md:border-l border-border md:pl-12">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <PieChart>
-                                            <Pie
-                                                data={[
-                                                    { name: 'Cost', value: result.totalProjectCost },
-                                                    { name: 'Profit', value: Math.max(0, profit) },
-                                                ]}
-                                                cx="50%"
-                                                cy="50%"
-                                                innerRadius="65%"
-                                                outerRadius="90%"
-                                                paddingAngle={5}
-                                                dataKey="value"
-                                                stroke="none"
-                                            >
-                                                <Cell fill="#f5f5f4" /> {/* Stone 100-ish for Cost */}
-                                                <Cell fill="#8c9c8a" /> {/* Brand Emerald for Profit */}
-                                            </Pie>
-                                        </PieChart>
-                                    </ResponsiveContainer>
+                                    <ClientOnlyChart>
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie
+                                                    data={[
+                                                        { name: 'Cost', value: result.totalProjectCost },
+                                                        { name: 'Profit', value: Math.max(0, profit) },
+                                                    ]}
+                                                    cx="50%"
+                                                    cy="50%"
+                                                    innerRadius="65%"
+                                                    outerRadius="90%"
+                                                    paddingAngle={5}
+                                                    dataKey="value"
+                                                    stroke="none"
+                                                >
+                                                    <Cell fill="#f5f5f4" /> {/* Stone 100-ish for Cost */}
+                                                    <Cell fill="#8c9c8a" /> {/* Brand Emerald for Profit */}
+                                                </Pie>
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                    </ClientOnlyChart>
                                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                                         <span className="text-sm font-bold text-stone-400 uppercase tracking-widest mb-1">Margin</span>
                                         <span className="text-3xl font-serif font-bold text-stone-800">{profitMargin.toFixed(1)}%</span>

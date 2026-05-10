@@ -3,6 +3,7 @@
 import { UnitType, UnitAllocation, AnalysisResult } from "@/types";
 import { formatKoreanCurrency } from "@/utils/currency";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { ClientOnlyChart } from "@/components/client-only-chart";
 
 interface UnitMixStatsProps {
     unitTypes: UnitType[];
@@ -94,29 +95,31 @@ export function UnitMixStats({ unitTypes, allocations, unitPricing }: UnitMixSta
                     <span className="text-xs text-slate-300">총 {formatKoreanCurrency(totalRevenue)}원</span>
                 </div>
                 <div className="h-28">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                            <Pie
-                                data={revenueData}
-                                cx="50%"
-                                cy="50%"
-                                innerRadius={20}
-                                outerRadius={45}
-                                paddingAngle={2}
-                                dataKey="value"
-                                stroke="none"
-                            >
-                                {revenueData.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={entry.color} />
-                                ))}
-                            </Pie>
-                            <Tooltip
-                                formatter={(value: number | string | (number | string)[] | undefined) => [formatKoreanCurrency(Number(value || 0)) + '원', '']}
-                                contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc' }}
-                                itemStyle={{ color: '#f8fafc' }}
-                            />
-                        </PieChart>
-                    </ResponsiveContainer>
+                    <ClientOnlyChart>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie
+                                    data={revenueData}
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={20}
+                                    outerRadius={45}
+                                    paddingAngle={2}
+                                    dataKey="value"
+                                    stroke="none"
+                                >
+                                    {revenueData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                    ))}
+                                </Pie>
+                                <Tooltip
+                                    formatter={(value: number | string | (number | string)[] | undefined) => [formatKoreanCurrency(Number(value || 0)) + '원', '']}
+                                    contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc' }}
+                                    itemStyle={{ color: '#f8fafc' }}
+                                />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </ClientOnlyChart>
                 </div>
                 <div className="flex flex-wrap justify-center gap-x-2 gap-y-1 mt-2">
                     {allStats.map(s => (
@@ -136,29 +139,31 @@ export function UnitMixStats({ unitTypes, allocations, unitPricing }: UnitMixSta
                     <span className="text-xs text-slate-300">총 {totalUnits}세대</span>
                 </div>
                 <div className="h-28">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                            <Pie
-                                data={countData}
-                                cx="50%"
-                                cy="50%"
-                                innerRadius={20}
-                                outerRadius={45}
-                                paddingAngle={2}
-                                dataKey="value"
-                                stroke="none"
-                            >
-                                {countData.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={entry.color} />
-                                ))}
-                            </Pie>
-                            <Tooltip
-                                formatter={(value: number | string | (number | string)[] | undefined) => [`${value || 0}세대`, '']}
-                                contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc' }}
-                                itemStyle={{ color: '#f8fafc' }}
-                            />
-                        </PieChart>
-                    </ResponsiveContainer>
+                    <ClientOnlyChart>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie
+                                    data={countData}
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={20}
+                                    outerRadius={45}
+                                    paddingAngle={2}
+                                    dataKey="value"
+                                    stroke="none"
+                                >
+                                    {countData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                    ))}
+                                </Pie>
+                                <Tooltip
+                                    formatter={(value: number | string | (number | string)[] | undefined) => [`${value || 0}세대`, '']}
+                                    contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc' }}
+                                    itemStyle={{ color: '#f8fafc' }}
+                                />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </ClientOnlyChart>
                 </div>
                 <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 mt-2">
                     {allStats.map(s => (

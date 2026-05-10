@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { ClientOnlyChart } from "@/components/client-only-chart";
 import { useCalculator } from "@/hooks/useCalculator";
 import { calculateAnalysisResult, calculateCostItemAmount } from "@/lib/analysis";
 import { AnalysisInputs } from "@/types";
@@ -1323,57 +1324,59 @@ export default function SimulationPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="h-[360px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  data={chartData}
-                  margin={{ top: 8, right: 16, left: 12, bottom: 8 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis
-                    dataKey="scenario"
-                    stroke="#64748b"
-                    tickFormatter={(value) =>
-                      `${new Intl.NumberFormat("ko-KR", {
-                        maximumFractionDigits: 0,
-                      }).format(value)}${selectedDriver.unitLabel}`
-                    }
-                  />
-                  <YAxis
-                    stroke="#64748b"
-                    tickFormatter={(value) =>
-                      `${formatCompactWon(Number(value))}원`
-                    }
-                    width={90}
-                  />
-                  <Tooltip
-                    formatter={(value: number | undefined, name: string | undefined) => {
-                      const seriesName = name ?? "";
-                      const member = memberColumns.find(
-                        (column) => column.allocationId === seriesName
-                      );
-                      return [formatWon(value ?? 0), member?.label || seriesName];
-                    }}
-                    labelFormatter={(label) => `${label}${selectedDriver.unitLabel}`}
-                    contentStyle={{
-                      borderRadius: "16px",
-                      border: "1px solid #dbe4ee",
-                      boxShadow: "0 10px 30px rgba(15, 23, 42, 0.08)",
-                    }}
-                  />
-                  {memberColumns.map((column, index) => (
-                    <Line
-                      key={column.allocationId}
-                      type="monotone"
-                      dataKey={column.allocationId}
-                      name={column.label}
-                      stroke={LINE_COLORS[index % LINE_COLORS.length]}
-                      strokeWidth={3}
-                      dot={{ r: 3 }}
-                      activeDot={{ r: 6 }}
+              <ClientOnlyChart>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={chartData}
+                    margin={{ top: 8, right: 16, left: 12, bottom: 8 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis
+                      dataKey="scenario"
+                      stroke="#64748b"
+                      tickFormatter={(value) =>
+                        `${new Intl.NumberFormat("ko-KR", {
+                          maximumFractionDigits: 0,
+                        }).format(value)}${selectedDriver.unitLabel}`
+                      }
                     />
-                  ))}
-                </LineChart>
-              </ResponsiveContainer>
+                    <YAxis
+                      stroke="#64748b"
+                      tickFormatter={(value) =>
+                        `${formatCompactWon(Number(value))}원`
+                      }
+                      width={90}
+                    />
+                    <Tooltip
+                      formatter={(value: number | undefined, name: string | undefined) => {
+                        const seriesName = name ?? "";
+                        const member = memberColumns.find(
+                          (column) => column.allocationId === seriesName
+                        );
+                        return [formatWon(value ?? 0), member?.label || seriesName];
+                      }}
+                      labelFormatter={(label) => `${label}${selectedDriver.unitLabel}`}
+                      contentStyle={{
+                        borderRadius: "16px",
+                        border: "1px solid #dbe4ee",
+                        boxShadow: "0 10px 30px rgba(15, 23, 42, 0.08)",
+                      }}
+                    />
+                    {memberColumns.map((column, index) => (
+                      <Line
+                        key={column.allocationId}
+                        type="monotone"
+                        dataKey={column.allocationId}
+                        name={column.label}
+                        stroke={LINE_COLORS[index % LINE_COLORS.length]}
+                        strokeWidth={3}
+                        dot={{ r: 3 }}
+                        activeDot={{ r: 6 }}
+                      />
+                    ))}
+                  </LineChart>
+                </ResponsiveContainer>
+              </ClientOnlyChart>
             </div>
 
             <div className="flex flex-wrap gap-2">
