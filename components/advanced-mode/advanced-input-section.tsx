@@ -240,96 +240,104 @@ export function AdvancedInputSection({
     return (
         <div className={detailPanel ? "grid grid-cols-1 gap-3 pb-10 lg:grid-cols-[minmax(0,1fr)_minmax(420px,500px)] lg:items-start" : "pb-10"}>
             <div className="min-w-0 space-y-3">
-            {/* Compact Statistics Dashboard */}
-            <div className="bg-card p-4 rounded-xl border border-border shadow-sm">
-                <div className="mb-3 flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
-                    <div>
+                {/* Expense Summary */}
+                <div className="flex items-center justify-between gap-4 rounded-xl border border-slate-800 bg-slate-900 px-5 py-4 text-white shadow-sm">
+                    <div className="min-w-0">
+                        <p className="mb-2 text-sm font-bold tracking-tight text-slate-400">총 지출 예상</p>
+                        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                            <span className="text-2xl font-extrabold tracking-tight sm:text-3xl">
+                                {formatMoney(totalExpense)}
+                            </span>
+                            {totalIncome !== undefined && (
+                                <span className="text-sm font-semibold tracking-tight text-slate-500 sm:text-base">
+                                    (수입: {formatMoney(totalIncome)})
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                    <div className="shrink-0 text-right">
+                        <p className="mb-2 text-sm font-bold tracking-tight text-slate-400">카테고리</p>
+                        <p className="text-2xl font-extrabold tracking-tight sm:text-3xl">{categories.length}개</p>
+                    </div>
+                </div>
+
+                {/* Compact Statistics Dashboard */}
+                <div className="bg-card p-4 rounded-xl border border-border shadow-sm">
+                    <div className="mb-3">
                         <h3 className="text-lg font-bold text-foreground flex items-center gap-2 tracking-tight">
                             <span className="w-1 h-6 bg-emerald-500 rounded-full"></span>
                             지출 구성 분석
                         </h3>
-                        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-                            <span className="font-bold text-slate-900">
-                                총 지출 <span className="text-lg">{formatMoney(totalExpense)}</span>
-                            </span>
-                            {totalIncome !== undefined && (
-                                <span className="text-slate-500">
-                                    수입 {formatMoney(totalIncome)}
-                                </span>
-                            )}
-                            <span className="text-slate-500">카테고리 {categories.length}개</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="flex flex-col lg:flex-row gap-4 lg:gap-4 items-center lg:items-stretch">
-                    {/* Pie Chart */}
-                    <div className="w-full lg:w-[210px] h-[132px] relative flex-shrink-0 flex justify-center px-6 lg:border-r lg:border-slate-100">
-                        {mounted ? (
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={pieData}
-                                        cx={centerPos}
-                                        cy="50%"
-                                        innerRadius={40}
-                                        outerRadius={58}
-                                        paddingAngle={2}
-                                        dataKey="value"
-                                    >
-                                        {pieData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.fill} stroke="none" />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip
-                                        formatter={(value: unknown) => formatMoney(Number(value))}
-                                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                        wrapperStyle={{ zIndex: 100 }}
-                                    />
-                                </PieChart>
-                            </ResponsiveContainer>
-                        ) : (
-                            <div className="w-full h-full flex items-center justify-center text-slate-300 text-xs">
-                                차트 로딩 중...
-                            </div>
-                        )}
-                        {/* Center Text */}
-                        <div
-                            className="absolute top-[50%] flex flex-col items-center justify-center pointer-events-none z-0"
-                            style={{ left: centerPos, transform: 'translate(-50%, -50%)' }}
-                        >
-                            <div className="text-center">
-                                <p className="text-[10px] text-muted-foreground font-bold tracking-tight">Total</p>
-                                <p className="text-xs font-bold text-foreground tracking-tight">100%</p>
-                            </div>
-                        </div>
                     </div>
 
-                    {/* Legend Grid */}
-                    <div className="relative flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-1.5 content-center w-full min-w-0 py-0.5">
-                        <span className="pointer-events-none absolute left-1/2 top-1/2 hidden h-16 w-px -translate-y-1/2 bg-slate-200 md:block lg:hidden" />
-                        <span className="pointer-events-none absolute left-1/3 top-1/2 hidden h-16 w-px -translate-y-1/2 bg-slate-200 lg:block" />
-                        <span className="pointer-events-none absolute left-2/3 top-1/2 hidden h-16 w-px -translate-y-1/2 bg-slate-200 lg:block" />
-                        {categoriesWithTotals.map((cat) => {
-                            const pct = totalExpense > 0 ? (cat.totalAmount / totalExpense) * 100 : 0;
-                            const colors = getCategoryColor(cat.title);
+                    <div className="flex flex-col gap-5 lg:flex-row lg:items-center">
+                        {/* Legend Grid */}
+                        <div className="relative grid w-full min-w-0 flex-1 grid-cols-1 gap-x-8 gap-y-2 py-2 md:grid-cols-2 lg:grid-cols-3">
+                            <span className="pointer-events-none absolute left-1/2 top-1/2 hidden h-24 w-px -translate-y-1/2 bg-slate-200 md:block lg:hidden" />
+                            <span className="pointer-events-none absolute left-1/3 top-1/2 hidden h-24 w-px -translate-y-1/2 bg-slate-200 lg:block" />
+                            <span className="pointer-events-none absolute left-2/3 top-1/2 hidden h-24 w-px -translate-y-1/2 bg-slate-200 lg:block" />
+                            {categoriesWithTotals.map((cat) => {
+                                const pct = totalExpense > 0 ? (cat.totalAmount / totalExpense) * 100 : 0;
+                                const colors = getCategoryColor(cat.title);
 
-                            return (
-                                <div key={cat.id} className="grid grid-cols-[minmax(0,1fr)_5.5rem] items-baseline gap-2 border-b border-slate-100 pb-1.5">
-                                    <div className="flex min-w-0 items-baseline gap-1.5">
-                                        <div className={`h-2 w-2 shrink-0 rounded-full ${colors.bar}`} />
-                                        <span className="truncate text-sm font-bold tracking-tight text-slate-700">{cat.title}</span>
-                                        <span className="shrink-0 text-xs tracking-tight text-muted-foreground/50">{pct.toFixed(1)}%</span>
+                                return (
+                                    <div key={cat.id} className="grid grid-cols-[minmax(0,1fr)_5.5rem] items-baseline gap-2 border-b border-slate-100 pb-1.5">
+                                        <div className="flex min-w-0 items-baseline gap-1.5">
+                                            <div className={`h-2 w-2 shrink-0 rounded-full ${colors.bar}`} />
+                                            <span className="truncate text-sm font-bold tracking-tight text-slate-700">{cat.title}</span>
+                                            <span className="shrink-0 text-xs tracking-tight text-muted-foreground/50">{pct.toFixed(1)}%</span>
+                                        </div>
+                                        <span className="justify-self-end text-right text-sm font-medium text-slate-700 tracking-tight whitespace-nowrap tabular-nums">{formatMoney(cat.totalAmount)}</span>
                                     </div>
-                                    <span className="justify-self-end text-right text-sm font-medium text-slate-700 tracking-tight whitespace-nowrap tabular-nums">{formatMoney(cat.totalAmount)}</span>
+                                );
+                            })}
+                        </div>
+
+                        {/* Pie Chart */}
+                        <div className="relative flex h-[170px] w-full shrink-0 justify-center px-6 lg:w-[240px]">
+                            {mounted ? (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={pieData}
+                                            cx={centerPos}
+                                            cy="50%"
+                                            innerRadius={50}
+                                            outerRadius={72}
+                                            paddingAngle={2}
+                                            dataKey="value"
+                                        >
+                                            {pieData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={entry.fill} stroke="none" />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip
+                                            formatter={(value: unknown) => formatMoney(Number(value))}
+                                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                            wrapperStyle={{ zIndex: 100 }}
+                                        />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-slate-300 text-xs">
+                                    차트 로딩 중...
                                 </div>
-                            );
-                        })}
+                            )}
+                            {/* Center Text */}
+                            <div
+                                className="absolute top-[50%] flex flex-col items-center justify-center pointer-events-none z-0"
+                                style={{ left: centerPos, transform: 'translate(-50%, -50%)' }}
+                            >
+                                <div className="text-center">
+                                    <p className="text-[10px] text-muted-foreground font-bold tracking-tight">Total</p>
+                                    <p className="text-xs font-bold text-foreground tracking-tight">100%</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Category grid */}
+                {/* Category grid */}
                 <div className="min-w-0">
                     {mounted ? (
                         <DndContext
