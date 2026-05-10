@@ -58,6 +58,7 @@ interface AdvancedInputSectionProps {
     allowItemMoving?: boolean;
     allowCategoryAdding?: boolean;
     allowItemDeleting?: boolean;
+    showAddCategoryButton?: boolean;
 }
 
 export function AdvancedInputSection({
@@ -90,6 +91,7 @@ export function AdvancedInputSection({
     allowItemMoving = true,
     allowCategoryAdding = true,
     allowItemDeleting = true,
+    showAddCategoryButton = true,
 }: AdvancedInputSectionProps) {
     const mounted = useSyncExternalStore(
         subscribeToMount,
@@ -417,7 +419,7 @@ export function AdvancedInputSection({
             </div>
 
             {/* Add Category Button */}
-            {allowCategoryAdding && (
+            {showAddCategoryButton && allowCategoryAdding && (
                 <button
                     onClick={handleAddCategory}
                     className="w-full py-4 rounded-xl border-2 border-dashed border-border text-muted-foreground font-bold hover:border-primary hover:text-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-2"
