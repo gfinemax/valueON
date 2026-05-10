@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { GripVertical, PanelRightOpen } from "lucide-react";
+import { GripVertical, PanelRightOpen, X } from "lucide-react";
 import { AnalysisResult, MemberTier, UnitAllocation, UnitType } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -108,7 +108,7 @@ export function IncomeCategorySection({
     onUpdateAllocation,
     isEditMode = true,
 }: IncomeCategorySectionProps) {
-    const [selectedCategoryId, setSelectedCategoryId] = useState<IncomeCategoryId>("member");
+    const [selectedCategoryId, setSelectedCategoryId] = useState<IncomeCategoryId | null>("member");
 
     const summaries = useMemo<IncomeCategorySummary[]>(() => {
         const rows = getRows(unitTypes, allocations, unitPricing);
@@ -138,10 +138,10 @@ export function IncomeCategorySection({
     }, [allocations, unitPricing, unitTypes]);
 
     const totalRevenue = summaries.reduce((sum, summary) => sum + summary.revenue, 0);
-    const selectedCategory = summaries.find((summary) => summary.id === selectedCategoryId) ?? summaries[0];
+    const selectedCategory = summaries.find((summary) => summary.id === selectedCategoryId);
 
     return (
-        <section className="grid grid-cols-1 gap-3 pb-10 lg:grid-cols-[minmax(0,1fr)_minmax(420px,500px)] lg:items-start">
+        <section className={selectedCategory ? "grid grid-cols-1 gap-3 pb-10 lg:grid-cols-[minmax(0,1fr)_minmax(420px,500px)] lg:items-start" : "pb-10"}>
             <div className="min-w-0 space-y-3">
                 <h3 className="flex items-center gap-2 text-sm font-bold text-slate-700">
                     <span className="inline-block h-4 w-1 rounded-full bg-slate-800" />
@@ -151,7 +151,7 @@ export function IncomeCategorySection({
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                     {summaries.map((summary) => {
                         const percent = totalRevenue > 0 ? (summary.revenue / totalRevenue) * 100 : 0;
-                        const selected = summary.id === selectedCategory.id;
+                        const selected = summary.id === selectedCategory?.id;
 
                         return (
                             <button
@@ -192,50 +192,63 @@ export function IncomeCategorySection({
                 </div>
             </div>
 
-            <aside className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm lg:sticky lg:top-16">
-                <div className={`border-l-[5px] ${selectedCategory.border} border-b border-slate-100 bg-white p-4`}>
-                    <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                            <div className="flex min-w-0 items-center gap-2">
-                                <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${selectedCategory.color}`} />
-                                <h4 className="truncate text-base font-extrabold tracking-tight text-slate-900">
-                                    {selectedCategory.title}
-                                </h4>
+            {selectedCategory && (
+                <aside className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm lg:sticky lg:top-16">
+                    <div className={`border-l-[5px] ${selectedCategory.border} border-b border-slate-100 bg-white p-4`}>
+                        <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                                <div className="flex min-w-0 items-center gap-2">
+                                    <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${selectedCategory.color}`} />
+                                    <h4 className="truncate text-base font-extrabold tracking-tight text-slate-900">
+                                        {selectedCategory.title}
+                                    </h4>
+                                </div>
+                                <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm">
+                                    <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                                        {totalRevenue > 0 ? ((selectedCategory.revenue / totalRevenue) * 100).toFixed(1) : "0.0"}%
+                                    </span>
+                                    <span className="font-bold text-slate-900 tabular-nums">
+                                        {formatEok(selectedCategory.revenue)}
+                                    </span>
+                                    <span className="text-xs text-slate-400">
+                                        {selectedCategory.householdCount}세대
+                                    </span>
+                                </div>
                             </div>
-                            <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm">
-                                <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
-                                    {totalRevenue > 0 ? ((selectedCategory.revenue / totalRevenue) * 100).toFixed(1) : "0.0"}%
-                                </span>
-                                <span className="font-bold text-slate-900 tabular-nums">
-                                    {formatEok(selectedCategory.revenue)}
-                                </span>
-                                <span className="text-xs text-slate-400">
-                                    {selectedCategory.householdCount}세대
-                                </span>
-                            </div>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon-sm"
+                                title="상세 패널 닫기"
+                                aria-label="상세 패널 닫기"
+                                className="shrink-0 rounded-full border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                                onClick={() => setSelectedCategoryId(null)}
+                            >
+                                <X className="h-4 w-4" />
+                            </Button>
                         </div>
                     </div>
-                </div>
 
-                <div className="max-h-[calc(100vh-11rem)] overflow-y-auto p-4">
-                    {selectedCategory.rows.length > 0 ? (
-                        <div className="space-y-3">
-                            {selectedCategory.rows.map((row) => (
-                                <IncomeDetailRow
-                                    key={row.allocation.id}
-                                    row={row}
-                                    isEditMode={isEditMode}
-                                    onUpdateAllocation={onUpdateAllocation}
-                                />
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="rounded-lg border border-dashed border-slate-200 p-5 text-sm text-slate-500">
-                            등록된 세부 수입 항목이 없습니다.
-                        </div>
-                    )}
-                </div>
-            </aside>
+                    <div className="max-h-[calc(100vh-11rem)] overflow-y-auto p-4">
+                        {selectedCategory.rows.length > 0 ? (
+                            <div className="space-y-3">
+                                {selectedCategory.rows.map((row) => (
+                                    <IncomeDetailRow
+                                        key={row.allocation.id}
+                                        row={row}
+                                        isEditMode={isEditMode}
+                                        onUpdateAllocation={onUpdateAllocation}
+                                    />
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="rounded-lg border border-dashed border-slate-200 p-5 text-sm text-slate-500">
+                                등록된 세부 수입 항목이 없습니다.
+                            </div>
+                        )}
+                    </div>
+                </aside>
+            )}
         </section>
     );
 }
