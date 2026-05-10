@@ -33,6 +33,17 @@ function formatEok(amount: number) {
     }).format(amount / 100000000)}억원`;
 }
 
+function formatSalePrice(amount: number) {
+    return `${new Intl.NumberFormat("ko-KR", {
+        maximumFractionDigits: 2,
+    }).format(amount / 100000000)}억`;
+}
+
+function getUnitShortName(name: string) {
+    const match = name.match(/\d+/);
+    return match ? match[0] : name.replace("Type", "").replace("임대", "").trim();
+}
+
 export function UnitMixStats({ unitTypes, allocations, unitPricing }: UnitMixStatsProps) {
     // Separate apartment and rental types
     const apartmentTypeIds = unitTypes.filter(u => u.category === 'APARTMENT').map(u => u.id);
@@ -53,12 +64,30 @@ export function UnitMixStats({ unitTypes, allocations, unitPricing }: UnitMixSta
             }
         });
 
+        const priceSummary = tierAllocations
+            .map((alloc) => {
+                const unitType = unitTypes.find((u) => u.id === alloc.unitTypeId);
+                const pricing = unitPricing?.find(p => p.allocationId === alloc.id);
+                const pricePerPyung = alloc.targetPricePerPyung ?? pricing?.pricePerPyung ?? 0;
+                const totalPrice = pricing?.totalPrice ?? ((unitType?.supplyArea ?? 0) * pricePerPyung);
+
+                return {
+                    label: unitType ? getUnitShortName(unitType.name) : "?",
+                    supplyArea: unitType?.supplyArea ?? 0,
+                    totalPrice,
+                };
+            })
+            .sort((a, b) => a.supplyArea - b.supplyArea)
+            .map((item) => `${item.label} ${formatSalePrice(item.totalPrice)}`)
+            .join(" · ");
+
         return {
             tier,
             name: TIER_LABELS[tier],
             count: totalCount,
             revenue: totalRevenue,
             color: TIER_COLORS[tier],
+            priceSummary,
         };
     });
 
@@ -72,10 +101,26 @@ export function UnitMixStats({ unitTypes, allocations, unitPricing }: UnitMixSta
             rentalRevenue += alloc.targetPricePerPyung * ut.supplyArea * alloc.count;
         }
     });
+    const rentalPriceSummary = rentalAllocations
+        .map((alloc) => {
+            const unitType = unitTypes.find(u => u.id === alloc.unitTypeId);
+            const pricing = unitPricing?.find(p => p.allocationId === alloc.id);
+            const pricePerPyung = alloc.targetPricePerPyung ?? pricing?.pricePerPyung ?? 0;
+            const totalPrice = pricing?.totalPrice ?? ((unitType?.supplyArea ?? 0) * pricePerPyung);
+
+            return {
+                label: unitType ? getUnitShortName(unitType.name) : "?",
+                supplyArea: unitType?.supplyArea ?? 0,
+                totalPrice,
+            };
+        })
+        .sort((a, b) => a.supplyArea - b.supplyArea)
+        .map((item) => `${item.label} ${formatSalePrice(item.totalPrice)}`)
+        .join(" · ");
 
     const allStats = [
         ...tierStats,
-        { tier: 'Rental', name: '임대주택', count: rentalCount, revenue: rentalRevenue, color: TIER_COLORS['Rental'] }
+        { tier: 'Rental', name: '임대주택', count: rentalCount, revenue: rentalRevenue, color: TIER_COLORS['Rental'], priceSummary: rentalPriceSummary }
     ];
 
     const totalUnits = allStats.reduce((sum, s) => sum + s.count, 0);
@@ -135,16 +180,16 @@ export function UnitMixStats({ unitTypes, allocations, unitPricing }: UnitMixSta
                             const percent = totalRevenue > 0 ? (stat.revenue / totalRevenue) * 100 : 0;
 
                             return (
-                                <div key={stat.tier} className="grid grid-cols-[minmax(0,1fr)_7rem] items-baseline gap-2 border-b border-slate-100 pb-1.5">
+                                <div key={stat.tier} className="border-b border-slate-100 pb-2">
                                     <div className="flex min-w-0 items-baseline gap-1.5">
                                         <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: stat.color }} />
                                         <span className="truncate text-sm font-bold tracking-tight text-slate-700">{stat.name}</span>
                                         <span className="shrink-0 text-xs tracking-tight text-slate-500">{stat.count}세대</span>
                                         <span className="shrink-0 text-xs tracking-tight text-muted-foreground/50">{percent.toFixed(1)}%</span>
                                     </div>
-                                    <span className="justify-self-end whitespace-nowrap text-right text-sm font-medium tracking-tight text-slate-700 tabular-nums">
-                                        {formatEok(stat.revenue)}
-                                    </span>
+                                    <div className="mt-1 truncate pl-3.5 text-sm font-semibold tracking-tight text-slate-900 tabular-nums">
+                                        {stat.priceSummary || "-"}
+                                    </div>
                                 </div>
                             );
                         })}
