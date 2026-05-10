@@ -8,9 +8,10 @@ interface UnitMixSectionProps {
     allocations: UnitAllocation[];
     onUpdateAllocation: (id: string, field: keyof UnitAllocation, value: number | string) => void;
     unitPricing?: AnalysisResult['unitPricing'];
+    isEditMode?: boolean;
 }
 
-export function UnitMixSection({ unitTypes, allocations, onUpdateAllocation, unitPricing }: UnitMixSectionProps) {
+export function UnitMixSection({ unitTypes, allocations, onUpdateAllocation, unitPricing, isEditMode = true }: UnitMixSectionProps) {
     return (
         <div className="space-y-6">
             {/* Group by Category */}
@@ -35,6 +36,7 @@ export function UnitMixSection({ unitTypes, allocations, onUpdateAllocation, uni
                             allocations={allocations}
                             onUpdateAllocation={onUpdateAllocation}
                             unitPricing={unitPricing}
+                            isEditMode={isEditMode}
                         />
                     </div>
                 );

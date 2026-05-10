@@ -9,6 +9,8 @@ interface SettingsContextType {
     setAllowCategoryAdding: (value: boolean) => void;
     allowItemDeleting: boolean;
     setAllowItemDeleting: (value: boolean) => void;
+    isEditMode: boolean;
+    setIsEditMode: (value: boolean) => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -16,6 +18,7 @@ const SETTINGS_KEYS = {
     allowItemMoving: 'valueon-allow-item-moving-v2',
     allowCategoryAdding: 'valueon-allow-category-adding-v2',
     allowItemDeleting: 'valueon-allow-item-deleting-v2',
+    isEditMode: 'valueon-management-edit-mode-v1',
 };
 const LEGACY_SETTINGS_KEYS = [
     'valueon-allow-item-moving',
@@ -27,6 +30,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     const [allowItemMoving, setAllowItemMovingState] = useState<boolean>(true);
     const [allowCategoryAdding, setAllowCategoryAddingState] = useState<boolean>(true);
     const [allowItemDeleting, setAllowItemDeletingState] = useState<boolean>(true);
+    const [isEditMode, setIsEditModeState] = useState<boolean>(true);
 
     useEffect(() => {
         const timer = window.setTimeout(() => {
@@ -45,6 +49,11 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
             const savedDelete = localStorage.getItem(SETTINGS_KEYS.allowItemDeleting);
             if (savedDelete !== null) {
                 setAllowItemDeletingState(savedDelete === 'true');
+            }
+
+            const savedEditMode = localStorage.getItem(SETTINGS_KEYS.isEditMode);
+            if (savedEditMode !== null) {
+                setIsEditModeState(savedEditMode === 'true');
             }
         }, 0);
 
@@ -66,6 +75,11 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem(SETTINGS_KEYS.allowItemDeleting, String(value));
     };
 
+    const setIsEditMode = (value: boolean) => {
+        setIsEditModeState(value);
+        localStorage.setItem(SETTINGS_KEYS.isEditMode, String(value));
+    };
+
     return (
         <SettingsContext.Provider value={{
             allowItemMoving,
@@ -73,7 +87,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
             allowCategoryAdding,
             setAllowCategoryAdding,
             allowItemDeleting,
-            setAllowItemDeleting
+            setAllowItemDeleting,
+            isEditMode,
+            setIsEditMode
         }}>
             {children}
         </SettingsContext.Provider>

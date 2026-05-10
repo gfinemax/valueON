@@ -8,9 +8,10 @@ interface UnitMixGridProps {
     allocations: UnitAllocation[];
     onUpdateAllocation: (id: string, field: keyof UnitAllocation, value: number | string) => void;
     unitPricing?: AnalysisResult['unitPricing'];
+    isEditMode?: boolean;
 }
 
-export function UnitMixGrid({ unitTypes, allocations, onUpdateAllocation, unitPricing }: UnitMixGridProps) {
+export function UnitMixGrid({ unitTypes, allocations, onUpdateAllocation, unitPricing, isEditMode = true }: UnitMixGridProps) {
     // Calculate total revenue for percentage display
     const totalRevenue = allocations.reduce((sum, alloc) => {
         if (alloc.tier === '1st' && alloc.fixedTotalPrice) {
@@ -39,6 +40,7 @@ export function UnitMixGrid({ unitTypes, allocations, onUpdateAllocation, unitPr
                         onUpdateAllocation={onUpdateAllocation}
                         unitPricing={unitPricing}
                         totalRevenue={totalRevenue}
+                        isEditMode={isEditMode}
                     />
                 );
             })}

@@ -14,6 +14,7 @@ interface UnitTypeCardProps {
     unitPricing?: AnalysisResult['unitPricing'];
     initialPayment?: number;
     totalRevenue?: number; // 전체 수입 (비율 계산용)
+    isEditMode?: boolean;
 }
 
 export function UnitTypeCard({
@@ -22,7 +23,8 @@ export function UnitTypeCard({
     onUpdateAllocation,
     unitPricing,
     initialPayment = 450000000,
-    totalRevenue = 0
+    totalRevenue = 0,
+    isEditMode = true
 }: UnitTypeCardProps) {
     const [expandedTiers, setExpandedTiers] = useState<Record<string, boolean>>({});
 
@@ -55,17 +57,24 @@ export function UnitTypeCard({
             <div className={`relative rounded-lg overflow-hidden ${bgColor} shadow-sm border border-slate-100`}>
                 {/* Summary Row - 2 Line Layout */}
                 <button
-                    onClick={() => toggleTier(tier)}
-                    aria-expanded={isExpanded}
-                    aria-controls={panelId}
-                    className="group w-full p-3 pl-5 text-left transition-colors hover:bg-slate-100/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30"
+                    type="button"
+                    onClick={() => {
+                        if (isEditMode) {
+                            toggleTier(tier);
+                        }
+                    }}
+                    aria-expanded={isEditMode ? isExpanded : undefined}
+                    aria-controls={isEditMode ? panelId : undefined}
+                    className={`group w-full p-3 pl-5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 ${
+                        isEditMode ? "hover:bg-slate-100/70" : "cursor-default"
+                    }`}
                 >
                     {/* Line 1: Tier + Count */}
                     <div className="flex items-center justify-between gap-3 mb-1.5">
                         <span className={`text-sm font-bold ${textColor}`}>
                             {label} <span className="text-slate-600 font-normal ml-1">{alloc.count}세대</span>
                         </span>
-                        <ExpandToggle expanded={isExpanded} />
+                        {isEditMode && <ExpandToggle expanded={isExpanded} />}
                     </div>
                     {/* Line 2: Percentage + Price */}
                     <div className="flex items-center justify-between">
@@ -79,7 +88,7 @@ export function UnitTypeCard({
                 </button>
 
                 {/* Expandable Details */}
-                {isExpanded && (
+                {isEditMode && isExpanded && (
                     <div id={panelId} className="px-3 pb-3 pt-1 pl-5 border-t border-black/5 bg-white">
                         {/* 1차 조합원 - 초기분양가/추가분담금 표시 */}
                         {tier === '1st' && alloc.fixedTotalPrice && (
