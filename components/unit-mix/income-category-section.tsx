@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatKoreanCurrency, formatKrwThousands, parseKoreanMoney } from "@/utils/currency";
 
-type IncomeCategoryId = "member" | "general" | "rental" | "other";
+type IncomeCategoryId = "member1" | "member2" | "general" | "rental" | "other";
 
 interface IncomeCategorySectionProps {
     unitTypes: UnitType[];
@@ -40,11 +40,17 @@ interface IncomeCategorySummary {
 }
 
 const CATEGORY_META: Record<IncomeCategoryId, { title: string; description: string; color: string; border: string }> = {
-    member: {
-        title: "조합원 분담금",
-        description: "1차/2차 조합원",
+    member1: {
+        title: "1차 조합원",
+        description: "1차 조합원 분담금",
         color: "bg-emerald-500",
         border: "border-l-emerald-500",
+    },
+    member2: {
+        title: "2차 조합원",
+        description: "2차 조합원 분담금",
+        color: "bg-amber-500",
+        border: "border-l-amber-500",
     },
     general: {
         title: "일반분양수입",
@@ -108,12 +114,13 @@ export function IncomeCategorySection({
     isEditMode = true,
     summaryContent,
 }: IncomeCategorySectionProps) {
-    const [selectedCategoryId, setSelectedCategoryId] = useState<IncomeCategoryId | null>("member");
+    const [selectedCategoryId, setSelectedCategoryId] = useState<IncomeCategoryId | null>("member1");
 
     const summaries = useMemo<IncomeCategorySummary[]>(() => {
         const rows = getRows(unitTypes, allocations, unitPricing);
         const apartmentRows = rows.filter((row) => row.unitType.category !== "RENTAL");
-        const memberRows = apartmentRows.filter((row) => row.allocation.tier === "1st" || row.allocation.tier === "2nd");
+        const firstMemberRows = apartmentRows.filter((row) => row.allocation.tier === "1st");
+        const secondMemberRows = apartmentRows.filter((row) => row.allocation.tier === "2nd");
         const generalRows = apartmentRows.filter((row) => row.allocation.tier === "General");
         const rentalRows = rows.filter((row) => row.unitType.category === "RENTAL");
 
@@ -130,7 +137,8 @@ export function IncomeCategorySection({
         };
 
         return [
-            buildSummary("member", memberRows, 2),
+            buildSummary("member1", firstMemberRows),
+            buildSummary("member2", secondMemberRows),
             buildSummary("general", generalRows),
             buildSummary("rental", rentalRows),
             buildSummary("other", [], 0),
