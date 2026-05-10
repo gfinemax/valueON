@@ -14,9 +14,6 @@ interface UnitMixGridProps {
 export function UnitMixGrid({ unitTypes, allocations, onUpdateAllocation, unitPricing, isEditMode = true }: UnitMixGridProps) {
     // Calculate total revenue for percentage display
     const totalRevenue = allocations.reduce((sum, alloc) => {
-        if (alloc.tier === '1st' && alloc.fixedTotalPrice) {
-            return sum + alloc.fixedTotalPrice * alloc.count;
-        }
         const pricing = unitPricing?.find(p => p.allocationId === alloc.id);
         if (pricing) {
             return sum + pricing.totalPrice * alloc.count;

@@ -95,20 +95,20 @@ const defaultUnitTypes: UnitType[] = [
 ];
 
 const defaultUnitAllocations: UnitAllocation[] = [
-    // 아파트 - 1st Members (고정 분양가) - 총 70세대
-    { id: "a1", unitTypeId: "u1", tier: "1st", count: 37, fixedTotalPrice: 750000000 },  // 59 Type: 7억 5천
-    { id: "a7", unitTypeId: "u3", tier: "1st", count: 14, fixedTotalPrice: 925000000 },  // 73 Type: 9억 2,500만
-    { id: "a2", unitTypeId: "u2", tier: "1st", count: 19, fixedTotalPrice: 999000000 },  // 84 Type: 9억 9,900만
+    // 아파트 - 1st Members (평당 단가) - 총 70세대
+    { id: "a1", unitTypeId: "u1", tier: "1st", count: 37, targetPricePerPyung: 30000000 },  // 59 Type: 7억 5천
+    { id: "a7", unitTypeId: "u3", tier: "1st", count: 14, targetPricePerPyung: 29838710 },  // 73 Type: 9억 2,500만
+    { id: "a2", unitTypeId: "u2", tier: "1st", count: 19, targetPricePerPyung: 29382353 },  // 84 Type: 9억 9,900만
 
-    // 아파트 - 2nd Members (일반분양과 동일) - 총 130세대
-    { id: "a3", unitTypeId: "u1", tier: "2nd", count: 69, fixedTotalPrice: 1000000000 },  // 59 Type: 10억
-    { id: "a8", unitTypeId: "u3", tier: "2nd", count: 26, fixedTotalPrice: 1325000000 }, // 73 Type: 13.25억
-    { id: "a4", unitTypeId: "u2", tier: "2nd", count: 35, fixedTotalPrice: 1399000000 }, // 84 Type: 13.99억
+    // 아파트 - 2nd Members (평당 단가) - 총 130세대
+    { id: "a3", unitTypeId: "u1", tier: "2nd", count: 69, targetPricePerPyung: 40000000 },  // 59 Type: 10억
+    { id: "a8", unitTypeId: "u3", tier: "2nd", count: 26, targetPricePerPyung: 42741935 }, // 73 Type: 13.25억
+    { id: "a4", unitTypeId: "u2", tier: "2nd", count: 35, targetPricePerPyung: 41147059 }, // 84 Type: 13.99억
 
-    // 아파트 - General Sales - 총 36세대
-    { id: "a5", unitTypeId: "u1", tier: "General", count: 19, fixedTotalPrice: 1100000000 },  // 59 Type: 11억
-    { id: "a9", unitTypeId: "u3", tier: "General", count: 7, fixedTotalPrice: 1475000000 },   // 73 Type: 13.25억+1.5억=14.75억
-    { id: "a6", unitTypeId: "u2", tier: "General", count: 10, fixedTotalPrice: 1549000000 },  // 84 Type: 13.99억+1.5억=15.49억
+    // 아파트 - General Sales (평당 단가) - 총 36세대
+    { id: "a5", unitTypeId: "u1", tier: "General", count: 19, targetPricePerPyung: 44000000 },  // 59 Type: 11억
+    { id: "a9", unitTypeId: "u3", tier: "General", count: 7, targetPricePerPyung: 47580645 },   // 73 Type: 14.75억
+    { id: "a6", unitTypeId: "u2", tier: "General", count: 10, targetPricePerPyung: 45558824 },  // 84 Type: 15.49억
 
     // 임대주택 - General only (평당 2,500만원) - 총 18세대
     { id: "a10", unitTypeId: "u4", tier: "General", count: 12, targetPricePerPyung: 25000000 },

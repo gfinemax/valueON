@@ -73,8 +73,10 @@ export function calculateAnalysisResult(inputs: AnalysisInputs): AnalysisResult 
     .filter((allocation) => allocation.tier === "General")
     .forEach((allocation) => {
       const area = getUnitArea(allocation.unitTypeId);
-      const calculatedPrice = area * (allocation.targetPricePerPyung || 0);
-      const finalPrice = allocation.fixedTotalPrice || calculatedPrice;
+      const pricePerPyung =
+        allocation.targetPricePerPyung
+        ?? (area > 0 && allocation.fixedTotalPrice ? allocation.fixedTotalPrice / area : 0);
+      const finalPrice = area * pricePerPyung;
       const revenue = allocation.count * finalPrice;
 
       generalRevenue += revenue;
@@ -85,7 +87,7 @@ export function calculateAnalysisResult(inputs: AnalysisInputs): AnalysisResult 
         tier: "General",
         supplyArea: area,
         totalPrice: finalPrice,
-        pricePerPyung: area > 0 ? finalPrice / area : 0,
+        pricePerPyung,
         revenueContribution: revenue,
       });
     });
@@ -114,13 +116,15 @@ export function calculateAnalysisResult(inputs: AnalysisInputs): AnalysisResult 
 
   memberAllocations.forEach((allocation) => {
     const area = getUnitArea(allocation.unitTypeId);
-    let calculatedPrice = area * basePricePerPyung;
+    let pricePerPyung =
+      allocation.targetPricePerPyung
+      ?? (area > 0 && allocation.fixedTotalPrice ? allocation.fixedTotalPrice / area : basePricePerPyung);
+    let finalPrice = area * pricePerPyung;
 
-    if (allocation.tier === "2nd") {
-      calculatedPrice += allocation.premium || 0;
+    if (allocation.tier === "2nd" && allocation.targetPricePerPyung === undefined && !allocation.fixedTotalPrice) {
+      finalPrice += allocation.premium || 0;
+      pricePerPyung = area > 0 ? finalPrice / area : pricePerPyung;
     }
-
-    const finalPrice = allocation.fixedTotalPrice || calculatedPrice;
 
     calculatedUnitPricing.push({
       allocationId: allocation.id,
@@ -148,10 +152,8 @@ export function calculateAnalysisResult(inputs: AnalysisInputs): AnalysisResult 
       return;
     }
 
-    if (unitType.category === "RENTAL") {
-      if (allocation.targetPricePerPyung) {
-        totalRevenue += allocation.targetPricePerPyung * unitType.supplyArea * allocation.count;
-      }
+    if (allocation.targetPricePerPyung) {
+      totalRevenue += allocation.targetPricePerPyung * unitType.supplyArea * allocation.count;
       return;
     }
 

@@ -172,32 +172,53 @@ function getItemTotal(inputs: AnalysisInputs, categoryId: string, itemId: string
   return item ? calculateCostItemAmount(item, inputs) : 0;
 }
 
+function getAllocationUnitPrice(inputs: AnalysisInputs, allocationId: string) {
+  const allocation = inputs.unitAllocations.find((current) => current.id === allocationId);
+  if (!allocation) {
+    return 0;
+  }
+
+  const unitType = inputs.unitTypes.find((current) => current.id === allocation.unitTypeId);
+  const area = unitType?.supplyArea || 0;
+
+  if (allocation.targetPricePerPyung !== undefined) {
+    return allocation.targetPricePerPyung * area;
+  }
+
+  return allocation.fixedTotalPrice || 0;
+}
+
 function createSimulationBaseInputs(inputs: AnalysisInputs) {
   const cloned = structuredClone(inputs);
   const firstTierPrices = new Map<string, number>();
 
   cloned.unitAllocations.forEach((allocation) => {
-    if (allocation.tier === "1st" && allocation.fixedTotalPrice) {
-      firstTierPrices.set(allocation.unitTypeId, allocation.fixedTotalPrice);
+    if (allocation.tier === "1st") {
+      const unitPrice = getAllocationUnitPrice(inputs, allocation.id);
+      if (unitPrice > 0) {
+        firstTierPrices.set(allocation.unitTypeId, unitPrice);
+      }
     }
   });
 
   cloned.unitAllocations = cloned.unitAllocations.map((allocation) => {
     if (allocation.tier === "1st") {
-      return { ...allocation, fixedTotalPrice: undefined };
+      return { ...allocation, fixedTotalPrice: undefined, targetPricePerPyung: undefined };
     }
 
     if (allocation.tier === "2nd") {
       const basePrice = firstTierPrices.get(allocation.unitTypeId) || 0;
+      const unitPrice = getAllocationUnitPrice(inputs, allocation.id);
       const inferredPremium =
         allocation.premium !== undefined
           ? allocation.premium
-          : Math.max(0, (allocation.fixedTotalPrice || 0) - basePrice);
+          : Math.max(0, unitPrice - basePrice);
 
       return {
         ...allocation,
         premium: inferredPremium,
         fixedTotalPrice: undefined,
+        targetPricePerPyung: undefined,
       };
     }
 
@@ -433,7 +454,7 @@ function getAnchoredBasePrices(inputs: AnalysisInputs, columns: MemberColumn[]) 
       const allocation = inputs.unitAllocations.find(
         (item) => item.id === column.allocationId
       );
-      return [column.allocationId, allocation?.fixedTotalPrice || 0];
+      return [column.allocationId, allocation ? getAllocationUnitPrice(inputs, allocation.id) : 0];
     })
   );
 }

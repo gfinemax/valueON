@@ -39,14 +39,9 @@ export function UnitMixStats({ unitTypes, allocations, unitPricing }: UnitMixSta
 
         let totalRevenue = 0;
         tierAllocations.forEach(alloc => {
-            // fixedTotalPrice 우선 사용 (모든 tier)
-            if (alloc.fixedTotalPrice) {
-                totalRevenue += alloc.fixedTotalPrice * alloc.count;
-            } else {
-                const pricing = unitPricing?.find(p => p.allocationId === alloc.id);
-                if (pricing) {
-                    totalRevenue += pricing.totalPrice * alloc.count;
-                }
+            const pricing = unitPricing?.find(p => p.allocationId === alloc.id);
+            if (pricing) {
+                totalRevenue += pricing.totalPrice * alloc.count;
             }
         });
 

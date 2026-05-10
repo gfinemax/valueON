@@ -38,10 +38,8 @@ export function UnitTypeCard({
 
         const pricing = unitPricing?.find(p => p.allocationId === alloc.id);
 
-        // fixedTotalPrice 우선 사용 (모든 tier), 없으면 계산된 가격 사용
-        const salesPrice = alloc.fixedTotalPrice
-            ? alloc.fixedTotalPrice
-            : (pricing ? pricing.totalPrice : 0);
+        const pricePerPyung = alloc.targetPricePerPyung ?? pricing?.pricePerPyung ?? 0;
+        const salesPrice = pricing?.totalPrice ?? unitType.supplyArea * pricePerPyung;
 
         const tierRevenue = salesPrice * alloc.count;
         const isExpanded = expandedTiers[tier] || false;
@@ -91,7 +89,7 @@ export function UnitTypeCard({
                 {isEditMode && isExpanded && (
                     <div id={panelId} className="px-3 pb-3 pt-1 pl-5 border-t border-black/5 bg-white">
                         {/* 1차 조합원 - 초기분양가/추가분담금 표시 */}
-                        {tier === '1st' && alloc.fixedTotalPrice && (
+                        {tier === '1st' && salesPrice > 0 && (
                             <div className="mb-3 p-2 bg-slate-50 rounded-md border border-slate-100">
                                 <div className="flex justify-between text-sm">
                                     <span className="text-slate-600">초기 분양가</span>
@@ -121,10 +119,10 @@ export function UnitTypeCard({
 
                             {/* Price Setting */}
                             <div>
-                                <label className="text-xs text-slate-500 block mb-1">고정 분양가</label>
+                                <label className="text-xs text-slate-500 block mb-1">평당 단가</label>
                                 <MoneyInput
-                                    value={alloc.fixedTotalPrice || 0}
-                                    onChange={(val) => onUpdateAllocation(alloc.id, 'fixedTotalPrice', val)}
+                                    value={pricePerPyung}
+                                    onChange={(val) => onUpdateAllocation(alloc.id, 'targetPricePerPyung', val)}
                                 />
                             </div>
                         </div>
@@ -145,7 +143,7 @@ export function UnitTypeCard({
                         {tierRevenue > 0 && (
                             <div className="mt-3 pt-2 border-t border-black/10">
                                 <div className="text-xs text-slate-500 mb-1">
-                                    합계 ({alloc.count}세대 × {formatKoreanCurrency(salesPrice)})
+                                    합계 ({alloc.count}세대 × {unitType.supplyArea}평 × {formatKoreanCurrency(pricePerPyung)})
                                 </div>
                                 <div className="text-lg font-bold text-blue-600 text-right">
                                     {formatKoreanCurrency(tierRevenue)}원

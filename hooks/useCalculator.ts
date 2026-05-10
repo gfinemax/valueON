@@ -57,9 +57,21 @@ function normalizeInputs(
         const savedType = inputs.unitTypes?.find((type) => type.id === defaultType.id);
         return savedType ? { ...defaultType, ...savedType } : defaultType;
     });
+    const unitAreaById = new Map(mergedUnitTypes.map((unitType) => [unitType.id, unitType.supplyArea]));
     const mergedAllocations = defaultValues.unitAllocations.map((defaultAllocation) => {
         const savedAllocation = inputs.unitAllocations?.find((allocation) => allocation.id === defaultAllocation.id);
-        return savedAllocation ? { ...defaultAllocation, ...savedAllocation } : defaultAllocation;
+        const mergedAllocation = savedAllocation ? { ...defaultAllocation, ...savedAllocation } : defaultAllocation;
+        const area = unitAreaById.get(mergedAllocation.unitTypeId) || 0;
+        const savedPricePerPyung = savedAllocation?.targetPricePerPyung
+            ?? (area > 0 && savedAllocation?.fixedTotalPrice ? Math.round(savedAllocation.fixedTotalPrice / area) : undefined);
+        const defaultPricePerPyung = defaultAllocation.targetPricePerPyung
+            ?? (area > 0 && defaultAllocation.fixedTotalPrice ? Math.round(defaultAllocation.fixedTotalPrice / area) : undefined);
+
+        return {
+            ...mergedAllocation,
+            targetPricePerPyung: savedPricePerPyung ?? defaultPricePerPyung,
+            fixedTotalPrice: undefined,
+        };
     });
 
     return {
