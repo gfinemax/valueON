@@ -92,48 +92,6 @@ export function UnitMixStats({ unitTypes, allocations, unitPricing }: UnitMixSta
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            {/* 세대 구성 차트 */}
-            <div className="bg-gradient-to-r from-slate-800 to-slate-700 rounded-lg p-4 shadow-sm">
-                <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-sm font-bold text-white">세대 구성</h4>
-                    <span className="text-xs text-slate-300">총 {totalUnits}세대</span>
-                </div>
-                <div className="h-28">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                            <Pie
-                                data={countData}
-                                cx="50%"
-                                cy="50%"
-                                innerRadius={20}
-                                outerRadius={45}
-                                paddingAngle={2}
-                                dataKey="value"
-                                stroke="none"
-                            >
-                                {countData.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={entry.color} />
-                                ))}
-                            </Pie>
-                            <Tooltip
-                                formatter={(value: number | string | (number | string)[] | undefined) => [`${value || 0}세대`, '']}
-                                contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc' }}
-                                itemStyle={{ color: '#f8fafc' }}
-                            />
-                        </PieChart>
-                    </ResponsiveContainer>
-                </div>
-                <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 mt-2">
-                    {allStats.map(s => (
-                        <div key={s.tier} className="flex items-center gap-1 text-xs">
-                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
-                            <span className="text-slate-300">{s.name}</span>
-                            <span className="font-bold text-white">{s.count}</span>
-                        </div>
-                    ))}
-                </div>
-            </div>
-
             {/* 분양가 총액 차트 */}
             <div className="bg-gradient-to-r from-slate-800 to-slate-700 rounded-lg p-4 shadow-sm">
                 <div className="flex items-center justify-between mb-2">
@@ -171,6 +129,48 @@ export function UnitMixStats({ unitTypes, allocations, unitPricing }: UnitMixSta
                             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
                             <span className="text-slate-300">{s.name}</span>
                             <span className="font-bold text-white">{formatKoreanCurrency(s.revenue)}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* 세대 구성 차트 */}
+            <div className="bg-gradient-to-r from-slate-800 to-slate-700 rounded-lg p-4 shadow-sm">
+                <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-sm font-bold text-white">세대 구성</h4>
+                    <span className="text-xs text-slate-300">총 {totalUnits}세대</span>
+                </div>
+                <div className="h-28">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                            <Pie
+                                data={countData}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={20}
+                                outerRadius={45}
+                                paddingAngle={2}
+                                dataKey="value"
+                                stroke="none"
+                            >
+                                {countData.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={entry.color} />
+                                ))}
+                            </Pie>
+                            <Tooltip
+                                formatter={(value: number | string | (number | string)[] | undefined) => [`${value || 0}세대`, '']}
+                                contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc' }}
+                                itemStyle={{ color: '#f8fafc' }}
+                            />
+                        </PieChart>
+                    </ResponsiveContainer>
+                </div>
+                <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 mt-2">
+                    {allStats.map(s => (
+                        <div key={s.tier} className="flex items-center gap-1 text-xs">
+                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
+                            <span className="text-slate-300">{s.name}</span>
+                            <span className="font-bold text-white">{s.count}</span>
                         </div>
                     ))}
                 </div>
