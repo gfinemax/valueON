@@ -130,7 +130,7 @@ export function UnitMixStats({ unitTypes, allocations, unitPricing }: UnitMixSta
                 </div>
 
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-center">
-                    <div className="relative grid w-full min-w-0 flex-1 grid-cols-1 gap-x-8 gap-y-2 py-2 md:grid-cols-2 lg:grid-cols-4">
+                    <div className="relative grid w-full min-w-0 flex-1 grid-cols-1 gap-x-8 gap-y-2 py-2 md:grid-cols-2">
                         {allStats.map((stat) => {
                             const percent = totalRevenue > 0 ? (stat.revenue / totalRevenue) * 100 : 0;
 
@@ -183,30 +183,6 @@ export function UnitMixStats({ unitTypes, allocations, unitPricing }: UnitMixSta
                             <p className="text-xs font-bold tracking-tight text-foreground">100%</p>
                         </div>
                     </div>
-                </div>
-
-                <div className="mt-4 grid border-t border-slate-100 md:grid-cols-2 xl:grid-cols-4">
-                    {allStats.map((stat) => (
-                        <div key={stat.tier} className="min-w-0 border-b border-slate-100 px-4 py-4 md:[&:nth-child(2n-1)]:border-r xl:border-b-0 xl:border-r xl:last:border-r-0">
-                            <div className="flex items-center justify-between gap-3">
-                                <div className="flex min-w-0 items-center gap-2">
-                                    <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: stat.color }} />
-                                    <h4 className="truncate text-sm font-extrabold text-slate-900">{stat.name}</h4>
-                                </div>
-                                <span className="shrink-0 text-xs font-medium text-slate-500">
-                                    {stat.count}세대
-                                </span>
-                            </div>
-                            <div className="mt-2 flex items-end justify-between gap-3">
-                                <div className="text-xl font-bold tracking-tight text-slate-950">
-                                    {formatEok(stat.revenue)}
-                                </div>
-                                <div className="text-xs text-slate-400">
-                                    {totalRevenue > 0 ? `${((stat.revenue / totalRevenue) * 100).toFixed(1)}%` : "0.0%"}
-                                </div>
-                            </div>
-                        </div>
-                    ))}
                 </div>
             </section>
         </div>
