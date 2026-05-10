@@ -16,13 +16,20 @@ function normalizeInputs(
     const savedCategories = Array.isArray(inputs.advancedCategories) ? inputs.advancedCategories : [];
     const savedCategoryById = new Map(savedCategories.map((category) => [category.id, category]));
     const defaultCategoryIds = new Set(defaultValues.advancedCategories.map((category) => category.id));
+    const deletedDefaultCategoryIds = new Set(inputs.deletedDefaultCategoryIds ?? []);
+    const deletedDefaultItemIds = inputs.deletedDefaultItemIds ?? {};
 
-    const mergedCategories = defaultValues.advancedCategories.map((defaultCategory) => {
+    const mergedCategories = defaultValues.advancedCategories.filter((defaultCategory) => {
+        return !deletedDefaultCategoryIds.has(defaultCategory.id);
+    }).map((defaultCategory) => {
         const savedCategory = savedCategoryById.get(defaultCategory.id);
         if (!savedCategory) return defaultCategory;
 
         const savedItemById = new Map(savedCategory.items?.map((item) => [item.id, item]) ?? []);
-        const mergedItems = defaultCategory.items.map((defaultItem) => {
+        const deletedItemIds = new Set(deletedDefaultItemIds[defaultCategory.id] ?? []);
+        const mergedItems = defaultCategory.items.filter((defaultItem) => {
+            return !deletedItemIds.has(defaultItem.id);
+        }).map((defaultItem) => {
             const savedItem = savedItemById.get(defaultItem.id);
             if (!savedItem) return defaultItem;
 
@@ -62,6 +69,26 @@ function normalizeInputs(
         unitTypes: mergedUnitTypes,
         unitAllocations: mergedAllocations,
     };
+}
+
+const defaultCategoryIds = new Set(defaultValues.advancedCategories.map((category) => category.id));
+const defaultItemIdsByCategory = new Map(
+    defaultValues.advancedCategories.map((category) => [
+        category.id,
+        new Set(category.items.map((item) => item.id)),
+    ])
+);
+
+function isDefaultCategory(categoryId: string) {
+    return defaultCategoryIds.has(categoryId);
+}
+
+function isDefaultItem(categoryId: string, itemId: string) {
+    return defaultItemIdsByCategory.get(categoryId)?.has(itemId) ?? false;
+}
+
+function addUniqueId(ids: string[] | undefined, id: string) {
+    return ids?.includes(id) ? ids : [...(ids ?? []), id];
 }
 
 export function useCalculator() {
@@ -242,7 +269,19 @@ export function useCalculator() {
                 if (cat.id !== categoryId) return cat;
                 return { ...cat, items: cat.items.filter((item) => item.id !== itemId) };
             });
-            return { ...prev, advancedCategories: newCategories };
+
+            if (!isDefaultItem(categoryId, itemId)) {
+                return { ...prev, advancedCategories: newCategories };
+            }
+
+            return {
+                ...prev,
+                advancedCategories: newCategories,
+                deletedDefaultItemIds: {
+                    ...(prev.deletedDefaultItemIds ?? {}),
+                    [categoryId]: addUniqueId(prev.deletedDefaultItemIds?.[categoryId], itemId),
+                },
+            };
         });
     };
 
@@ -263,7 +302,10 @@ export function useCalculator() {
     const removeCostCategory = (id: string) => {
         setInputs((prev) => ({
             ...prev,
-            advancedCategories: prev.advancedCategories.filter(cat => cat.id !== id)
+            advancedCategories: prev.advancedCategories.filter(cat => cat.id !== id),
+            deletedDefaultCategoryIds: isDefaultCategory(id)
+                ? addUniqueId(prev.deletedDefaultCategoryIds, id)
+                : prev.deletedDefaultCategoryIds,
         }));
     };
 

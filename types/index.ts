@@ -31,6 +31,10 @@ export interface AnalysisInputs {
 
   // 1차 조합원 초기 분양가 (Initial payment)
   initialPayment: number;
+
+  // Default data deletion tracking for merge-safe deployments
+  deletedDefaultCategoryIds?: string[];
+  deletedDefaultItemIds?: Record<string, string[]>;
 }
 
 export interface UnitType {
