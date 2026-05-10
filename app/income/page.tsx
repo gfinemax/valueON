@@ -47,9 +47,6 @@ export default function IncomePage() {
             />
 
             <div className="p-6 space-y-4 max-w-7xl mx-auto">
-                {/* Subtitle */}
-                <p className="text-sm text-slate-600">세대 구성 및 분양가</p>
-
                 {/* Collapsible Configuration Panel */}
                 {isEditMode && showConfig && (
                     <UnitConfigPanel
