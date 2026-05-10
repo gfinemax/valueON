@@ -55,15 +55,6 @@ function ExpensePageContent() {
         updateInput('projectTarget', field, value);
     };
 
-    const handleAddCategory = () => {
-        if (!isEditMode || !allowCategoryAdding) return;
-
-        const title = prompt("새로운 카테고리 이름을 입력하세요:", "새 카테고리");
-        if (title?.trim()) {
-            addCostCategory(title.trim());
-        }
-    };
-
     const canMoveItems = isEditMode && allowItemMoving;
     const canAddCategories = isEditMode && allowCategoryAdding;
     const canDeleteItems = isEditMode && allowItemDeleting;
@@ -79,11 +70,6 @@ function ExpensePageContent() {
                     <ManagementHeaderActions
                         isEditMode={isEditMode}
                         onEditModeChange={setIsEditMode}
-                        addLabel="카테고리"
-                        onAdd={handleAddCategory}
-                        canAdd={allowCategoryAdding}
-                        addTitle="카테고리 추가"
-                        addDisabledTitle={!isEditMode ? "편집 모드에서 카테고리를 추가할 수 있습니다" : "설정에서 카테고리 추가가 꺼져 있습니다"}
                         secondaryActions={(
                             <ProjectInfoPanel
                                 projectTarget={inputs.projectTarget}
@@ -102,7 +88,7 @@ function ExpensePageContent() {
                             allowItemMoving={canMoveItems}
                             allowCategoryAdding={canAddCategories}
                             allowItemDeleting={canDeleteItems}
-                            showAddCategoryButton={false}
+                            showAddCategoryButton={canAddCategories}
                             categories={inputs.advancedCategories}
                             projectTarget={inputs.projectTarget}
                             unitAllocations={inputs.unitAllocations}
