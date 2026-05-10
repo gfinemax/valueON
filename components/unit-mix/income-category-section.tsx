@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { ReactNode, useMemo, useState } from "react";
 import { GripVertical, PanelRightOpen, X } from "lucide-react";
 import { AnalysisResult, MemberTier, UnitAllocation, UnitType } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ interface IncomeCategorySectionProps {
     unitPricing?: AnalysisResult["unitPricing"];
     onUpdateAllocation: (id: string, field: keyof UnitAllocation, value: number | string) => void;
     isEditMode?: boolean;
+    summaryContent?: ReactNode;
 }
 
 interface IncomeRow {
@@ -107,6 +108,7 @@ export function IncomeCategorySection({
     unitPricing,
     onUpdateAllocation,
     isEditMode = true,
+    summaryContent,
 }: IncomeCategorySectionProps) {
     const [selectedCategoryId, setSelectedCategoryId] = useState<IncomeCategoryId | null>("member");
 
@@ -143,6 +145,8 @@ export function IncomeCategorySection({
     return (
         <section className={selectedCategory ? "grid grid-cols-1 gap-3 pb-10 lg:grid-cols-[minmax(0,1fr)_minmax(420px,500px)] lg:items-start" : "pb-10"}>
             <div className="min-w-0 space-y-3">
+                {summaryContent}
+
                 <h3 className="flex items-center gap-2 text-sm font-bold text-slate-700">
                     <span className="inline-block h-4 w-1 rounded-full bg-slate-800" />
                     수입 카테고리

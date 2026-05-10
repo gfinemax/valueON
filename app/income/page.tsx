@@ -55,13 +55,6 @@ export default function IncomePage() {
                     />
                 )}
 
-                {/* Statistics Dashboard */}
-                <UnitMixStats
-                    unitTypes={inputs.unitTypes}
-                    allocations={inputs.unitAllocations}
-                    unitPricing={result.unitPricing}
-                />
-
                 {/* Income category cards and detail editor */}
                 <IncomeCategorySection
                     unitTypes={inputs.unitTypes}
@@ -69,6 +62,13 @@ export default function IncomePage() {
                     onUpdateAllocation={updateUnitAllocation}
                     unitPricing={result.unitPricing}
                     isEditMode={isEditMode}
+                    summaryContent={
+                        <UnitMixStats
+                            unitTypes={inputs.unitTypes}
+                            allocations={inputs.unitAllocations}
+                            unitPricing={result.unitPricing}
+                        />
+                    }
                 />
             </div>
         </main>
