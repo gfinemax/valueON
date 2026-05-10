@@ -139,6 +139,7 @@ export function UnitMixStats({ unitTypes, allocations, unitPricing }: UnitMixSta
                                     <div className="flex min-w-0 items-baseline gap-1.5">
                                         <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: stat.color }} />
                                         <span className="truncate text-sm font-bold tracking-tight text-slate-700">{stat.name}</span>
+                                        <span className="shrink-0 text-xs tracking-tight text-slate-500">{stat.count}세대</span>
                                         <span className="shrink-0 text-xs tracking-tight text-muted-foreground/50">{percent.toFixed(1)}%</span>
                                     </div>
                                     <span className="justify-self-end whitespace-nowrap text-right text-sm font-medium tracking-tight text-slate-700 tabular-nums">
