@@ -119,7 +119,7 @@ export function SearchHeader({ title, leftSlot, actions, className, searchResult
         <div
             ref={containerRef}
             className={cn(
-                "fixed top-0 left-0 md:left-[var(--sidebar-offset)] right-0 z-50 border-b bg-white/95 backdrop-blur px-6 h-14 flex items-center justify-between transition-all duration-300 pt-safe h-auto min-h-[3.5rem]",
+                "app-search-header fixed top-0 right-0 z-50 border-b bg-white/95 backdrop-blur px-6 h-14 flex items-center justify-between transition-all duration-300 pt-safe h-auto min-h-[3.5rem]",
                 className
             )}
         >

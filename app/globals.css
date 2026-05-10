@@ -198,6 +198,16 @@
   padding-top: env(safe-area-inset-top);
 }
 
+.app-search-header {
+  left: 0;
+}
+
+@media (width >= 48rem) {
+  .app-search-header {
+    left: var(--sidebar-offset);
+  }
+}
+
 @supports (padding: env(safe-area-inset-bottom)) {
   .pb-safe {
     padding-bottom: max(1rem, env(safe-area-inset-bottom));
