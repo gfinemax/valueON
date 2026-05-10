@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { useCalculator } from "@/hooks/useCalculator";
 import { useSearchIndex } from "@/hooks/useSearchIndex";
-import { UnitMixSection } from "@/components/unit-mix/unit-mix-section";
 import { UnitMixStats } from "@/components/unit-mix/unit-mix-stats";
 import { UnitConfigPanel } from "@/components/unit-mix/unit-config-panel";
+import { IncomeCategorySection } from "@/components/unit-mix/income-category-section";
 import { SearchHeader } from "@/components/search-header";
 import { ManagementHeaderActions } from "@/components/management-header-actions";
 import { useSettings } from "@/components/settings-context";
@@ -62,8 +62,8 @@ export default function IncomePage() {
                     unitPricing={result.unitPricing}
                 />
 
-                {/* Unit Mix Cards */}
-                <UnitMixSection
+                {/* Income category cards and detail editor */}
+                <IncomeCategorySection
                     unitTypes={inputs.unitTypes}
                     allocations={inputs.unitAllocations}
                     onUpdateAllocation={updateUnitAllocation}
