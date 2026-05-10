@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { AnalysisInputs, CostCategory, CostItem, UnitAllocation } from "@/types";
+import { AnalysisInputs, CostCategory, CostItem, FundingCategory, FundingPlanItem, UnitAllocation } from "@/types";
 import { defaultValues } from "@/constants/defaultValues";
 import { calculateAnalysisResult } from "@/lib/analysis";
 import { recommendCalculationBasis } from "@/utils/calculation-basis";
@@ -80,6 +80,7 @@ function normalizeInputs(
         advancedCategories: [...mergedCategories, ...customCategories],
         unitTypes: mergedUnitTypes,
         unitAllocations: mergedAllocations,
+        fundingPlan: Array.isArray(inputs.fundingPlan) ? inputs.fundingPlan : defaultValues.fundingPlan,
     };
 }
 
@@ -534,6 +535,45 @@ export function useCalculator() {
         });
     };
 
+    const addFundingPlanItem = (category: FundingCategory = "bridge") => {
+        setInputs((prev) => ({
+            ...prev,
+            fundingPlan: [
+                ...prev.fundingPlan,
+                {
+                    id: Math.random().toString(36).substr(2, 9),
+                    category,
+                    name: "신규 조달",
+                    amount: 0,
+                    interestRate: category === "pf" ? prev.variableCosts.interestRatePF : prev.variableCosts.interestRateBridge,
+                    termMonths: 12,
+                    feeRate: 0,
+                    repaymentSource: "",
+                },
+            ],
+        }));
+    };
+
+    const updateFundingPlanItem = <K extends keyof FundingPlanItem>(
+        itemId: string,
+        field: K,
+        value: FundingPlanItem[K]
+    ) => {
+        setInputs((prev) => ({
+            ...prev,
+            fundingPlan: prev.fundingPlan.map((item) =>
+                item.id === itemId ? { ...item, [field]: value } : item
+            ),
+        }));
+    };
+
+    const removeFundingPlanItem = (itemId: string) => {
+        setInputs((prev) => ({
+            ...prev,
+            fundingPlan: prev.fundingPlan.filter((item) => item.id !== itemId),
+        }));
+    };
+
     const result = useMemo(() => calculateAnalysisResult(inputs), [inputs]);
 
     const updateCategoryItemCondition = (categoryId: string, itemId: string, allocationId: string, amount: number) => {
@@ -678,6 +718,9 @@ export function useCalculator() {
         reorderCategoryItem,
         updateUnitAllocation,
         updateUnitTypeTotalUnits,
+        addFundingPlanItem,
+        updateFundingPlanItem,
+        removeFundingPlanItem,
         resetData,
         result,
         reorderCostCategory,

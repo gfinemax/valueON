@@ -32,9 +32,26 @@ export interface AnalysisInputs {
   // 1차 조합원 초기 분양가 (Initial payment)
   initialPayment: number;
 
+  // Funding Plan Data
+  fundingPlan: FundingPlanItem[];
+
   // Default data deletion tracking for merge-safe deployments
   deletedDefaultCategoryIds?: string[];
   deletedDefaultItemIds?: Record<string, string[]>;
+}
+
+export type FundingCategory = 'bridge' | 'pf' | 'member' | 'other';
+
+export interface FundingPlanItem {
+  id: string;
+  category: FundingCategory;
+  name: string;
+  amount: number;
+  interestRate: number;
+  termMonths: number;
+  feeRate: number;
+  repaymentSource: string;
+  note?: string;
 }
 
 export interface UnitType {

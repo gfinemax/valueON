@@ -10,7 +10,8 @@ import {
     Settings,
     Banknote,
     Wallet,
-    SlidersHorizontal
+    SlidersHorizontal,
+    Landmark
 } from "lucide-react";
 
 interface SidebarProps {
@@ -42,6 +43,13 @@ export function Sidebar({ className, expanded = false }: SidebarProps) {
             href: "/expense",
             active: pathname === "/expense",
             color: "text-rose-500",
+        },
+        {
+            label: "자금계획",
+            icon: Landmark,
+            href: "/funding",
+            active: pathname === "/funding",
+            color: "text-blue-500",
         },
         {
             label: "시뮬레이션",

@@ -23,6 +23,7 @@ import {
     rectSortingStrategy,
 } from "@dnd-kit/sortable";
 import { calculateCostItemAmount } from "@/lib/analysis";
+import { ManagementHeroSummary } from "@/components/management/management-hero-summary";
 
 const subscribeToMount = () => () => {};
 const getMountedSnapshot = () => true;
@@ -110,6 +111,9 @@ export function AdvancedInputSection({
             notation: "compact",
             maximumFractionDigits: 1,
         }).format(val);
+    const formatEok = (val: number) => `${new Intl.NumberFormat("ko-KR", {
+        maximumFractionDigits: 1,
+    }).format(val / 100000000)}억원`;
 
     const handleAddCategory = () => {
         const title = prompt("새로운 카테고리 이름을 입력하세요:", "새 카테고리");
@@ -133,6 +137,9 @@ export function AdvancedInputSection({
 
     // 2. Derive totalExpense and pieData from sorted list
     const totalExpense = categoriesWithTotals.reduce((sum, cat) => sum + cat.totalAmount, 0);
+    const largestCategory = categoriesWithTotals[0];
+    const financeCategory = categoriesWithTotals.find((cat) => cat.title.includes("금융"));
+    const incomeGap = totalIncome !== undefined ? totalIncome - totalExpense : undefined;
     const selectedCategory = categories.find((cat) => cat.id === selectedCategoryId);
     const selectedCategoryTotal = categoriesWithTotals.find((cat) => cat.id === selectedCategoryId)?.totalAmount ?? 0;
     const selectedCategoryPercent = totalExpense > 0 ? (selectedCategoryTotal / totalExpense) * 100 : 0;
@@ -240,26 +247,31 @@ export function AdvancedInputSection({
     return (
         <div className={detailPanel ? "grid grid-cols-1 gap-3 pb-10 lg:grid-cols-[minmax(0,1fr)_minmax(420px,500px)] lg:items-start" : "pb-10"}>
             <div className="min-w-0 space-y-3">
-                {/* Expense Summary */}
-                <div className="flex items-center justify-between gap-4 rounded-xl border border-slate-800 bg-slate-900 px-5 py-4 text-white shadow-sm">
-                    <div className="min-w-0">
-                        <p className="mb-2 text-sm font-bold tracking-tight text-slate-400">총 지출 예상</p>
-                        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                            <span className="text-2xl font-extrabold tracking-tight sm:text-3xl">
-                                {formatMoney(totalExpense)}
-                            </span>
-                            {totalIncome !== undefined && (
-                                <span className="text-sm font-semibold tracking-tight text-slate-500 sm:text-base">
-                                    (수입: {formatMoney(totalIncome)})
-                                </span>
-                            )}
-                        </div>
-                    </div>
-                    <div className="shrink-0 text-right">
-                        <p className="mb-2 text-sm font-bold tracking-tight text-slate-400">카테고리</p>
-                        <p className="text-2xl font-extrabold tracking-tight sm:text-3xl">{categories.length}개</p>
-                    </div>
-                </div>
+                <ManagementHeroSummary
+                    title="총 지출 예상"
+                    value={formatEok(totalExpense)}
+                    description={totalIncome !== undefined ? `수입 ${formatEok(totalIncome)} 기준` : "전체 비용 카테고리 합계"}
+                    tone="negative"
+                    items={[
+                        {
+                            label: "카테고리 구성",
+                            value: `${categories.length}개`,
+                            description: `세부 항목 ${categories.reduce((sum, category) => sum + category.items.length, 0)}개`,
+                        },
+                        {
+                            label: "최대 비용 항목",
+                            value: largestCategory ? formatEok(largestCategory.totalAmount) : "0억원",
+                            description: largestCategory ? largestCategory.title : "등록된 비용 없음",
+                            tone: "accent",
+                        },
+                        {
+                            label: "수입 대비 차이",
+                            value: incomeGap === undefined ? "-" : `${incomeGap >= 0 ? "+" : "-"}${formatEok(Math.abs(incomeGap))}`,
+                            description: financeCategory ? `금융비용 ${formatEok(financeCategory.totalAmount)}` : "수입 데이터 연동 필요",
+                            tone: incomeGap === undefined ? "neutral" : incomeGap >= 0 ? "positive" : "negative",
+                        },
+                    ]}
+                />
 
                 {/* Compact Statistics Dashboard */}
                 <div className="bg-card p-4 rounded-xl border border-border shadow-sm">

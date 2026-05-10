@@ -4,6 +4,7 @@ import { UnitType, UnitAllocation, AnalysisResult } from "@/types";
 import { formatKoreanCurrency } from "@/utils/currency";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { ClientOnlyChart } from "@/components/client-only-chart";
+import { ManagementHeroSummary } from "@/components/management/management-hero-summary";
 
 interface UnitMixStatsProps {
     unitTypes: UnitType[];
@@ -25,6 +26,12 @@ const TIER_LABELS: Record<string, string> = {
     'General': '일반분양',
     'Rental': '임대주택',
 };
+
+function formatEok(amount: number) {
+    return `${new Intl.NumberFormat("ko-KR", {
+        maximumFractionDigits: 1,
+    }).format(amount / 100000000)}억원`;
+}
 
 export function UnitMixStats({ unitTypes, allocations, unitPricing }: UnitMixStatsProps) {
     // Separate apartment and rental types
@@ -73,12 +80,13 @@ export function UnitMixStats({ unitTypes, allocations, unitPricing }: UnitMixSta
 
     const totalUnits = allStats.reduce((sum, s) => sum + s.count, 0);
     const totalRevenue = allStats.reduce((sum, s) => sum + s.revenue, 0);
-
-    const countData = allStats.map(s => ({
-        name: s.name,
-        value: s.count,
-        color: s.color,
-    }));
+    const memberRevenue = tierStats
+        .filter((stat) => stat.tier === "1st" || stat.tier === "2nd")
+        .reduce((sum, stat) => sum + stat.revenue, 0);
+    const marketRevenue = allStats
+        .filter((stat) => stat.tier === "General" || stat.tier === "Rental")
+        .reduce((sum, stat) => sum + stat.revenue, 0);
+    const apartmentUnits = tierStats.reduce((sum, stat) => sum + stat.count, 0);
 
     const revenueData = allStats.map(s => ({
         name: s.name,
@@ -87,94 +95,115 @@ export function UnitMixStats({ unitTypes, allocations, unitPricing }: UnitMixSta
     }));
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            {/* 분양가 총액 차트 */}
-            <div className="bg-gradient-to-r from-slate-800 to-slate-700 rounded-lg p-4 shadow-sm">
-                <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-sm font-bold text-white">분양가 총액</h4>
-                    <span className="text-xs text-slate-300">총 {formatKoreanCurrency(totalRevenue)}원</span>
-                </div>
-                <div className="h-28">
-                    <ClientOnlyChart>
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie
-                                    data={revenueData}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={20}
-                                    outerRadius={45}
-                                    paddingAngle={2}
-                                    dataKey="value"
-                                    stroke="none"
-                                >
-                                    {revenueData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.color} />
-                                    ))}
-                                </Pie>
-                                <Tooltip
-                                    formatter={(value: number | string | (number | string)[] | undefined) => [formatKoreanCurrency(Number(value || 0)) + '원', '']}
-                                    contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc' }}
-                                    itemStyle={{ color: '#f8fafc' }}
-                                />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    </ClientOnlyChart>
-                </div>
-                <div className="flex flex-wrap justify-center gap-x-2 gap-y-1 mt-2">
-                    {allStats.map(s => (
-                        <div key={s.tier} className="flex items-center gap-1 text-xs">
-                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
-                            <span className="text-slate-300">{s.name}</span>
-                            <span className="font-bold text-white">{formatKoreanCurrency(s.revenue)}</span>
-                        </div>
-                    ))}
-                </div>
-            </div>
+        <div className="space-y-4">
+            <ManagementHeroSummary
+                title="총 수입 예상"
+                value={formatEok(totalRevenue)}
+                description={`아파트 ${apartmentUnits}세대 / 임대 ${rentalCount}세대 기준`}
+                tone="positive"
+                items={[
+                    {
+                        label: "총 세대 구성",
+                        value: `${totalUnits}세대`,
+                        description: `전체 평형 ${unitTypes.length}개 타입`,
+                    },
+                    {
+                        label: "조합원 분담금",
+                        value: formatEok(memberRevenue),
+                        description: `${tierStats[0]?.count ?? 0}세대 + ${tierStats[1]?.count ?? 0}세대`,
+                        tone: "accent",
+                    },
+                    {
+                        label: "일반/임대 수입",
+                        value: formatEok(marketRevenue),
+                        description: `일반분양 ${tierStats[2]?.count ?? 0}세대 / 임대 ${rentalCount}세대`,
+                    },
+                ]}
+            />
 
-            {/* 세대 구성 차트 */}
-            <div className="bg-gradient-to-r from-slate-800 to-slate-700 rounded-lg p-4 shadow-sm">
-                <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-sm font-bold text-white">세대 구성</h4>
-                    <span className="text-xs text-slate-300">총 {totalUnits}세대</span>
+            <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
+                <div className="mb-3">
+                    <h3 className="flex items-center gap-2 text-lg font-bold tracking-tight text-foreground">
+                        <span className="h-6 w-1 rounded-full bg-emerald-500" />
+                        수입 구성 분석
+                    </h3>
                 </div>
-                <div className="h-28">
-                    <ClientOnlyChart>
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie
-                                    data={countData}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={20}
-                                    outerRadius={45}
-                                    paddingAngle={2}
-                                    dataKey="value"
-                                    stroke="none"
-                                >
-                                    {countData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.color} />
-                                    ))}
-                                </Pie>
-                                <Tooltip
-                                    formatter={(value: number | string | (number | string)[] | undefined) => [`${value || 0}세대`, '']}
-                                    contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc' }}
-                                    itemStyle={{ color: '#f8fafc' }}
-                                />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    </ClientOnlyChart>
+
+                <div className="flex flex-col gap-5 lg:flex-row lg:items-center">
+                    <div className="relative grid w-full min-w-0 flex-1 grid-cols-1 gap-x-8 gap-y-2 py-2 md:grid-cols-2 lg:grid-cols-4">
+                        {allStats.map((stat) => {
+                            const percent = totalRevenue > 0 ? (stat.revenue / totalRevenue) * 100 : 0;
+
+                            return (
+                                <div key={stat.tier} className="grid grid-cols-[minmax(0,1fr)_7rem] items-baseline gap-2 border-b border-slate-100 pb-1.5">
+                                    <div className="flex min-w-0 items-baseline gap-1.5">
+                                        <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: stat.color }} />
+                                        <span className="truncate text-sm font-bold tracking-tight text-slate-700">{stat.name}</span>
+                                        <span className="shrink-0 text-xs tracking-tight text-muted-foreground/50">{percent.toFixed(1)}%</span>
+                                    </div>
+                                    <span className="justify-self-end whitespace-nowrap text-right text-sm font-medium tracking-tight text-slate-700 tabular-nums">
+                                        {formatEok(stat.revenue)}
+                                    </span>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    <div className="relative flex h-[170px] w-full shrink-0 justify-center px-6 lg:w-[240px]">
+                        <ClientOnlyChart>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={revenueData}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={50}
+                                        outerRadius={72}
+                                        paddingAngle={2}
+                                        dataKey="value"
+                                        stroke="none"
+                                    >
+                                        {revenueData.map((entry, index) => (
+                                            <Cell key={`revenue-cell-${index}`} fill={entry.color} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip
+                                        formatter={(value: number | string | (number | string)[] | undefined) => [
+                                            `${formatKoreanCurrency(Number(value || 0))}원`,
+                                            "",
+                                        ]}
+                                        contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}
+                                        wrapperStyle={{ zIndex: 100 }}
+                                    />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </ClientOnlyChart>
+                        <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center">
+                            <p className="text-[10px] font-bold tracking-tight text-muted-foreground">Total</p>
+                            <p className="text-xs font-bold tracking-tight text-foreground">100%</p>
+                        </div>
+                    </div>
                 </div>
-                <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 mt-2">
-                    {allStats.map(s => (
-                        <div key={s.tier} className="flex items-center gap-1 text-xs">
-                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
-                            <span className="text-slate-300">{s.name}</span>
-                            <span className="font-bold text-white">{s.count}</span>
+
+                <div className="mt-4 grid gap-3 border-t border-slate-100 pt-4 md:grid-cols-2 xl:grid-cols-4">
+                    {allStats.map((stat) => (
+                        <div key={stat.tier} className="min-w-0 rounded-lg bg-slate-50 px-4 py-3">
+                            <div className="flex items-center justify-between gap-3">
+                                <div className="flex min-w-0 items-center gap-2">
+                                    <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: stat.color }} />
+                                    <h4 className="truncate text-sm font-extrabold text-slate-900">{stat.name}</h4>
+                                </div>
+                                <span className="shrink-0 rounded bg-white px-2 py-0.5 text-xs font-medium text-slate-600 shadow-sm">
+                                    {stat.count}세대
+                                </span>
+                            </div>
+                            <div className="mt-3 text-xl font-bold tracking-tight text-slate-950">
+                                {formatEok(stat.revenue)}
+                            </div>
                         </div>
                     ))}
                 </div>
-            </div>
+            </section>
         </div>
     );
 }

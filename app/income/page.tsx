@@ -27,7 +27,7 @@ export default function IncomePage() {
     const searchResults = groupedSearch(searchQuery);
 
     return (
-        <main className="min-h-screen bg-white pt-14">
+        <main className="min-h-screen bg-background pt-14">
             {/* Header with Search and Settings */}
             <SearchHeader
                 title="수입 관리"
@@ -46,7 +46,7 @@ export default function IncomePage() {
                 }
             />
 
-            <div className="p-6 space-y-4 max-w-7xl mx-auto">
+            <div className="p-4 space-y-4 max-w-7xl mx-auto">
                 {/* Collapsible Configuration Panel */}
                 {isEditMode && showConfig && (
                     <UnitConfigPanel
