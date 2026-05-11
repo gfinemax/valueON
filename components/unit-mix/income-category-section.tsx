@@ -170,7 +170,9 @@ export function IncomeCategorySection({
                             <button
                                 key={summary.id}
                                 type="button"
-                                onClick={() => setSelectedCategoryId(summary.id)}
+                                onClick={() => setSelectedCategoryId((currentId) => (
+                                    currentId === summary.id ? null : summary.id
+                                ))}
                                 className={`group min-h-[168px] rounded-xl border border-slate-200 border-l-4 bg-white p-4 text-left shadow-sm transition hover:border-slate-300 hover:shadow-md ${summary.border} ${selected ? "ring-2 ring-slate-900/10" : ""}`}
                             >
                                 <div className="flex items-start justify-between gap-3">
@@ -192,7 +194,7 @@ export function IncomeCategorySection({
 
                                     <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-bold text-slate-600">
                                         <PanelRightOpen className="h-3.5 w-3.5" />
-                                        상세
+                                        {selected ? "닫기" : "상세"}
                                     </span>
                                 </div>
 
