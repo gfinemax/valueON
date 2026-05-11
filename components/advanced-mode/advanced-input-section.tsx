@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { CostCategory, CostItem, ProjectTarget, UnitAllocation, UnitType } from "@/types";
 import { CostCategoryCard, CostCategoryDetails } from "./cost-category-card";
 import { SortableCostCategoryCard } from "./sortable-cost-category-card";
@@ -29,6 +29,7 @@ import { formatKrwEok, formatKrwEokSigned, formatKrwThousands } from "@/utils/cu
 const subscribeToMount = () => () => {};
 const getMountedSnapshot = () => true;
 const getServerMountedSnapshot = () => false;
+const EXPENSE_DETAIL_STORAGE_KEY = "valueon-expense-selected-category-v1";
 
 interface AdvancedInputSectionProps {
     categories: CostCategory[];
@@ -100,7 +101,11 @@ export function AdvancedInputSection({
         getMountedSnapshot,
         getServerMountedSnapshot
     );
-    const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(expandCategoryId ?? null);
+    const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(() => {
+        if (expandCategoryId) return expandCategoryId;
+        if (typeof window === "undefined") return null;
+        return window.localStorage.getItem(EXPENSE_DETAIL_STORAGE_KEY);
+    });
 
     // Helper for cx/left position
     const centerPos = "50%";
@@ -137,6 +142,27 @@ export function AdvancedInputSection({
     const selectedCategoryPercent = totalExpense > 0 ? (selectedCategoryTotal / totalExpense) * 100 : 0;
     const selectedCategoryColors = selectedCategory ? getCategoryColor(selectedCategory.title) : undefined;
 
+    useEffect(() => {
+        if (expandCategoryId) {
+            setSelectedCategoryId(expandCategoryId);
+        }
+    }, [expandCategoryId]);
+
+    useEffect(() => {
+        if (!selectedCategoryId) {
+            window.localStorage.removeItem(EXPENSE_DETAIL_STORAGE_KEY);
+            return;
+        }
+
+        if (!categories.some((category) => category.id === selectedCategoryId)) {
+            setSelectedCategoryId(null);
+            window.localStorage.removeItem(EXPENSE_DETAIL_STORAGE_KEY);
+            return;
+        }
+
+        window.localStorage.setItem(EXPENSE_DETAIL_STORAGE_KEY, selectedCategoryId);
+    }, [categories, selectedCategoryId]);
+
     const pieData = categoriesWithTotals
         .filter(cat => cat.totalAmount > 0)
         .map((cat, index) => ({
@@ -171,7 +197,7 @@ export function AdvancedInputSection({
     const detailPanel = selectedCategory && selectedCategoryColors ? (
         <aside
             id={`${selectedCategory.id}-detail-panel`}
-            className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm lg:sticky lg:top-4"
+            className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm lg:sticky lg:top-16"
         >
             <div className={`border-l-[5px] ${selectedCategoryColors.border} border-b border-slate-100 bg-white p-4`}>
                 <div className="flex items-start justify-between gap-3">
@@ -204,7 +230,7 @@ export function AdvancedInputSection({
                     </button>
                 </div>
             </div>
-            <div className="max-h-[calc(100vh-11rem)] overflow-y-auto">
+            <div className="max-h-[calc(100vh-11rem)] overflow-y-auto bg-slate-50/60 p-4">
                 <CostCategoryDetails
                     category={selectedCategory}
                     projectTarget={projectTarget}

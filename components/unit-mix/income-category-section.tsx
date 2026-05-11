@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useMemo, useState } from "react";
+import { ReactNode, useEffect, useMemo, useState } from "react";
 import { GripVertical, PanelRight, X } from "lucide-react";
 import { AnalysisResult, MemberTier, UnitAllocation, UnitType } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -77,6 +77,11 @@ const TIER_LABELS: Record<MemberTier, string> = {
     "2nd": "2차 조합원",
     General: "일반분양",
 };
+const INCOME_DETAIL_STORAGE_KEY = "valueon-income-selected-category-v1";
+
+function isIncomeCategoryId(value: string | null): value is IncomeCategoryId {
+    return value !== null && value in CATEGORY_META;
+}
 
 function formatEok(amount: number) {
     return formatKrwEok(amount);
@@ -114,7 +119,11 @@ export function IncomeCategorySection({
     isEditMode = true,
     summaryContent,
 }: IncomeCategorySectionProps) {
-    const [selectedCategoryId, setSelectedCategoryId] = useState<IncomeCategoryId | null>(null);
+    const [selectedCategoryId, setSelectedCategoryId] = useState<IncomeCategoryId | null>(() => {
+        if (typeof window === "undefined") return null;
+        const savedCategoryId = window.localStorage.getItem(INCOME_DETAIL_STORAGE_KEY);
+        return isIncomeCategoryId(savedCategoryId) ? savedCategoryId : null;
+    });
 
     const summaries = useMemo<IncomeCategorySummary[]>(() => {
         const rows = getRows(unitTypes, allocations, unitPricing);
@@ -147,6 +156,21 @@ export function IncomeCategorySection({
 
     const totalRevenue = summaries.reduce((sum, summary) => sum + summary.revenue, 0);
     const selectedCategory = summaries.find((summary) => summary.id === selectedCategoryId);
+
+    useEffect(() => {
+        if (!selectedCategoryId) {
+            window.localStorage.removeItem(INCOME_DETAIL_STORAGE_KEY);
+            return;
+        }
+
+        if (!summaries.some((summary) => summary.id === selectedCategoryId)) {
+            setSelectedCategoryId(null);
+            window.localStorage.removeItem(INCOME_DETAIL_STORAGE_KEY);
+            return;
+        }
+
+        window.localStorage.setItem(INCOME_DETAIL_STORAGE_KEY, selectedCategoryId);
+    }, [selectedCategoryId, summaries]);
 
     return (
         <section className={selectedCategory ? "grid grid-cols-1 gap-3 pb-10 lg:grid-cols-[minmax(0,1fr)_minmax(420px,500px)] lg:items-start" : "pb-10"}>
@@ -275,7 +299,7 @@ export function IncomeCategorySection({
                         </div>
                     </div>
 
-                    <div className="max-h-[calc(100vh-11rem)] overflow-y-auto p-4">
+                    <div className="max-h-[calc(100vh-11rem)] overflow-y-auto bg-slate-50/60 p-4">
                         {selectedCategory.rows.length > 0 ? (
                             <div className="space-y-3">
                                 {selectedCategory.rows.map((row) => (
