@@ -8,6 +8,121 @@ import { recommendCalculationBasis } from "@/utils/calculation-basis";
 const STORAGE_KEY = "valueon-calculator-data-v11";
 const LEGACY_STORAGE_KEYS = ["valueon-calculator-data-v9", "valueon-calculator-data-v10"];
 const PERSISTED_DATA_VERSION = 11;
+const REMOTE_PROJECT_ID = process.env.NEXT_PUBLIC_VALUEON_PROJECT_ID || "default";
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const SUPABASE_TABLE = process.env.NEXT_PUBLIC_SUPABASE_PROJECTS_TABLE || "valueon_projects";
+
+type PersistedCalculatorData = {
+    version?: number;
+    inputs?: Partial<AnalysisInputs>;
+};
+
+function parsePersistedInputs(raw: string | null): PersistedCalculatorData | null {
+    if (!raw) return null;
+
+    try {
+        const parsed = JSON.parse(raw);
+        const savedInputs = parsed?.inputs && typeof parsed.inputs === 'object'
+            ? parsed.inputs
+            : parsed;
+
+        return {
+            version: parsed?.version,
+            inputs: savedInputs,
+        };
+    } catch (e) {
+        console.error("Failed to parse saved calculator data", e);
+        return null;
+    }
+}
+
+function normalizePersistedData(saved: PersistedCalculatorData) {
+    return saved.version === PERSISTED_DATA_VERSION
+        ? normalizeInputs(saved.inputs ?? {}, { preserveSavedDefaultItemBasis: true })
+        : normalizeInputs(saved.inputs ?? {});
+}
+
+function getSupabaseConfig() {
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return null;
+
+    if (!/^[a-zA-Z0-9_]+$/.test(SUPABASE_TABLE)) {
+        console.error("NEXT_PUBLIC_SUPABASE_PROJECTS_TABLE must contain only letters, numbers, and underscores.");
+        return null;
+    }
+
+    return {
+        url: SUPABASE_URL.replace(/\/$/, ""),
+        key: SUPABASE_ANON_KEY,
+        table: SUPABASE_TABLE,
+    };
+}
+
+function getSupabaseHeaders(contentType = false) {
+    const config = getSupabaseConfig();
+    if (!config) return null;
+
+    return {
+        apikey: config.key,
+        Authorization: `Bearer ${config.key}`,
+        ...(contentType ? { "Content-Type": "application/json" } : {}),
+    };
+}
+
+async function loadRemoteData(): Promise<PersistedCalculatorData | null | "not-found"> {
+    const config = getSupabaseConfig();
+    const headers = getSupabaseHeaders();
+    if (!config || !headers) return null;
+
+    const idFilter = encodeURIComponent(`eq.${REMOTE_PROJECT_ID}`);
+    const response = await fetch(
+        `${config.url}/rest/v1/${config.table}?id=${idFilter}&select=id,data,version,updated_at&limit=1`,
+        {
+            headers,
+            cache: "no-store",
+        }
+    );
+
+    if (!response.ok) {
+        console.error("Failed to load Supabase project data", await response.text());
+        return null;
+    }
+
+    const rows = await response.json() as Array<{
+        data: Partial<AnalysisInputs>;
+        version?: number;
+    }>;
+    const row = rows[0];
+
+    return row ? { inputs: row.data, version: row.version } : "not-found";
+}
+
+async function saveRemoteData(inputs: AnalysisInputs, signal: AbortSignal) {
+    const config = getSupabaseConfig();
+    const headers = getSupabaseHeaders(true);
+    if (!config || !headers) return;
+
+    const response = await fetch(
+        `${config.url}/rest/v1/${config.table}?on_conflict=id`,
+        {
+            method: "POST",
+            headers: {
+                ...headers,
+                Prefer: "resolution=merge-duplicates,return=minimal",
+            },
+            body: JSON.stringify({
+                id: REMOTE_PROJECT_ID,
+                data: inputs,
+                version: PERSISTED_DATA_VERSION,
+            }),
+            signal,
+        }
+    );
+
+    if (!response.ok) {
+        console.error("Failed to save Supabase project data", await response.text());
+    }
+}
 
 function normalizeInputs(
     inputs: Partial<AnalysisInputs>,
@@ -111,22 +226,25 @@ export function useCalculator() {
     useEffect(() => {
         let cancelled = false;
 
-        const loadSavedData = () => {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) {
-                try {
-                    const parsed = JSON.parse(saved);
-                    const savedInputs = parsed?.inputs && typeof parsed.inputs === 'object'
-                        ? parsed.inputs
-                        : parsed;
-                    const loadedInputs = parsed?.version === PERSISTED_DATA_VERSION
-                        ? normalizeInputs(savedInputs, { preserveSavedDefaultItemBasis: true })
-                        : normalizeInputs(savedInputs);
+        const loadSavedData = async () => {
+            const localSaved = parsePersistedInputs(localStorage.getItem(STORAGE_KEY));
+
+            try {
+                const remoteSaved = await loadRemoteData();
+                if (remoteSaved && remoteSaved !== "not-found") {
                     if (!cancelled) {
-                        setInputs(loadedInputs);
+                        setInputs(normalizePersistedData(remoteSaved));
+                        setIsLoaded(true);
                     }
-                } catch (e) {
-                    console.error("Failed to load saved data", e);
+                    return;
+                }
+            } catch (e) {
+                console.error("Failed to load Supabase project data", e);
+            }
+
+            if (localSaved?.inputs) {
+                if (!cancelled) {
+                    setInputs(normalizePersistedData(localSaved));
                 }
             } else {
                 LEGACY_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
@@ -137,7 +255,9 @@ export function useCalculator() {
             }
         };
 
-        const timer = window.setTimeout(loadSavedData, 0);
+        const timer = window.setTimeout(() => {
+            void loadSavedData();
+        }, 0);
 
         return () => {
             cancelled = true;
@@ -152,6 +272,24 @@ export function useCalculator() {
             version: PERSISTED_DATA_VERSION,
             inputs,
         }));
+    }, [inputs, isLoaded]);
+
+    useEffect(() => {
+        if (!isLoaded) return;
+
+        const controller = new AbortController();
+        const timer = window.setTimeout(() => {
+            saveRemoteData(inputs, controller.signal).catch((e) => {
+                if (e?.name !== "AbortError") {
+                    console.error("Failed to save Supabase project data", e);
+                }
+            });
+        }, 600);
+
+        return () => {
+            controller.abort();
+            window.clearTimeout(timer);
+        };
     }, [inputs, isLoaded]);
 
     const resetData = () => {
