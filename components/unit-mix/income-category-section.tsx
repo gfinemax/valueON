@@ -119,11 +119,7 @@ export function IncomeCategorySection({
     isEditMode = true,
     summaryContent,
 }: IncomeCategorySectionProps) {
-    const [selectedCategoryId, setSelectedCategoryId] = useState<IncomeCategoryId | null>(() => {
-        if (typeof window === "undefined") return null;
-        const savedCategoryId = window.localStorage.getItem(INCOME_DETAIL_STORAGE_KEY);
-        return isIncomeCategoryId(savedCategoryId) ? savedCategoryId : null;
-    });
+    const [selectedCategoryId, setSelectedCategoryId] = useState<IncomeCategoryId | null>(null);
 
     const summaries = useMemo<IncomeCategorySummary[]>(() => {
         const rows = getRows(unitTypes, allocations, unitPricing);
@@ -156,6 +152,13 @@ export function IncomeCategorySection({
 
     const totalRevenue = summaries.reduce((sum, summary) => sum + summary.revenue, 0);
     const selectedCategory = summaries.find((summary) => summary.id === selectedCategoryId);
+
+    useEffect(() => {
+        const savedCategoryId = window.localStorage.getItem(INCOME_DETAIL_STORAGE_KEY);
+        if (isIncomeCategoryId(savedCategoryId) && summaries.some((summary) => summary.id === savedCategoryId)) {
+            setSelectedCategoryId(savedCategoryId);
+        }
+    }, [summaries]);
 
     useEffect(() => {
         if (!selectedCategoryId) {

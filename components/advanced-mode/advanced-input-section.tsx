@@ -101,11 +101,7 @@ export function AdvancedInputSection({
         getMountedSnapshot,
         getServerMountedSnapshot
     );
-    const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(() => {
-        if (expandCategoryId) return expandCategoryId;
-        if (typeof window === "undefined") return null;
-        return window.localStorage.getItem(EXPENSE_DETAIL_STORAGE_KEY);
-    });
+    const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(expandCategoryId ?? null);
 
     // Helper for cx/left position
     const centerPos = "50%";
@@ -145,8 +141,14 @@ export function AdvancedInputSection({
     useEffect(() => {
         if (expandCategoryId) {
             setSelectedCategoryId(expandCategoryId);
+            return;
         }
-    }, [expandCategoryId]);
+
+        const savedCategoryId = window.localStorage.getItem(EXPENSE_DETAIL_STORAGE_KEY);
+        if (savedCategoryId && categories.some((category) => category.id === savedCategoryId)) {
+            setSelectedCategoryId(savedCategoryId);
+        }
+    }, [categories, expandCategoryId]);
 
     useEffect(() => {
         if (!selectedCategoryId) {
