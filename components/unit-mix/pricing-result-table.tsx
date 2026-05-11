@@ -3,7 +3,7 @@
 import { AnalysisResult } from "@/types";
 import { useState } from "react";
 import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
-import { formatKrwThousands } from "@/utils/currency";
+import { formatKrwEok, formatKrwMan } from "@/utils/currency";
 
 interface PricingResultTableProps {
     pricing: AnalysisResult['unitPricing'];
@@ -71,8 +71,6 @@ export function PricingResultTable({ pricing }: PricingResultTableProps) {
         }
         return 0;
     });
-
-    const formatMoney = (val: number) => formatKrwThousands(val);
 
     const SortButton = ({ column, label }: { column: SortKey; label: string }) => {
         const sortIndex = sorts.findIndex(s => s.key === column);
@@ -144,10 +142,10 @@ export function PricingResultTable({ pricing }: PricingResultTableProps) {
                                     </span>
                                 </td>
                                 <td className="py-2 md:py-3 text-center text-sm text-stone-800 whitespace-nowrap px-1 md:px-2 tracking-tighter">
-                                    {formatMoney(item.totalPrice)}
+                                    {formatKrwEok(item.totalPrice)}
                                 </td>
                                 <td className="py-2 md:py-3 text-center text-sm text-stone-800 whitespace-nowrap px-1 md:px-2 tracking-tighter">
-                                    {formatMoney(item.pricePerPyung)}
+                                    {formatKrwMan(item.pricePerPyung)}
                                 </td>
                             </tr>
                         ))}

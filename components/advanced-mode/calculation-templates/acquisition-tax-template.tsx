@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { formatKrwThousands } from "@/utils/currency";
+import { formatKrwMan } from "@/utils/currency";
 
 interface AcquisitionTaxTemplateProps {
     open: boolean;
@@ -77,7 +77,7 @@ export function AcquisitionTaxTemplate({
     const formatMoney = (val: number) =>
         new Intl.NumberFormat("ko-KR").format(val);
 
-    const formatCompact = (val: number) => formatKrwThousands(val);
+    const formatCompact = (val: number) => formatKrwMan(val);
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>

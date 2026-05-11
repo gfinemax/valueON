@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UnitAllocation, UnitType } from "@/types";
-import { formatKoreanCurrency, formatKrwThousands, parseKoreanMoney } from "@/utils/currency";
+import { formatKoreanCurrency, formatKrwMan, parseKoreanMoney } from "@/utils/currency";
 
 interface MixConditionDialogProps {
     open: boolean;
@@ -112,7 +112,7 @@ export function MixConditionDialog({
                     <div className="pt-4 border-t border-slate-100 flex justify-between items-center">
                         <span className="text-sm font-bold text-slate-700">총 합계 적용액</span>
                         <span className="text-lg font-bold text-blue-600">
-                            {formatKrwThousands(totalPreview)}
+                            {formatKrwMan(totalPreview)}
                         </span>
                     </div>
                 </div>

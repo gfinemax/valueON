@@ -110,3 +110,23 @@ export function formatKrwThousandsSigned(amount: number): string {
     const sign = amount > 0 ? "+" : amount < 0 ? "-" : "";
     return `${sign}${formatKrwThousands(Math.abs(amount))}`;
 }
+
+export function formatKrwMan(amount: number): string {
+    const roundedMan = Math.round(amount / 10000);
+    return `${new Intl.NumberFormat("ko-KR").format(roundedMan)}만원`;
+}
+
+export function formatKrwEok(amount: number, decimals = 1): string {
+    const roundedEok = amount / 100000000;
+    const formatted = new Intl.NumberFormat("ko-KR", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: decimals,
+    }).format(roundedEok);
+
+    return `${formatted}억원`;
+}
+
+export function formatKrwEokSigned(amount: number, decimals = 1): string {
+    const sign = amount > 0 ? "+" : amount < 0 ? "-" : "";
+    return `${sign}${formatKrwEok(Math.abs(amount), decimals)}`;
+}

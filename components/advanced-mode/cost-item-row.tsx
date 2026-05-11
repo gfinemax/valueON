@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { formatKrwThousands, parseKoreanMoney } from "@/utils/currency";
+import { formatKrwMan, parseKoreanMoney } from "@/utils/currency";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -306,13 +306,13 @@ export function CostItemRow({
         }
     }
 
-    const compactMoney = (val: number) => formatKrwThousands(val);
+    const compactMoney = (val: number) => formatKrwMan(val);
 
     // Calculate formula display
     let secondaryFormulaText = "";
     let calculatedTotal = 0;
 
-    const formatCompact = (val: number) => formatKrwThousands(val);
+    const formatCompact = (val: number) => formatKrwMan(val);
     const basisValue = getBasisValue(calculationBasis, projectTarget, manualArea);
     const isSquareMeterBasis = usesSquareMeterDisplay(calculationBasis);
     const displayBasisValue = isSquareMeterBasis ? toSquareMeters(basisValue) : basisValue;

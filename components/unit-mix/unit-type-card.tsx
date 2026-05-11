@@ -4,7 +4,7 @@ import { UnitType, UnitAllocation, AnalysisResult } from "@/types";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ExpandToggle } from "@/components/ui/expand-toggle";
-import { formatKoreanCurrency, formatKrwThousands, parseKoreanMoney } from "@/utils/currency";
+import { formatKoreanCurrency, formatKrwEok, formatKrwMan, parseKoreanMoney } from "@/utils/currency";
 import { useState } from "react";
 
 interface UnitTypeCardProps {
@@ -80,7 +80,7 @@ export function UnitTypeCard({
                             {percentage.toFixed(1)}%
                         </span>
                         <span className="text-base font-bold text-slate-900">
-                            {salesPrice > 0 ? formatKrwThousands(salesPrice) : '—'}
+                            {salesPrice > 0 ? formatKrwEok(salesPrice) : '—'}
                         </span>
                     </div>
                 </button>
@@ -93,11 +93,11 @@ export function UnitTypeCard({
                             <div className="mb-3 p-2 bg-slate-50 rounded-md border border-slate-100">
                                 <div className="flex justify-between text-sm">
                                     <span className="text-slate-600">초기 분양가</span>
-                                    <span className="font-medium">{formatKrwThousands(initialPayment)}</span>
+                                    <span className="font-medium">{formatKrwMan(initialPayment)}</span>
                                 </div>
                                 <div className="flex justify-between text-sm mt-1">
                                     <span className="text-slate-600">추가 분담금</span>
-                                    <span className="font-bold text-red-600">+{formatKrwThousands(additionalContribution)}</span>
+                                    <span className="font-bold text-red-600">+{formatKrwMan(additionalContribution)}</span>
                                 </div>
                             </div>
                         )}
@@ -143,10 +143,10 @@ export function UnitTypeCard({
                         {tierRevenue > 0 && (
                             <div className="mt-3 pt-2 border-t border-black/10">
                                 <div className="text-xs text-slate-500 mb-1">
-                                    합계 ({alloc.count}세대 × {unitType.supplyArea}평 × {formatKrwThousands(pricePerPyung)})
+                                    합계 ({alloc.count}세대 × {unitType.supplyArea}평 × {formatKrwMan(pricePerPyung)})
                                 </div>
                                 <div className="text-lg font-bold text-blue-600 text-right">
-                                    {formatKrwThousands(tierRevenue)}
+                                    {formatKrwEok(tierRevenue)}
                                 </div>
                             </div>
                         )}

@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UnitType } from "@/types";
-import { formatKrwThousands } from "@/utils/currency";
+import { formatKrwMan } from "@/utils/currency";
 
 interface ManagementFeeTemplateProps {
     open: boolean;
@@ -82,7 +82,7 @@ export function ManagementFeeTemplate({
     const formatMoney = (val: number) =>
         new Intl.NumberFormat("ko-KR").format(val);
 
-    const formatCompact = (val: number) => formatKrwThousands(val);
+    const formatCompact = (val: number) => formatKrwMan(val);
 
     // 카테고리별 그룹핑
     const groupedTypes = unitTypes.reduce((acc, ut) => {

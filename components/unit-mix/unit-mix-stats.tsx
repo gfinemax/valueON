@@ -1,7 +1,7 @@
 "use client";
 
 import { UnitType, UnitAllocation, AnalysisResult } from "@/types";
-import { formatKrwThousands } from "@/utils/currency";
+import { formatKrwEok } from "@/utils/currency";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { ClientOnlyChart } from "@/components/client-only-chart";
 import { ManagementHeroSummary } from "@/components/management/management-hero-summary";
@@ -28,7 +28,7 @@ const TIER_LABELS: Record<string, string> = {
 };
 
 function formatEok(amount: number) {
-    return formatKrwThousands(amount);
+    return formatKrwEok(amount);
 }
 
 export function UnitMixStats({ unitTypes, allocations, unitPricing }: UnitMixStatsProps) {
@@ -164,7 +164,7 @@ export function UnitMixStats({ unitTypes, allocations, unitPricing }: UnitMixSta
                                     </Pie>
                                     <Tooltip
                                         formatter={(value: number | string | (number | string)[] | undefined) => [
-                                            formatKrwThousands(Number(value || 0)),
+                                            formatEok(Number(value || 0)),
                                             "",
                                         ]}
                                         contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}
@@ -180,6 +180,9 @@ export function UnitMixStats({ unitTypes, allocations, unitPricing }: UnitMixSta
                     </div>
                 </div>
             </section>
+            <p className="-mt-2 text-xs text-slate-400">
+                표시 금액은 억원 단위로 반올림되며, 정확값은 상세 항목 기준으로 계산됩니다.
+            </p>
         </div>
     );
 }

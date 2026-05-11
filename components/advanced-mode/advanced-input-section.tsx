@@ -24,7 +24,7 @@ import {
 } from "@dnd-kit/sortable";
 import { calculateCostItemAmount } from "@/lib/analysis";
 import { ManagementHeroSummary } from "@/components/management/management-hero-summary";
-import { formatKrwThousands, formatKrwThousandsSigned } from "@/utils/currency";
+import { formatKrwEok, formatKrwEokSigned, formatKrwThousands } from "@/utils/currency";
 
 const subscribeToMount = () => () => {};
 const getMountedSnapshot = () => true;
@@ -105,7 +105,7 @@ export function AdvancedInputSection({
     // Helper for cx/left position
     const centerPos = "50%";
 
-    const formatMoney = (val: number) => formatKrwThousands(val);
+    const formatMoney = (val: number) => formatKrwEok(val);
 
     const handleAddCategory = () => {
         const title = prompt("새로운 카테고리 이름을 입력하세요:", "새 카테고리");
@@ -241,8 +241,8 @@ export function AdvancedInputSection({
             <div className="min-w-0 space-y-3">
                 <ManagementHeroSummary
                     title="총 지출 예상"
-                    value={formatKrwThousands(totalExpense)}
-                    description={totalIncome !== undefined ? `수입 ${formatKrwThousands(totalIncome)} 기준` : "전체 비용 카테고리 합계"}
+                    value={formatKrwEok(totalExpense)}
+                    description={totalIncome !== undefined ? `수입 ${formatKrwEok(totalIncome)} 기준` : `정확값 ${formatKrwThousands(totalExpense)}`}
                     tone="negative"
                     items={[
                         {
@@ -252,14 +252,14 @@ export function AdvancedInputSection({
                         },
                         {
                             label: "최대 비용 항목",
-                            value: largestCategory ? formatKrwThousands(largestCategory.totalAmount) : "0천원",
+                            value: largestCategory ? formatKrwEok(largestCategory.totalAmount) : "0억원",
                             description: largestCategory ? largestCategory.title : "등록된 비용 없음",
                             tone: "accent",
                         },
                         {
                             label: "수입 대비 차이",
-                            value: incomeGap === undefined ? "-" : formatKrwThousandsSigned(incomeGap),
-                            description: financeCategory ? `금융비용 ${formatKrwThousands(financeCategory.totalAmount)}` : "수입 데이터 연동 필요",
+                            value: incomeGap === undefined ? "-" : formatKrwEokSigned(incomeGap),
+                            description: financeCategory ? `금융비용 ${formatKrwEok(financeCategory.totalAmount)}` : "수입 데이터 연동 필요",
                             tone: incomeGap === undefined ? "neutral" : incomeGap >= 0 ? "positive" : "negative",
                         },
                     ]}
@@ -339,6 +339,9 @@ export function AdvancedInputSection({
                             </div>
                         </div>
                     </div>
+                    <p className="mt-3 text-xs text-slate-400">
+                        표시 금액은 억원 단위로 반올림되며, 정확값은 상세 항목 기준으로 계산됩니다.
+                    </p>
                 </div>
 
                 {/* Category grid */}

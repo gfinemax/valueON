@@ -5,7 +5,7 @@ import { GripVertical, PanelRight, X } from "lucide-react";
 import { AnalysisResult, MemberTier, UnitAllocation, UnitType } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { formatKoreanCurrency, formatKrwThousands, parseKoreanMoney } from "@/utils/currency";
+import { formatKoreanCurrency, formatKrwEok, formatKrwMan, formatKrwThousands, parseKoreanMoney } from "@/utils/currency";
 
 type IncomeCategoryId = "member1" | "member2" | "general" | "rental" | "other";
 
@@ -79,7 +79,7 @@ const TIER_LABELS: Record<MemberTier, string> = {
 };
 
 function formatEok(amount: number) {
-    return formatKrwThousands(amount);
+    return formatKrwEok(amount);
 }
 
 function getRows(
@@ -212,15 +212,21 @@ export function IncomeCategorySection({
                                                 <span className="truncate font-semibold text-slate-600">
                                                     {row.unitType.name}
                                                 </span>
-                                                <span className="shrink-0 font-bold tabular-nums text-slate-900">
-                                                    {formatKrwThousands(row.totalPrice)}
+                                                <span
+                                                    className="shrink-0 font-bold tabular-nums text-slate-900"
+                                                    title={`정확값 ${formatKrwThousands(row.totalPrice)}`}
+                                                >
+                                                    {formatKrwEok(row.totalPrice)}
                                                 </span>
                                             </div>
                                         ))}
                                     </div>
                                 )}
 
-                                <div className="mt-4 text-right text-2xl font-extrabold tracking-tight text-slate-950">
+                                <div
+                                    className="mt-4 text-right text-2xl font-extrabold tracking-tight text-slate-950"
+                                    title={`정확값 ${formatKrwThousands(summary.revenue)}`}
+                                >
                                     {formatEok(summary.revenue)}
                                 </div>
                             </button>
@@ -244,7 +250,10 @@ export function IncomeCategorySection({
                                     <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
                                         {totalRevenue > 0 ? ((selectedCategory.revenue / totalRevenue) * 100).toFixed(1) : "0.0"}%
                                     </span>
-                                    <span className="font-bold text-slate-900 tabular-nums">
+                                    <span
+                                        className="font-bold text-slate-900 tabular-nums"
+                                        title={`정확값 ${formatKrwThousands(selectedCategory.revenue)}`}
+                                    >
                                         {formatEok(selectedCategory.revenue)}
                                     </span>
                                     <span className="text-xs text-slate-400">
@@ -311,7 +320,7 @@ function IncomeDetailRow({
                     </p>
                 </div>
                 <div className="text-right text-base font-extrabold text-slate-950">
-                    {formatKrwThousands(row.revenue)}
+                    {formatKrwEok(row.revenue)}
                 </div>
             </div>
 
@@ -342,7 +351,7 @@ function IncomeDetailRow({
                         />
                     ) : (
                         <div className="text-right text-sm font-semibold text-slate-700">
-                            {formatKrwThousands(row.pricePerPyung)}
+                            {formatKrwMan(row.pricePerPyung)}
                         </div>
                     )}
                 </div>

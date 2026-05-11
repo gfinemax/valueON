@@ -23,7 +23,7 @@ import {
     sortableKeyboardCoordinates,
     verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { formatKrwThousands, parseKoreanMoney } from "@/utils/currency";
+import { formatKrwEok, formatKrwThousands, parseKoreanMoney } from "@/utils/currency";
 import { calculateCostItemAmount } from "@/lib/analysis";
 
 import { getCategoryColor } from "@/constants/category-colors";
@@ -226,7 +226,7 @@ export function CostCategoryCard({
 
     const percentage = totalExpense > 0 ? (totalAmount / totalExpense) * 100 : 0;
 
-    const formatMoney = (val: number) => formatKrwThousands(val);
+    const formatMoney = (val: number) => formatKrwEok(val);
 
     const handleDeleteCategory = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -346,7 +346,10 @@ export function CostCategoryCard({
                     <span className="text-xs text-slate-400">
                         항목 {category.items.length}개
                     </span>
-                    <span className={`justify-self-end text-lg font-extrabold ${totalAmount === 0 ? 'text-slate-300' : 'text-slate-900'}`}>
+                    <span
+                        className={`justify-self-end text-lg font-extrabold ${totalAmount === 0 ? 'text-slate-300' : 'text-slate-900'}`}
+                        title={`정확값 ${formatKrwThousands(totalAmount)}`}
+                    >
                         {formatMoney(totalAmount)}
                     </span>
                 </div>
