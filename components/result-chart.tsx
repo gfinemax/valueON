@@ -4,7 +4,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recha
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState } from "react";
 import { ClientOnlyChart } from "@/components/client-only-chart";
-import { formatKrwThousands } from "@/utils/currency";
+import { formatKrwEok } from "@/utils/currency";
 
 interface ResultChartProps {
     data: {
@@ -22,7 +22,7 @@ export function ResultChart({ data, totalCost, hideTitle }: ResultChartProps) {
     // Sort original data by value descending to ensure legend and slices are sorted by amount
     const sortedData = [...data].sort((a, b) => b.value - a.value);
 
-    const formattedTotal = formatKrwThousands(totalCost);
+    const formattedTotal = formatKrwEok(totalCost);
 
     // Muted/Earthy tones for editorial look
     const COLORS = ['#d97757', '#8c9c8a', '#e3c086', '#6b7280', '#c2b280'];
@@ -61,7 +61,7 @@ export function ResultChart({ data, totalCost, hideTitle }: ResultChartProps) {
                     </div>
                     <div className="text-base md:text-lg font-serif text-stone-800">
                         {hoveredData
-                            ? formatKrwThousands(hoveredData.value)
+                            ? formatKrwEok(hoveredData.value)
                             : formattedTotal
                         }
                     </div>

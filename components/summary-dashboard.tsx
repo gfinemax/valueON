@@ -7,13 +7,13 @@ import { useState, useEffect, useRef } from "react";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { ExpandToggle } from "@/components/ui/expand-toggle";
 import { ClientOnlyChart } from "@/components/client-only-chart";
-import { formatKrwThousands } from "@/utils/currency";
+import { formatKrwEok, formatKrwThousands } from "@/utils/currency";
 
 interface SummaryDashboardProps {
     result: AnalysisResult;
 }
 
-// CountUp Component for animated numbers
+// CountUp Component for animated eok-unit numbers
 function CountUp({ end, duration = 2000, suffix = "" }: { end: number, duration?: number, suffix?: string }) {
     const [count, setCount] = useState(0);
 
@@ -29,7 +29,7 @@ function CountUp({ end, duration = 2000, suffix = "" }: { end: number, duration?
             // Ease out quart
             const ease = 1 - Math.pow(1 - percentage, 4);
 
-            setCount(Math.floor(end * ease));
+            setCount(end * ease);
 
             if (progress < duration) {
                 animationFrame = requestAnimationFrame(animate);
@@ -43,7 +43,7 @@ function CountUp({ end, duration = 2000, suffix = "" }: { end: number, duration?
 
     return (
         <span>
-            {formatKrwThousands(count)}
+            {formatKrwEok(count)}
             {suffix}
         </span>
     );
@@ -65,7 +65,8 @@ export function SummaryDashboard({ result }: SummaryDashboardProps) {
     const detailsSectionRef = useRef<HTMLDivElement>(null);
     const revenueDetailRef = useRef<HTMLDivElement>(null);
 
-    const formatMoney = (val: number) => formatKrwThousands(val);
+    const formatMoney = (val: number) => formatKrwEok(val);
+    const formatExactMoney = (val: number) => formatKrwThousands(val);
 
     useEffect(() => {
         if (isCostDetailOpen && detailsSectionRef.current) {
@@ -100,7 +101,9 @@ export function SummaryDashboard({ result }: SummaryDashboardProps) {
                 <div className="bg-muted/50 p-4 rounded-2xl border border-border">
                     <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Net Profit</div>
                     <div className={`text-xl font-serif font-bold ${profit >= 0 ? 'text-[#8c9c8a]' : 'text-[#d97757]'}`}>
-                        {profit >= 0 ? '+' : ''}{formatMoney(profit)}
+                        <span title={`정확값 ${formatExactMoney(profit)}`}>
+                            {profit >= 0 ? '+' : ''}{formatMoney(profit)}
+                        </span>
                     </div>
                 </div>
                 <div className="bg-muted/50 p-4 rounded-2xl border border-border">
@@ -111,11 +114,11 @@ export function SummaryDashboard({ result }: SummaryDashboardProps) {
                 </div>
                 <div className="bg-card p-4 rounded-2xl border border-border shadow-sm">
                     <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Revenue</div>
-                    <div className="text-lg font-serif text-foreground">{formatMoney(result.totalRevenue || 0)}</div>
+                    <div className="text-lg font-serif text-foreground" title={`정확값 ${formatExactMoney(result.totalRevenue || 0)}`}>{formatMoney(result.totalRevenue || 0)}</div>
                 </div>
                 <div className="bg-card p-4 rounded-2xl border border-border shadow-sm">
                     <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Cost</div>
-                    <div className="text-lg font-serif text-foreground">{formatMoney(result.totalProjectCost)}</div>
+                    <div className="text-lg font-serif text-foreground" title={`정확값 ${formatExactMoney(result.totalProjectCost)}`}>{formatMoney(result.totalProjectCost)}</div>
                 </div>
             </div>
 
@@ -126,7 +129,7 @@ export function SummaryDashboard({ result }: SummaryDashboardProps) {
                         <div className="hidden md:block">
                             <h2 className="text-4xl font-serif text-stone-900 mb-4 tracking-tight leading-tight">Safe Margin Secured</h2>
                             <p className="text-stone-600 text-lg leading-relaxed max-w-3xl mb-2">
-                                This project is projected to generate a net profit of <strong className="text-emerald-700 font-semibold">{formatMoney(profit)}</strong>,
+                                This project is projected to generate a net profit of <strong className="text-emerald-700 font-semibold" title={`정확값 ${formatExactMoney(profit)}`}>{formatMoney(profit)}</strong>,
                                 representing a <strong className="text-emerald-700 font-semibold">{profitMargin.toFixed(1)}% safe margin</strong>.
                                 &nbsp;This establishes a solid foundation for business stability.
                             </p>
@@ -141,15 +144,18 @@ export function SummaryDashboard({ result }: SummaryDashboardProps) {
                                             {profit >= 0 ? '+' : ''}
                                             <CountUp end={profit} />
                                         </div>
+                                        <p className="mt-2 text-xs font-medium text-stone-400">
+                                            정확값 {formatExactMoney(profit)}
+                                        </p>
                                     </div>
                                     <div className="grid grid-cols-2 gap-8 border-t border-stone-100 pt-8">
                                         <div>
                                             <div className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-1">Total Revenue</div>
-                                            <div className="text-2xl font-serif text-stone-800">{formatMoney(result.totalRevenue || 0)}</div>
+                                            <div className="text-2xl font-serif text-stone-800" title={`정확값 ${formatExactMoney(result.totalRevenue || 0)}`}>{formatMoney(result.totalRevenue || 0)}</div>
                                         </div>
                                         <div>
                                             <div className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-1">Total Cost</div>
-                                            <div className="text-2xl font-serif text-stone-800">{formatMoney(result.totalProjectCost)}</div>
+                                            <div className="text-2xl font-serif text-stone-800" title={`정확값 ${formatExactMoney(result.totalProjectCost)}`}>{formatMoney(result.totalProjectCost)}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -219,7 +225,7 @@ export function SummaryDashboard({ result }: SummaryDashboardProps) {
                                     <div className="space-y-4 md:space-y-6">
                                         <div className="p-4 md:p-6 bg-stone-50 rounded-xl md:rounded-2xl border border-stone-100">
                                             <div className="text-[10px] md:text-xs font-bold text-stone-400 uppercase tracking-widest mb-1 md:mb-2">Total Projected Revenue</div>
-                                            <div className="text-2xl md:text-5xl font-serif text-[#8c9c8a] tracking-tight">{formatMoney(result.totalRevenue || 0)}</div>
+                                            <div className="text-2xl md:text-5xl font-serif text-[#8c9c8a] tracking-tight" title={`정확값 ${formatExactMoney(result.totalRevenue || 0)}`}>{formatMoney(result.totalRevenue || 0)}</div>
                                         </div>
                                     </div>
                                     <div className="pointer-events-none">
@@ -280,7 +286,7 @@ export function SummaryDashboard({ result }: SummaryDashboardProps) {
                                 <div className="space-y-3">
                                     <div className="p-4 md:p-5 bg-stone-50 rounded-xl md:rounded-2xl border border-stone-100">
                                         <div className="text-[10px] md:text-xs font-bold text-stone-400 uppercase tracking-widest mb-1">Total Project Cost</div>
-                                        <div className="text-2xl md:text-5xl font-serif text-[#d97757] tracking-tight leading-tight">{formatMoney(result.totalProjectCost)}</div>
+                                        <div className="text-2xl md:text-5xl font-serif text-[#d97757] tracking-tight leading-tight" title={`정확값 ${formatExactMoney(result.totalProjectCost)}`}>{formatMoney(result.totalProjectCost)}</div>
                                     </div>
                                 </div>
 
@@ -303,7 +309,7 @@ export function SummaryDashboard({ result }: SummaryDashboardProps) {
                                                     <span className="text-sm md:text-base text-stone-600 font-bold">{item.name}</span>
                                                 </div>
                                                 <div className="text-stone-800 font-serif flex items-baseline gap-2">
-                                                    <span className="text-sm md:text-base font-bold">{formatMoney(item.value)}</span>
+                                                    <span className="text-sm md:text-base font-bold" title={`정확값 ${formatExactMoney(item.value)}`}>{formatMoney(item.value)}</span>
                                                     <span className="text-xs text-stone-400 font-sans font-medium">({((item.value / result.totalProjectCost) * 100).toFixed(1)}%)</span>
                                                 </div>
                                             </div>
