@@ -1,7 +1,7 @@
 "use client";
 
 import { ReactNode, useMemo, useState } from "react";
-import { GripVertical, PanelRightOpen, X } from "lucide-react";
+import { GripVertical, PanelRight, X } from "lucide-react";
 import { AnalysisResult, MemberTier, UnitAllocation, UnitType } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -173,7 +173,7 @@ export function IncomeCategorySection({
                                 onClick={() => setSelectedCategoryId((currentId) => (
                                     currentId === summary.id ? null : summary.id
                                 ))}
-                                className={`group min-h-[168px] rounded-xl border border-slate-200 border-l-4 bg-white p-4 text-left shadow-sm transition hover:border-slate-300 hover:shadow-md ${summary.border} ${selected ? "ring-2 ring-slate-900/10" : ""}`}
+                                className={`group min-h-[168px] rounded-xl border border-slate-200 border-l-4 bg-white p-4 text-left shadow-sm transition hover:border-slate-300 hover:shadow-md ${summary.border} ${selected ? "ring-2 ring-blue-400 shadow-md" : ""}`}
                             >
                                 <div className="flex items-start justify-between gap-3">
                                     <div className="flex min-w-0 items-start gap-3">
@@ -192,9 +192,16 @@ export function IncomeCategorySection({
                                         </div>
                                     </div>
 
-                                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-bold text-slate-600">
-                                        <PanelRightOpen className="h-3.5 w-3.5" />
-                                        {selected ? "닫기" : "상세"}
+                                    <span
+                                        className={`
+                                            inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-xs font-bold transition-colors
+                                            ${selected
+                                                ? "border-blue-500 bg-blue-600 text-white shadow-sm"
+                                                : "border-slate-200 bg-slate-50 text-slate-500 group-hover:border-blue-200 group-hover:bg-blue-50 group-hover:text-blue-700"}
+                                        `}
+                                    >
+                                        <PanelRight className="h-3.5 w-3.5" aria-hidden="true" />
+                                        <span>{selected ? "열림" : "상세"}</span>
                                     </span>
                                 </div>
 

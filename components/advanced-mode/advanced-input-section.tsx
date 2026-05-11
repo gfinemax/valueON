@@ -382,7 +382,9 @@ export function AdvancedInputSection({
                                             reorderCategoryItem={reorderCategoryItem}
                                             isExpanded={cat.id === expandCategoryId}
                                             isSelected={cat.id === selectedCategoryId}
-                                            onSelect={() => setSelectedCategoryId(cat.id)}
+                                            onSelect={() => setSelectedCategoryId((currentId) => (
+                                                currentId === cat.id ? null : cat.id
+                                            ))}
                                             highlightItemId={cat.id === expandCategoryId ? highlightItemId : undefined}
                                             allowItemMoving={allowItemMoving}
                                             allowCategoryAdding={allowCategoryAdding}
@@ -420,7 +422,9 @@ export function AdvancedInputSection({
                                     onUpdateCategoryTitle={updateCategoryTitle}
                                     reorderCategoryItem={reorderCategoryItem}
                                     isSelected={cat.id === selectedCategoryId}
-                                    onSelect={() => setSelectedCategoryId(cat.id)}
+                                    onSelect={() => setSelectedCategoryId((currentId) => (
+                                        currentId === cat.id ? null : cat.id
+                                    ))}
                                     allowItemMoving={allowItemMoving}
                                     allowCategoryAdding={allowCategoryAdding}
                                     allowItemDeleting={allowItemDeleting}
