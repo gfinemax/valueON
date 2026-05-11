@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { CostCategory, CostItem, ProjectTarget, UnitAllocation, UnitType } from "@/types";
 
 import { SortableCostItemRow } from "./sortable-cost-item-row";
@@ -325,17 +326,24 @@ export function CostCategoryCard({
                             </button>
                         )}
                     </div>
-                    <span
-                        className={`
-                            flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-xs font-bold transition-colors
-                            ${isSelected
-                                ? "border-blue-500 bg-blue-600 text-white shadow-sm"
-                                : "border-slate-200 bg-slate-50 text-slate-500 group-hover:border-blue-200 group-hover:bg-blue-50 group-hover:text-blue-700"}
-                        `}
-                    >
-                        <PanelRight className="h-3.5 w-3.5" aria-hidden="true" />
-                        <span>{isSelected ? "열림" : "상세"}</span>
-                    </span>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <span
+                                className={`
+                                    flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-xs font-bold transition-colors
+                                    ${isSelected
+                                        ? "border-blue-500 bg-blue-600 text-white shadow-sm"
+                                        : "border-slate-200 bg-slate-50 text-slate-500 group-hover:border-blue-200 group-hover:bg-blue-50 group-hover:text-blue-700"}
+                                `}
+                            >
+                                <PanelRight className="h-3.5 w-3.5" aria-hidden="true" />
+                                <span>{isSelected ? "열림" : "상세"}</span>
+                            </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">
+                            {isSelected ? "다시 클릭하면 상세 패널이 닫힙니다" : "상세 패널 열기"}
+                        </TooltipContent>
+                    </Tooltip>
                 </div>
 
                 {/* Bottom Row: Amount + Percentage */}

@@ -6,7 +6,7 @@ import { CostCategoryCard, CostCategoryDetails } from "./cost-category-card";
 import { SortableCostCategoryCard } from "./sortable-cost-category-card";
 import { Plus, X } from "lucide-react";
 import { getCategoryColor } from "@/constants/category-colors";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from "recharts";
 import {
     DndContext,
     closestCenter,
@@ -25,6 +25,7 @@ import {
 import { calculateCostItemAmount } from "@/lib/analysis";
 import { ManagementHeroSummary } from "@/components/management/management-hero-summary";
 import { formatKrwEok, formatKrwEokSigned, formatKrwThousands } from "@/utils/currency";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const subscribeToMount = () => () => {};
 const getMountedSnapshot = () => true;
@@ -222,14 +223,19 @@ export function AdvancedInputSection({
                             </span>
                         </div>
                     </div>
-                    <button
-                        type="button"
-                        onClick={() => setSelectedCategoryId(null)}
-                        className="shrink-0 rounded-full border border-slate-200 p-2 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900"
-                        aria-label="상세 패널 닫기"
-                    >
-                        <X className="h-4 w-4" />
-                    </button>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <button
+                                type="button"
+                                onClick={() => setSelectedCategoryId(null)}
+                                className="shrink-0 rounded-full border border-slate-200 p-2 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900"
+                                aria-label="상세 패널 닫기"
+                            >
+                                <X className="h-4 w-4" />
+                            </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="left">상세 패널 닫기</TooltipContent>
+                    </Tooltip>
                 </div>
             </div>
             <div className="max-h-[calc(100vh-11rem)] overflow-y-auto bg-slate-50/60 p-4">
@@ -343,7 +349,7 @@ export function AdvancedInputSection({
                                                 <Cell key={`cell-${index}`} fill={entry.fill} stroke="none" />
                                             ))}
                                         </Pie>
-                                        <Tooltip
+                                        <RechartsTooltip
                                             formatter={(value: unknown) => formatMoney(Number(value))}
                                             contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                                             wrapperStyle={{ zIndex: 100 }}

@@ -28,6 +28,7 @@ export const viewport: Viewport = {
 import { ThemeProvider } from "@/components/theme-provider";
 import { SettingsProvider } from "@/components/settings-context";
 import { AppShell } from "@/components/app-shell";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export default function RootLayout({
   children,
@@ -46,7 +47,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <SettingsProvider>
-            <AppShell>{children}</AppShell>
+            <TooltipProvider>
+              <AppShell>{children}</AppShell>
+            </TooltipProvider>
           </SettingsProvider>
         </ThemeProvider>
       </body>

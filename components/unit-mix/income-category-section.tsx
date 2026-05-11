@@ -5,6 +5,7 @@ import { GripVertical, PanelRight, X } from "lucide-react";
 import { AnalysisResult, MemberTier, UnitAllocation, UnitType } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatKoreanCurrency, formatKrwEok, formatKrwMan, formatKrwThousands, parseKoreanMoney } from "@/utils/currency";
 
 type IncomeCategoryId = "member1" | "member2" | "general" | "rental" | "other";
@@ -219,17 +220,24 @@ export function IncomeCategorySection({
                                         </div>
                                     </div>
 
-                                    <span
-                                        className={`
-                                            inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-xs font-bold transition-colors
-                                            ${selected
-                                                ? "border-blue-500 bg-blue-600 text-white shadow-sm"
-                                                : "border-slate-200 bg-slate-50 text-slate-500 group-hover:border-blue-200 group-hover:bg-blue-50 group-hover:text-blue-700"}
-                                        `}
-                                    >
-                                        <PanelRight className="h-3.5 w-3.5" aria-hidden="true" />
-                                        <span>{selected ? "열림" : "상세"}</span>
-                                    </span>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <span
+                                                className={`
+                                                    inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-xs font-bold transition-colors
+                                                    ${selected
+                                                        ? "border-blue-500 bg-blue-600 text-white shadow-sm"
+                                                        : "border-slate-200 bg-slate-50 text-slate-500 group-hover:border-blue-200 group-hover:bg-blue-50 group-hover:text-blue-700"}
+                                                `}
+                                            >
+                                                <PanelRight className="h-3.5 w-3.5" aria-hidden="true" />
+                                                <span>{selected ? "열림" : "상세"}</span>
+                                            </span>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="top">
+                                            {selected ? "다시 클릭하면 상세 패널이 닫힙니다" : "상세 패널 열기"}
+                                        </TooltipContent>
+                                    </Tooltip>
                                 </div>
 
                                 {priceRows.length > 0 && (
@@ -288,17 +296,21 @@ export function IncomeCategorySection({
                                     </span>
                                 </div>
                             </div>
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon-sm"
-                                title="상세 패널 닫기"
-                                aria-label="상세 패널 닫기"
-                                className="shrink-0 rounded-full border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-900"
-                                onClick={() => setSelectedCategoryId(null)}
-                            >
-                                <X className="h-4 w-4" />
-                            </Button>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon-sm"
+                                        aria-label="상세 패널 닫기"
+                                        className="shrink-0 rounded-full border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                                        onClick={() => setSelectedCategoryId(null)}
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="left">상세 패널 닫기</TooltipContent>
+                            </Tooltip>
                         </div>
                     </div>
 
