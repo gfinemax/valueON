@@ -17,6 +17,7 @@ interface SortableCostCategoryCardProps {
     onUpdateItemRate: (catId: string, itemId: string, rate: number) => void;
     onUpdateItemArea?: (catId: string, itemId: string, area: number) => void;
     onUpdateItemMemo: (catId: string, itemId: string, memo: string) => void;
+    onToggleItemLock: (catId: string, itemId: string, locked: boolean) => void;
     onAddItem: (catId: string, name: string, amount: number) => void;
     onRemoveCategory: (id: string) => void;
     onRemoveItem: (catId: string, itemId: string) => void;
@@ -35,6 +36,7 @@ interface SortableCostCategoryCardProps {
     allowItemMoving?: boolean;
     allowCategoryAdding?: boolean;
     allowItemDeleting?: boolean;
+    forceItemsLocked?: boolean;
 }
 
 export function SortableCostCategoryCard(props: SortableCostCategoryCardProps) {

@@ -1,6 +1,11 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import type {
+    CSSProperties,
+    KeyboardEvent as ReactKeyboardEvent,
+    PointerEvent as ReactPointerEvent,
+} from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { CostCategory, CostItem, ProjectTarget, UnitAllocation, UnitType } from "@/types";
 import { CostCategoryCard, CostCategoryDetails } from "./cost-category-card";
 import { SortableCostCategoryCard } from "./sortable-cost-category-card";
@@ -31,6 +36,8 @@ const subscribeToMount = () => () => {};
 const getMountedSnapshot = () => true;
 const getServerMountedSnapshot = () => false;
 const EXPENSE_DETAIL_STORAGE_KEY = "valueon-expense-selected-category-v1";
+const MIN_DETAIL_PANEL_WIDTH = 360;
+const MAX_DETAIL_PANEL_WIDTH = 820;
 
 interface AdvancedInputSectionProps {
     categories: CostCategory[];
@@ -44,6 +51,7 @@ interface AdvancedInputSectionProps {
     updateCategoryItemRate: (catId: string, itemId: string, rate: number) => void;
     updateCategoryItemArea?: (catId: string, itemId: string, area: number) => void;
     updateCategoryItemMemo: (catId: string, itemId: string, memo: string) => void;
+    toggleCategoryItemLock: (catId: string, itemId: string, locked: boolean) => void;
     addCategoryItem: (catId: string, name: string, amount: number) => void;
     removeCategoryItem: (catId: string, itemId: string) => void;
     addCostCategory: (title: string) => void;
@@ -62,6 +70,7 @@ interface AdvancedInputSectionProps {
     allowItemMoving?: boolean;
     allowCategoryAdding?: boolean;
     allowItemDeleting?: boolean;
+    forceItemsLocked?: boolean;
     showAddCategoryButton?: boolean;
 }
 
@@ -77,6 +86,7 @@ export function AdvancedInputSection({
     updateCategoryItemRate,
     updateCategoryItemArea,
     updateCategoryItemMemo,
+    toggleCategoryItemLock,
     addCategoryItem,
     removeCategoryItem,
     addCostCategory,
@@ -95,6 +105,7 @@ export function AdvancedInputSection({
     allowItemMoving = true,
     allowCategoryAdding = true,
     allowItemDeleting = true,
+    forceItemsLocked = false,
     showAddCategoryButton = true,
 }: AdvancedInputSectionProps) {
     const mounted = useSyncExternalStore(
@@ -103,6 +114,9 @@ export function AdvancedInputSection({
         getServerMountedSnapshot
     );
     const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(expandCategoryId ?? null);
+    const [detailPanelWidth, setDetailPanelWidth] = useState(520);
+    const restoredCategoryRef = useRef(false);
+    const layoutRef = useRef<HTMLDivElement>(null);
 
     // Helper for cx/left position
     const centerPos = "50%";
@@ -140,14 +154,24 @@ export function AdvancedInputSection({
     const selectedCategoryColors = selectedCategory ? getCategoryColor(selectedCategory.title) : undefined;
 
     useEffect(() => {
-        if (expandCategoryId) {
-            setSelectedCategoryId(expandCategoryId);
+        if (!expandCategoryId || !categories.some((category) => category.id === expandCategoryId)) {
             return;
         }
 
+        const timeoutId = window.setTimeout(() => setSelectedCategoryId(expandCategoryId), 0);
+        return () => window.clearTimeout(timeoutId);
+    }, [categories, expandCategoryId]);
+
+    useEffect(() => {
+        if (restoredCategoryRef.current || expandCategoryId) {
+            return;
+        }
+
+        restoredCategoryRef.current = true;
         const savedCategoryId = window.localStorage.getItem(EXPENSE_DETAIL_STORAGE_KEY);
         if (savedCategoryId && categories.some((category) => category.id === savedCategoryId)) {
-            setSelectedCategoryId(savedCategoryId);
+            const timeoutId = window.setTimeout(() => setSelectedCategoryId(savedCategoryId), 0);
+            return () => window.clearTimeout(timeoutId);
         }
     }, [categories, expandCategoryId]);
 
@@ -158,9 +182,9 @@ export function AdvancedInputSection({
         }
 
         if (!categories.some((category) => category.id === selectedCategoryId)) {
-            setSelectedCategoryId(null);
             window.localStorage.removeItem(EXPENSE_DETAIL_STORAGE_KEY);
-            return;
+            const timeoutId = window.setTimeout(() => setSelectedCategoryId(null), 0);
+            return () => window.clearTimeout(timeoutId);
         }
 
         window.localStorage.setItem(EXPENSE_DETAIL_STORAGE_KEY, selectedCategoryId);
@@ -197,12 +221,57 @@ export function AdvancedInputSection({
         }
     }
 
+    const clampDetailPanelWidth = (width: number) => {
+        const containerWidth = layoutRef.current?.getBoundingClientRect().width ?? 0;
+        const dynamicMaxWidth = containerWidth > 0
+            ? Math.min(MAX_DETAIL_PANEL_WIDTH, Math.max(MIN_DETAIL_PANEL_WIDTH, containerWidth - 360))
+            : MAX_DETAIL_PANEL_WIDTH;
+
+        return Math.min(Math.max(width, MIN_DETAIL_PANEL_WIDTH), dynamicMaxWidth);
+    };
+
+    const handleDetailResizePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+        if (!layoutRef.current) return;
+
+        event.preventDefault();
+        const previousCursor = document.body.style.cursor;
+        const previousUserSelect = document.body.style.userSelect;
+
+        document.body.style.cursor = "col-resize";
+        document.body.style.userSelect = "none";
+
+        const handlePointerMove = (pointerEvent: PointerEvent) => {
+            const containerRect = layoutRef.current?.getBoundingClientRect();
+            if (!containerRect) return;
+
+            setDetailPanelWidth(clampDetailPanelWidth(containerRect.right - pointerEvent.clientX));
+        };
+
+        const handlePointerUp = () => {
+            document.body.style.cursor = previousCursor;
+            document.body.style.userSelect = previousUserSelect;
+            window.removeEventListener("pointermove", handlePointerMove);
+            window.removeEventListener("pointerup", handlePointerUp);
+        };
+
+        window.addEventListener("pointermove", handlePointerMove);
+        window.addEventListener("pointerup", handlePointerUp, { once: true });
+    };
+
+    const handleDetailResizeKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+        if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+
+        event.preventDefault();
+        const direction = event.key === "ArrowLeft" ? 24 : -24;
+        setDetailPanelWidth((currentWidth) => clampDetailPanelWidth(currentWidth + direction));
+    };
+
     const detailPanel = selectedCategory && selectedCategoryColors ? (
         <aside
             id={`${selectedCategory.id}-detail-panel`}
-            className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm lg:sticky lg:top-16"
+            className="rounded-xl border border-slate-200 bg-white shadow-sm lg:h-full lg:overflow-y-auto lg:overscroll-contain"
         >
-            <div className={`border-l-[5px] ${selectedCategoryColors.border} border-b border-slate-100 bg-white p-4`}>
+            <div className={`sticky top-0 z-20 rounded-t-xl border-l-[5px] ${selectedCategoryColors.border} border-b border-slate-200 bg-slate-50 p-4 shadow-sm`}>
                 <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                         <div className="flex min-w-0 items-center gap-2">
@@ -211,15 +280,15 @@ export function AdvancedInputSection({
                                 {selectedCategory.title}
                             </h4>
                         </div>
-                        <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm">
+                        <div className="mt-2 grid grid-cols-[auto_minmax(0,1fr)_auto] items-baseline gap-x-3 gap-y-1 text-sm">
                             <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
                                 {selectedCategoryPercent.toFixed(1)}%
                             </span>
-                            <span className="font-bold text-slate-900 tabular-nums">
-                                {formatMoney(selectedCategoryTotal)}
-                            </span>
                             <span className="text-xs text-slate-400">
                                 항목 {selectedCategory.items.length}개
+                            </span>
+                            <span className="justify-self-end text-right font-bold text-slate-900 tabular-nums">
+                                {formatMoney(selectedCategoryTotal)}
                             </span>
                         </div>
                     </div>
@@ -238,7 +307,7 @@ export function AdvancedInputSection({
                     </Tooltip>
                 </div>
             </div>
-            <div className="max-h-[calc(100vh-11rem)] overflow-y-auto bg-slate-50/60 p-4">
+            <div className="rounded-b-xl bg-slate-50/60 p-4">
                 <CostCategoryDetails
                     category={selectedCategory}
                     projectTarget={projectTarget}
@@ -250,6 +319,7 @@ export function AdvancedInputSection({
                     onUpdateItemRate={updateCategoryItemRate}
                     onUpdateItemArea={updateCategoryItemArea}
                     onUpdateItemMemo={updateCategoryItemMemo}
+                    onToggleItemLock={toggleCategoryItemLock}
                     onAddItem={addCategoryItem}
                     onRemoveItem={removeCategoryItem}
                     onRemoveCategory={removeCostCategory}
@@ -265,19 +335,25 @@ export function AdvancedInputSection({
                     allowItemMoving={allowItemMoving}
                     allowCategoryAdding={allowCategoryAdding}
                     allowItemDeleting={allowItemDeleting}
+                    forceItemsLocked={forceItemsLocked}
                 />
             </div>
         </aside>
     ) : null;
 
     return (
-        <div className={detailPanel ? "grid grid-cols-1 gap-3 pb-10 lg:grid-cols-[minmax(0,1fr)_minmax(420px,500px)] lg:items-start" : "pb-10"}>
-            <div className="min-w-0 space-y-3">
+        <div
+            ref={layoutRef}
+            style={detailPanel ? ({ "--detail-panel-width": `${detailPanelWidth}px` } as CSSProperties) : undefined}
+            className={detailPanel ? "grid grid-cols-1 gap-3 pb-10 lg:h-[calc(100vh-5.5rem)] lg:grid-cols-[minmax(320px,1fr)_0.5rem_minmax(360px,var(--detail-panel-width))] lg:gap-0 lg:overflow-hidden" : "grid grid-cols-1 gap-3 pb-10 lg:h-[calc(100vh-5.5rem)] lg:overflow-hidden"}
+        >
+            <div className="min-w-0 space-y-3 lg:h-full lg:overflow-y-auto lg:overscroll-contain lg:pr-2 lg:pb-10">
                 <ManagementHeroSummary
                     title="총 지출 예상"
                     value={formatKrwEok(totalExpense)}
                     description={totalIncome !== undefined ? `수입 ${formatKrwEok(totalIncome)} 기준` : `정확값 ${formatKrwThousands(totalExpense)}`}
                     tone="negative"
+                    sticky
                     items={[
                         {
                             label: "카테고리 구성",
@@ -300,7 +376,7 @@ export function AdvancedInputSection({
                 />
 
                 {/* Compact Statistics Dashboard */}
-                <div className="bg-card p-4 rounded-xl border border-border shadow-sm">
+                <div className="expense-analysis-card bg-card p-4 rounded-xl border border-border shadow-sm">
                     <div className="mb-3">
                         <h3 className="text-lg font-bold text-foreground flex items-center gap-2 tracking-tight">
                             <span className="w-1 h-6 bg-emerald-500 rounded-full"></span>
@@ -323,7 +399,9 @@ export function AdvancedInputSection({
                                         <div className="flex min-w-0 items-baseline gap-1.5">
                                             <div className={`h-2 w-2 shrink-0 rounded-full ${colors.bar}`} />
                                             <span className="truncate text-sm font-bold tracking-tight text-slate-700">{cat.title}</span>
-                                            <span className="shrink-0 text-xs tracking-tight text-muted-foreground/50">{pct.toFixed(1)}%</span>
+                                            <span className="expense-analysis-percent shrink-0 text-xs tracking-tight text-muted-foreground/50">
+                                                {pct.toFixed(1)}%
+                                            </span>
                                         </div>
                                         <span className="justify-self-end text-right text-sm font-medium text-slate-700 tracking-tight whitespace-nowrap tabular-nums">{formatMoney(cat.totalAmount)}</span>
                                     </div>
@@ -406,6 +484,7 @@ export function AdvancedInputSection({
                                             onUpdateItemRate={updateCategoryItemRate}
                                             onUpdateItemArea={updateCategoryItemArea}
                                             onUpdateItemMemo={updateCategoryItemMemo}
+                                            onToggleItemLock={toggleCategoryItemLock}
                                             onAddItem={addCategoryItem}
                                             onRemoveItem={removeCategoryItem}
                                             onRemoveCategory={removeCostCategory}
@@ -426,6 +505,7 @@ export function AdvancedInputSection({
                                             allowItemMoving={allowItemMoving}
                                             allowCategoryAdding={allowCategoryAdding}
                                             allowItemDeleting={allowItemDeleting}
+                                            forceItemsLocked={forceItemsLocked}
                                         />
                                     ))}
                                 </div>
@@ -447,6 +527,7 @@ export function AdvancedInputSection({
                                     onUpdateItemRate={updateCategoryItemRate}
                                     onUpdateItemArea={updateCategoryItemArea}
                                     onUpdateItemMemo={updateCategoryItemMemo}
+                                    onToggleItemLock={toggleCategoryItemLock}
                                     onAddItem={addCategoryItem}
                                     onRemoveItem={removeCategoryItem}
                                     onRemoveCategory={removeCostCategory}
@@ -465,6 +546,7 @@ export function AdvancedInputSection({
                                     allowItemMoving={allowItemMoving}
                                     allowCategoryAdding={allowCategoryAdding}
                                     allowItemDeleting={allowItemDeleting}
+                                    forceItemsLocked={forceItemsLocked}
                                 />
                             ))}
                         </div>
@@ -482,6 +564,20 @@ export function AdvancedInputSection({
                 </button>
             )}
             </div>
+
+            {detailPanel && (
+                <div
+                    role="separator"
+                    aria-label="카테고리와 상세페이지 너비 조절"
+                    aria-orientation="vertical"
+                    tabIndex={0}
+                    onPointerDown={handleDetailResizePointerDown}
+                    onKeyDown={handleDetailResizeKeyDown}
+                    className="group hidden h-full cursor-col-resize items-stretch justify-center px-0.5 outline-none lg:flex"
+                >
+                    <span className="h-full w-px bg-slate-200 transition-colors group-hover:bg-blue-400 group-focus-visible:bg-blue-500" />
+                </div>
+            )}
 
             {mounted && detailPanel}
         </div>

@@ -92,12 +92,13 @@ export function UnitMixStats({ unitTypes, allocations, unitPricing }: UnitMixSta
     }));
 
     return (
-        <div className="space-y-4">
+        <>
             <ManagementHeroSummary
                 title="총 수입 예상"
                 value={formatEok(totalRevenue)}
                 description={`아파트 ${apartmentUnits}세대 / 임대 ${rentalCount}세대 기준`}
                 tone="positive"
+                sticky
                 items={[
                     {
                         label: "총 세대 구성",
@@ -183,6 +184,6 @@ export function UnitMixStats({ unitTypes, allocations, unitPricing }: UnitMixSta
             <p className="-mt-2 text-xs text-slate-400">
                 표시 금액은 억원 단위로 반올림되며, 정확값은 상세 항목 기준으로 계산됩니다.
             </p>
-        </div>
+        </>
     );
 }

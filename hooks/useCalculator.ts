@@ -219,6 +219,13 @@ function addUniqueId(ids: string[] | undefined, id: string) {
     return ids?.includes(id) ? ids : [...(ids ?? []), id];
 }
 
+function isItemLocked(categories: CostCategory[], categoryId: string, itemId: string) {
+    return categories
+        .find((category) => category.id === categoryId)
+        ?.items.find((item) => item.id === itemId)
+        ?.isLocked === true;
+}
+
 export function useCalculator() {
     const [inputs, setInputs] = useState<AnalysisInputs>(defaultValues);
     const [isLoaded, setIsLoaded] = useState(false);
@@ -324,7 +331,7 @@ export function useCalculator() {
                     const landCat = newCategories.find(c => c.id === 'land');
                     if (landCat) {
                         landCat.items = landCat.items.map(item =>
-                            item.id === 'l1' ? { ...item, amount: value as number, calculationBasis: 'per_site_pyung' } : item
+                            item.id === 'l1' && !item.isLocked ? { ...item, amount: value as number, calculationBasis: 'per_site_pyung' } : item
                         );
                     }
                 } else if (field === 'constCostPerPyung') {
@@ -332,7 +339,7 @@ export function useCalculator() {
                     const constCat = newCategories.find(c => c.id === 'construction');
                     if (constCat) {
                         constCat.items = constCat.items.map(item =>
-                            item.id === 'c1' ? { ...item, amount: value as number, calculationBasis: 'per_floor_pyung' } : item
+                            item.id === 'c1' && !item.isLocked ? { ...item, amount: value as number, calculationBasis: 'per_floor_pyung' } : item
                         );
                     }
                 }
@@ -352,6 +359,8 @@ export function useCalculator() {
 
     const updateCategoryItem = (categoryId: string, itemId: string, newValue: number) => {
         setInputs((prev) => {
+            if (isItemLocked(prev.advancedCategories, categoryId, itemId)) return prev;
+
             const newCategories = prev.advancedCategories.map((cat) => {
                 if (cat.id !== categoryId) return cat;
                 return {
@@ -368,6 +377,8 @@ export function useCalculator() {
 
     const updateCategoryItemBasis = (categoryId: string, itemId: string, basis: CostItem['calculationBasis']) => {
         setInputs((prev) => {
+            if (isItemLocked(prev.advancedCategories, categoryId, itemId)) return prev;
+
             const newCategories = prev.advancedCategories.map((cat) => {
                 if (cat.id !== categoryId) return cat;
                 return {
@@ -384,6 +395,8 @@ export function useCalculator() {
 
     const updateCategoryItemArea = (categoryId: string, itemId: string, area: number) => {
         setInputs((prev) => {
+            if (isItemLocked(prev.advancedCategories, categoryId, itemId)) return prev;
+
             const newCategories = prev.advancedCategories.map((cat) => {
                 if (cat.id !== categoryId) return cat;
                 return {
@@ -416,6 +429,8 @@ export function useCalculator() {
 
     const removeCategoryItem = (categoryId: string, itemId: string) => {
         setInputs((prev) => {
+            if (isItemLocked(prev.advancedCategories, categoryId, itemId)) return prev;
+
             const newCategories = prev.advancedCategories.map((cat) => {
                 if (cat.id !== categoryId) return cat;
                 return { ...cat, items: cat.items.filter((item) => item.id !== itemId) };
@@ -451,18 +466,26 @@ export function useCalculator() {
     };
 
     const removeCostCategory = (id: string) => {
-        setInputs((prev) => ({
-            ...prev,
-            advancedCategories: prev.advancedCategories.filter(cat => cat.id !== id),
-            deletedDefaultCategoryIds: isDefaultCategory(id)
-                ? addUniqueId(prev.deletedDefaultCategoryIds, id)
-                : prev.deletedDefaultCategoryIds,
-        }));
+        setInputs((prev) => {
+            if (prev.advancedCategories.some((cat) => cat.id === id && cat.items.some((item) => item.isLocked))) {
+                return prev;
+            }
+
+            return {
+                ...prev,
+                advancedCategories: prev.advancedCategories.filter(cat => cat.id !== id),
+                deletedDefaultCategoryIds: isDefaultCategory(id)
+                    ? addUniqueId(prev.deletedDefaultCategoryIds, id)
+                    : prev.deletedDefaultCategoryIds,
+            };
+        });
     };
 
     // Sub-Item Handlers
     const addSubItem = (categoryId: string, itemId: string, name: string, amount: number) => {
         setInputs((prev) => {
+            if (isItemLocked(prev.advancedCategories, categoryId, itemId)) return prev;
+
             const newCategories = prev.advancedCategories.map((cat) => {
                 if (cat.id !== categoryId) return cat;
                 return {
@@ -486,6 +509,8 @@ export function useCalculator() {
 
     const updateSubItem = (categoryId: string, itemId: string, subItemId: string, field: 'name' | 'amount', value: string | number) => {
         setInputs((prev) => {
+            if (isItemLocked(prev.advancedCategories, categoryId, itemId)) return prev;
+
             const newCategories = prev.advancedCategories.map((cat) => {
                 if (cat.id !== categoryId) return cat;
                 return {
@@ -510,6 +535,8 @@ export function useCalculator() {
 
     const removeSubItem = (categoryId: string, itemId: string, subItemId: string) => {
         setInputs((prev) => {
+            if (isItemLocked(prev.advancedCategories, categoryId, itemId)) return prev;
+
             const newCategories = prev.advancedCategories.map((cat) => {
                 if (cat.id !== categoryId) return cat;
                 return {
@@ -542,6 +569,8 @@ export function useCalculator() {
     // Update sub-item memo
     const updateSubItemMemo = (categoryId: string, itemId: string, subItemId: string, memo: string) => {
         setInputs((prev) => {
+            if (isItemLocked(prev.advancedCategories, categoryId, itemId)) return prev;
+
             const newCategories = prev.advancedCategories.map((cat) => {
                 if (cat.id !== categoryId) return cat;
                 return {
@@ -716,6 +745,8 @@ export function useCalculator() {
 
     const updateCategoryItemCondition = (categoryId: string, itemId: string, allocationId: string, amount: number) => {
         setInputs((prev) => {
+            if (isItemLocked(prev.advancedCategories, categoryId, itemId)) return prev;
+
             const newCategories = prev.advancedCategories.map((cat) => {
                 if (cat.id !== categoryId) return cat;
                 return {
@@ -738,6 +769,8 @@ export function useCalculator() {
 
     const updateCategoryItemRate = (categoryId: string, itemId: string, rate: number) => {
         setInputs((prev) => {
+            if (isItemLocked(prev.advancedCategories, categoryId, itemId)) return prev;
+
             const newCategories = prev.advancedCategories.map((cat) => {
                 if (cat.id !== categoryId) return cat;
                 return {
@@ -754,6 +787,8 @@ export function useCalculator() {
 
     const updateCategoryItemMemo = (categoryId: string, itemId: string, memo: string) => {
         setInputs((prev) => {
+            if (isItemLocked(prev.advancedCategories, categoryId, itemId)) return prev;
+
             const newCategories = prev.advancedCategories.map((cat) => {
                 if (cat.id !== categoryId) return cat;
                 return {
@@ -771,6 +806,8 @@ export function useCalculator() {
     // Rename cost item
     const updateCategoryItemName = (categoryId: string, itemId: string, newName: string) => {
         setInputs((prev) => {
+            if (isItemLocked(prev.advancedCategories, categoryId, itemId)) return prev;
+
             const newCategories = prev.advancedCategories.map((cat) => {
                 if (cat.id !== categoryId) return cat;
                 return {
@@ -817,6 +854,22 @@ export function useCalculator() {
         });
     };
 
+    const toggleCategoryItemLock = (categoryId: string, itemId: string, locked: boolean) => {
+        setInputs((prev) => {
+            const newCategories = prev.advancedCategories.map((cat) => {
+                if (cat.id !== categoryId) return cat;
+                return {
+                    ...cat,
+                    items: cat.items.map((item) => {
+                        if (item.id !== itemId) return item;
+                        return { ...item, isLocked: locked };
+                    }),
+                };
+            });
+            return { ...prev, advancedCategories: newCategories };
+        });
+    };
+
     // Reorder categories
     const reorderCostCategory = (activeId: string, overId: string) => {
         setInputs((prev) => {
@@ -842,6 +895,7 @@ export function useCalculator() {
         updateCategoryItemCondition,
         updateCategoryItemRate,
         updateCategoryItemMemo,
+        toggleCategoryItemLock,
         addCategoryItem,
         removeCategoryItem,
         addCostCategory,

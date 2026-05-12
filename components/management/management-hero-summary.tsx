@@ -1,5 +1,7 @@
 "use client";
 
+import { cn } from "@/lib/utils";
+
 type SummaryTone = "neutral" | "positive" | "negative" | "accent";
 
 interface SummaryItem {
@@ -15,6 +17,8 @@ interface ManagementHeroSummaryProps {
     description: string;
     tone?: SummaryTone;
     items: SummaryItem[];
+    sticky?: boolean;
+    className?: string;
 }
 
 function getToneClass(tone: SummaryTone = "neutral") {
@@ -30,9 +34,17 @@ export function ManagementHeroSummary({
     description,
     tone = "neutral",
     items,
+    sticky = false,
+    className,
 }: ManagementHeroSummaryProps) {
     return (
-        <section className="rounded-xl border border-slate-800 bg-gradient-to-r from-slate-950 to-slate-900 p-5 text-white shadow-sm">
+        <section
+            className={cn(
+                "rounded-xl border border-slate-800 bg-gradient-to-r from-slate-950 to-slate-900 p-5 text-white shadow-sm",
+                sticky && "sticky top-0 z-30",
+                className
+            )}
+        >
             <div className="grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,2fr)] lg:items-end">
                 <div className="min-w-0">
                     <p className="text-sm font-bold tracking-tight text-slate-400">{title}</p>

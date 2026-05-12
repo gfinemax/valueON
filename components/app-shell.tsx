@@ -20,7 +20,7 @@ export function AppShell({ children }: AppShellProps) {
 
   return (
     <div
-      className="h-full relative overflow-x-hidden"
+      className="h-full relative overflow-x-clip"
       style={{ "--sidebar-offset": sidebarOffset } as CSSProperties}
     >
       <aside

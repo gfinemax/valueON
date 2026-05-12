@@ -44,6 +44,7 @@ interface CostCategoryDetailsProps {
     onUpdateItemRate: (catId: string, itemId: string, rate: number) => void;
     onUpdateItemArea?: (catId: string, itemId: string, area: number) => void;
     onUpdateItemMemo: (catId: string, itemId: string, memo: string) => void;
+    onToggleItemLock: (catId: string, itemId: string, locked: boolean) => void;
     onAddItem: (catId: string, name: string, amount: number) => void;
     onRemoveCategory: (id: string) => void;
     onRemoveItem: (catId: string, itemId: string) => void;
@@ -59,6 +60,7 @@ interface CostCategoryDetailsProps {
     allowItemMoving?: boolean;
     allowCategoryAdding?: boolean;
     allowItemDeleting?: boolean;
+    forceItemsLocked?: boolean;
 }
 
 interface CostCategoryCardProps extends CostCategoryDetailsProps {
@@ -81,6 +83,7 @@ export function CostCategoryDetails({
     onUpdateItemRate,
     onUpdateItemArea,
     onUpdateItemMemo,
+    onToggleItemLock,
     onAddItem,
     onRemoveItem,
     onAddSubItem,
@@ -92,6 +95,7 @@ export function CostCategoryDetails({
     highlightItemId,
     allowCategoryAdding = true,
     allowItemDeleting = true,
+    forceItemsLocked = false,
 }: CostCategoryDetailsProps) {
     const colors = getCategoryColor(category.title);
 
@@ -160,10 +164,13 @@ export function CostCategoryDetails({
                                 onUpdateRate={(itemId, rate) => onUpdateItemRate(category.id, itemId, rate)}
                                 onUpdateArea={(itemId, area) => onUpdateItemArea?.(category.id, itemId, area)}
                                 onUpdateMemo={(itemId, memo) => onUpdateItemMemo(category.id, itemId, memo)}
+                                onToggleLock={(itemId, locked) => onToggleItemLock(category.id, itemId, locked)}
                                 onRemove={(itemId) => onRemoveItem(category.id, itemId)}
                                 applicationRate={item.applicationRate}
                                 manualArea={item.manualArea}
                                 memo={item.note}
+                                isLocked={forceItemsLocked || item.isLocked}
+                                isLockForced={forceItemsLocked}
                                 subItems={item.subItems}
                                 onAddSubItem={(name, amount) => onAddSubItem(category.id, item.id, name, amount)}
                                 onUpdateSubItem={(subId, field, val) => onUpdateSubItem(category.id, item.id, subId, field, val)}

@@ -196,6 +196,20 @@
   animation: pulse-once 0.6s ease-out 2;
 }
 
+.expense-analysis-card {
+  container: expense-analysis / inline-size;
+}
+
+.expense-analysis-percent {
+  display: none;
+}
+
+@container expense-analysis (min-width: 1080px) {
+  .expense-analysis-percent {
+    display: inline;
+  }
+}
+
 /* Mobile Safe Area Utilities */
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom);

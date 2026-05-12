@@ -105,6 +105,8 @@ export interface CostItem {
   manualArea?: number;
   // NEW: Sub-Items for detailed breakdown
   subItems?: SubItem[];
+  // Prevent accidental edits to amount, basis, templates, and sub-items
+  isLocked?: boolean;
 }
 
 export interface CostCategory {

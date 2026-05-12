@@ -1,6 +1,11 @@
 "use client";
 
-import { ReactNode, useEffect, useMemo, useState } from "react";
+import type {
+    CSSProperties,
+    KeyboardEvent as ReactKeyboardEvent,
+    PointerEvent as ReactPointerEvent,
+} from "react";
+import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { GripVertical, PanelRight, X } from "lucide-react";
 import { AnalysisResult, MemberTier, UnitAllocation, UnitType } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -79,6 +84,8 @@ const TIER_LABELS: Record<MemberTier, string> = {
     General: "일반분양",
 };
 const INCOME_DETAIL_STORAGE_KEY = "valueon-income-selected-category-v1";
+const MIN_DETAIL_PANEL_WIDTH = 360;
+const MAX_DETAIL_PANEL_WIDTH = 720;
 
 function isIncomeCategoryId(value: string | null): value is IncomeCategoryId {
     return value !== null && value in CATEGORY_META;
@@ -121,6 +128,9 @@ export function IncomeCategorySection({
     summaryContent,
 }: IncomeCategorySectionProps) {
     const [selectedCategoryId, setSelectedCategoryId] = useState<IncomeCategoryId | null>(null);
+    const [detailPanelWidth, setDetailPanelWidth] = useState(500);
+    const restoredCategoryRef = useRef(false);
+    const layoutRef = useRef<HTMLElement>(null);
 
     const summaries = useMemo<IncomeCategorySummary[]>(() => {
         const rows = getRows(unitTypes, allocations, unitPricing);
@@ -155,9 +165,15 @@ export function IncomeCategorySection({
     const selectedCategory = summaries.find((summary) => summary.id === selectedCategoryId);
 
     useEffect(() => {
+        if (restoredCategoryRef.current) {
+            return;
+        }
+
+        restoredCategoryRef.current = true;
         const savedCategoryId = window.localStorage.getItem(INCOME_DETAIL_STORAGE_KEY);
         if (isIncomeCategoryId(savedCategoryId) && summaries.some((summary) => summary.id === savedCategoryId)) {
-            setSelectedCategoryId(savedCategoryId);
+            const timeoutId = window.setTimeout(() => setSelectedCategoryId(savedCategoryId), 0);
+            return () => window.clearTimeout(timeoutId);
         }
     }, [summaries]);
 
@@ -176,9 +192,58 @@ export function IncomeCategorySection({
         window.localStorage.setItem(INCOME_DETAIL_STORAGE_KEY, selectedCategoryId);
     }, [selectedCategoryId, summaries]);
 
+    const clampDetailPanelWidth = (width: number) => {
+        const containerWidth = layoutRef.current?.getBoundingClientRect().width ?? 0;
+        const dynamicMaxWidth = containerWidth > 0
+            ? Math.min(MAX_DETAIL_PANEL_WIDTH, Math.max(MIN_DETAIL_PANEL_WIDTH, containerWidth - 360))
+            : MAX_DETAIL_PANEL_WIDTH;
+
+        return Math.min(Math.max(width, MIN_DETAIL_PANEL_WIDTH), dynamicMaxWidth);
+    };
+
+    const handleDetailResizePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+        if (!layoutRef.current) return;
+
+        event.preventDefault();
+        const previousCursor = document.body.style.cursor;
+        const previousUserSelect = document.body.style.userSelect;
+
+        document.body.style.cursor = "col-resize";
+        document.body.style.userSelect = "none";
+
+        const handlePointerMove = (pointerEvent: PointerEvent) => {
+            const containerRect = layoutRef.current?.getBoundingClientRect();
+            if (!containerRect) return;
+
+            setDetailPanelWidth(clampDetailPanelWidth(containerRect.right - pointerEvent.clientX));
+        };
+
+        const handlePointerUp = () => {
+            document.body.style.cursor = previousCursor;
+            document.body.style.userSelect = previousUserSelect;
+            window.removeEventListener("pointermove", handlePointerMove);
+            window.removeEventListener("pointerup", handlePointerUp);
+        };
+
+        window.addEventListener("pointermove", handlePointerMove);
+        window.addEventListener("pointerup", handlePointerUp, { once: true });
+    };
+
+    const handleDetailResizeKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+        if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+
+        event.preventDefault();
+        const direction = event.key === "ArrowLeft" ? 24 : -24;
+        setDetailPanelWidth((currentWidth) => clampDetailPanelWidth(currentWidth + direction));
+    };
+
     return (
-        <section className={selectedCategory ? "grid grid-cols-1 gap-3 pb-10 lg:grid-cols-[minmax(0,1fr)_minmax(420px,500px)] lg:items-start" : "pb-10"}>
-            <div className="min-w-0 space-y-3">
+        <section
+            ref={layoutRef}
+            style={selectedCategory ? ({ "--detail-panel-width": `${detailPanelWidth}px` } as CSSProperties) : undefined}
+            className={selectedCategory ? "grid grid-cols-1 gap-3 pb-10 lg:h-[calc(100vh-5.5rem)] lg:grid-cols-[minmax(320px,1fr)_0.5rem_minmax(360px,var(--detail-panel-width))] lg:gap-0 lg:overflow-hidden" : "grid grid-cols-1 gap-3 pb-10 lg:h-[calc(100vh-5.5rem)] lg:overflow-hidden"}
+        >
+            <div className="min-w-0 space-y-3 lg:h-full lg:overflow-y-auto lg:overscroll-contain lg:pr-2 lg:pb-10">
                 {summaryContent}
 
                 <h3 className="flex items-center gap-2 text-sm font-bold text-slate-700">
@@ -271,8 +336,22 @@ export function IncomeCategorySection({
             </div>
 
             {selectedCategory && (
-                <aside className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm lg:sticky lg:top-16">
-                    <div className={`border-l-[5px] ${selectedCategory.border} border-b border-slate-100 bg-white p-4`}>
+                <div
+                    role="separator"
+                    aria-label="카테고리와 상세페이지 너비 조절"
+                    aria-orientation="vertical"
+                    tabIndex={0}
+                    onPointerDown={handleDetailResizePointerDown}
+                    onKeyDown={handleDetailResizeKeyDown}
+                    className="group hidden h-full cursor-col-resize items-stretch justify-center px-0.5 outline-none lg:flex"
+                >
+                    <span className="h-full w-px bg-slate-200 transition-colors group-hover:bg-blue-400 group-focus-visible:bg-blue-500" />
+                </div>
+            )}
+
+            {selectedCategory && (
+                <aside className="rounded-xl border border-slate-200 bg-white shadow-sm lg:h-full lg:overflow-y-auto lg:overscroll-contain">
+                    <div className={`sticky top-0 z-20 rounded-t-xl border-l-[5px] ${selectedCategory.border} border-b border-slate-200 bg-slate-50 p-4 shadow-sm`}>
                         <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
                                 <div className="flex min-w-0 items-center gap-2">
@@ -314,7 +393,7 @@ export function IncomeCategorySection({
                         </div>
                     </div>
 
-                    <div className="max-h-[calc(100vh-11rem)] overflow-y-auto bg-slate-50/60 p-4">
+                    <div className="rounded-b-xl bg-slate-50/60 p-4">
                         {selectedCategory.rows.length > 0 ? (
                             <div className="space-y-3">
                                 {selectedCategory.rows.map((row) => (

@@ -28,6 +28,7 @@ function ExpensePageContent() {
         updateCategoryItemCondition,
         updateCategoryItemRate,
         updateCategoryItemMemo,
+        toggleCategoryItemLock,
         addCategoryItem,
         removeCategoryItem,
         addCostCategory,
@@ -80,7 +81,7 @@ function ExpensePageContent() {
                 )}
             />
 
-            <div className="p-4 space-y-4 max-w-7xl mx-auto">
+            <div className="w-full p-4 space-y-4">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
                     <div className="lg:col-span-12 space-y-4">
                         <AdvancedInputSection
@@ -88,6 +89,7 @@ function ExpensePageContent() {
                             allowItemMoving={canMoveItems}
                             allowCategoryAdding={canAddCategories}
                             allowItemDeleting={canDeleteItems}
+                            forceItemsLocked={!isEditMode}
                             showAddCategoryButton={canAddCategories}
                             categories={inputs.advancedCategories}
                             projectTarget={inputs.projectTarget}
@@ -99,6 +101,7 @@ function ExpensePageContent() {
                             updateCategoryItemCondition={updateCategoryItemCondition}
                             updateCategoryItemRate={updateCategoryItemRate}
                             updateCategoryItemMemo={updateCategoryItemMemo}
+                            toggleCategoryItemLock={toggleCategoryItemLock}
                             addCategoryItem={addCategoryItem}
                             removeCategoryItem={removeCategoryItem}
                             addCostCategory={addCostCategory}
