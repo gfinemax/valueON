@@ -331,7 +331,7 @@ export function useCalculator() {
                     const landCat = newCategories.find(c => c.id === 'land');
                     if (landCat) {
                         landCat.items = landCat.items.map(item =>
-                            item.id === 'l1' && !item.isLocked ? { ...item, amount: value as number, calculationBasis: 'per_site_pyung' } : item
+                            item.id === 'l1' && !item.isLocked ? { ...item, amount: value as number, calculationBasis: 'per_site_private' } : item
                         );
                     }
                 } else if (field === 'constCostPerPyung') {
