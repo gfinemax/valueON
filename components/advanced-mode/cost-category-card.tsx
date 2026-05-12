@@ -1,12 +1,21 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Plus, Trash2, GripVertical, PanelRight } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
 import { CostCategory, CostItem, ProjectTarget, UnitAllocation, UnitType } from "@/types";
 
 import { SortableCostItemRow } from "./sortable-cost-item-row";
@@ -121,14 +130,18 @@ export function CostCategoryDetails({
         }
     }
 
-    const handleAddItem = () => {
-        const name = prompt("추가할 항목명을 입력하세요:", "새 항목");
-        if (!name) return;
-        const amountStr = prompt("금액을 입력하세요 (예: 1000만원, 1.5억, 500000 등):", "0");
-        if (amountStr === null) return;
-        const amount = parseKoreanMoney(amountStr);
+    const [isAddItemOpen, setIsAddItemOpen] = useState(false);
+    const [newItemName, setNewItemName] = useState("");
+    const [newItemAmount, setNewItemAmount] = useState("");
+
+    const handleAddItemSubmit = () => {
+        if (!newItemName.trim()) return;
+        const amount = parseKoreanMoney(newItemAmount) || 0;
         if (!isNaN(amount)) {
-            onAddItem(category.id, name, amount);
+            onAddItem(category.id, newItemName.trim(), amount);
+            setIsAddItemOpen(false);
+            setNewItemName("");
+            setNewItemAmount("");
         } else {
             alert("올바른 금액 형식이 아닙니다.");
         }
@@ -187,14 +200,47 @@ export function CostCategoryDetails({
                 </DndContext>
             </div>
             {allowCategoryAdding && (
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full text-blue-600 hover:bg-blue-100 hover:text-blue-700 py-1.5 h-auto border border-dashed border-blue-300 rounded-lg"
-                    onClick={handleAddItem}
-                >
-                    <Plus className="h-4 w-4 mr-1" /> 항목 추가하기
-                </Button>
+                <Dialog open={isAddItemOpen} onOpenChange={setIsAddItemOpen}>
+                    <DialogTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="w-full text-blue-600 hover:bg-blue-100 hover:text-blue-700 py-1.5 h-auto border border-dashed border-blue-300 rounded-lg mt-2"
+                        >
+                            <Plus className="h-4 w-4 mr-1" /> 항목 추가하기
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>새 항목 추가</DialogTitle>
+                            <DialogDescription>{category.title}에 추가할 항목 정보를 입력하세요.</DialogDescription>
+                        </DialogHeader>
+                        <div className="py-4 space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">항목명</label>
+                                <Input
+                                    value={newItemName}
+                                    onChange={(e) => setNewItemName(e.target.value)}
+                                    placeholder="예: 추가 공사비"
+                                    autoFocus
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">금액 (원)</label>
+                                <Input
+                                    value={newItemAmount}
+                                    onChange={(e) => setNewItemAmount(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleAddItemSubmit()}
+                                    placeholder="예: 1000만원, 1.5억, 500000"
+                                />
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setIsAddItemOpen(false)}>취소</Button>
+                            <Button onClick={handleAddItemSubmit}>추가</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             )}
         </CardContent>
     );

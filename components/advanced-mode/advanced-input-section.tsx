@@ -31,6 +31,17 @@ import { calculateCostItemAmount } from "@/lib/analysis";
 import { ManagementHeroSummary } from "@/components/management/management-hero-summary";
 import { formatKrwEok, formatKrwEokSigned, formatKrwThousands } from "@/utils/currency";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 const subscribeToMount = () => () => {};
 const getMountedSnapshot = () => true;
@@ -123,10 +134,14 @@ export function AdvancedInputSection({
 
     const formatMoney = (val: number) => formatKrwEok(val);
 
-    const handleAddCategory = () => {
-        const title = prompt("새로운 카테고리 이름을 입력하세요:", "새 카테고리");
-        if (title) {
-            addCostCategory(title);
+    const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
+    const [newCategoryTitle, setNewCategoryTitle] = useState("");
+
+    const handleAddCategorySubmit = () => {
+        if (newCategoryTitle.trim()) {
+            addCostCategory(newCategoryTitle.trim());
+            setIsAddCategoryOpen(false);
+            setNewCategoryTitle("");
         }
     };
 
@@ -555,13 +570,35 @@ export function AdvancedInputSection({
 
             {/* Add Category Button */}
             {showAddCategoryButton && allowCategoryAdding && (
-                <button
-                    onClick={handleAddCategory}
-                    className="w-full py-4 rounded-xl border-2 border-dashed border-border text-muted-foreground font-bold hover:border-primary hover:text-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-2"
-                >
-                    <Plus className="w-5 h-5" />
-                    <span>새로운 카테고리 추가</span>
-                </button>
+                <Dialog open={isAddCategoryOpen} onOpenChange={setIsAddCategoryOpen}>
+                    <DialogTrigger asChild>
+                        <button
+                            className="w-full py-4 rounded-xl border-2 border-dashed border-border text-muted-foreground font-bold hover:border-primary hover:text-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-2"
+                        >
+                            <Plus className="w-5 h-5" />
+                            <span>새로운 카테고리 추가</span>
+                        </button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>새 카테고리 추가</DialogTitle>
+                            <DialogDescription>새로운 카테고리의 이름을 입력하세요.</DialogDescription>
+                        </DialogHeader>
+                        <div className="py-4">
+                            <Input
+                                value={newCategoryTitle}
+                                onChange={(e) => setNewCategoryTitle(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleAddCategorySubmit()}
+                                placeholder="예: 추가 공사비"
+                                autoFocus
+                            />
+                        </div>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setIsAddCategoryOpen(false)}>취소</Button>
+                            <Button onClick={handleAddCategorySubmit}>추가</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             )}
             </div>
 
