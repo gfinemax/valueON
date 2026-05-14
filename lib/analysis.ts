@@ -153,6 +153,7 @@ export function calculateAnalysisResult(inputs: AnalysisInputs): AnalysisResult 
     }
 
     if (allocation.targetPricePerPyung) {
+      // For MISC items, targetPricePerPyung is the absolute amount, supplyArea is 1
       totalRevenue += allocation.targetPricePerPyung * unitType.supplyArea * allocation.count;
       return;
     }

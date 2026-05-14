@@ -18,6 +18,7 @@ const TIER_COLORS: Record<string, string> = {
     '2nd': '#f59e0b',   // amber
     'General': '#3b82f6', // blue
     'Rental': '#8b5cf6', // purple for rental
+    'Misc': '#64748b',
 };
 
 const TIER_LABELS: Record<string, string> = {
@@ -25,6 +26,7 @@ const TIER_LABELS: Record<string, string> = {
     '2nd': '2차 조합원',
     'General': '일반분양',
     'Rental': '임대주택',
+    'Misc': '기타수입',
 };
 
 function formatEok(amount: number) {
@@ -35,6 +37,7 @@ export function UnitMixStats({ unitTypes, allocations, unitPricing }: UnitMixSta
     // Separate apartment and rental types
     const apartmentTypeIds = unitTypes.filter(u => u.category === 'APARTMENT').map(u => u.id);
     const rentalTypeIds = unitTypes.filter(u => u.category === 'RENTAL').map(u => u.id);
+    const miscTypeIds = unitTypes.filter(u => u.category === 'MISC').map(u => u.id);
 
     // Calculate stats by tier (apartments only for tiers, rental as separate)
     const tierStats = (['1st', '2nd', 'General'] as const).map(tier => {
@@ -70,18 +73,28 @@ export function UnitMixStats({ unitTypes, allocations, unitPricing }: UnitMixSta
             rentalRevenue += alloc.targetPricePerPyung * ut.supplyArea * alloc.count;
         }
     });
+    const miscAllocations = allocations.filter(a => miscTypeIds.includes(a.unitTypeId));
+    const miscCount = miscAllocations.reduce((sum, a) => sum + a.count, 0);
+    let miscRevenue = 0;
+    miscAllocations.forEach(alloc => {
+        const ut = unitTypes.find(u => u.id === alloc.unitTypeId);
+        if (ut && alloc.targetPricePerPyung) {
+            miscRevenue += alloc.targetPricePerPyung * ut.supplyArea * alloc.count;
+        }
+    });
     const allStats = [
         ...tierStats,
-        { tier: 'Rental', name: '임대주택', count: rentalCount, revenue: rentalRevenue, color: TIER_COLORS['Rental'] }
+        { tier: 'Rental', name: '임대주택', count: rentalCount, revenue: rentalRevenue, color: TIER_COLORS['Rental'] },
+        { tier: 'Misc', name: '기타수입', count: miscCount, revenue: miscRevenue, color: TIER_COLORS['Misc'] },
     ];
 
-    const totalUnits = allStats.reduce((sum, s) => sum + s.count, 0);
+    const totalUnits = tierStats.reduce((sum, s) => sum + s.count, 0) + rentalCount;
     const totalRevenue = allStats.reduce((sum, s) => sum + s.revenue, 0);
     const memberRevenue = tierStats
         .filter((stat) => stat.tier === "1st" || stat.tier === "2nd")
         .reduce((sum, stat) => sum + stat.revenue, 0);
     const marketRevenue = allStats
-        .filter((stat) => stat.tier === "General" || stat.tier === "Rental")
+        .filter((stat) => stat.tier === "General" || stat.tier === "Rental" || stat.tier === "Misc")
         .reduce((sum, stat) => sum + stat.revenue, 0);
     const apartmentUnits = tierStats.reduce((sum, stat) => sum + stat.count, 0);
 
@@ -96,14 +109,14 @@ export function UnitMixStats({ unitTypes, allocations, unitPricing }: UnitMixSta
             <ManagementHeroSummary
                 title="총 수입 예상"
                 value={formatEok(totalRevenue)}
-                description={`아파트 ${apartmentUnits}세대 / 임대 ${rentalCount}세대 기준`}
+                description={`아파트 ${apartmentUnits}세대 / 임대 ${rentalCount}세대${miscCount > 0 ? ` / 기타 ${miscCount}건` : ""} 기준`}
                 tone="positive"
                 sticky
                 items={[
                     {
                         label: "총 세대 구성",
                         value: `${totalUnits}세대`,
-                        description: `전체 평형 ${unitTypes.length}개 타입`,
+                        description: `전체 평형 ${unitTypes.filter((unitType) => unitType.category !== 'MISC').length}개 타입`,
                     },
                     {
                         label: "조합원 분담금",
@@ -114,7 +127,7 @@ export function UnitMixStats({ unitTypes, allocations, unitPricing }: UnitMixSta
                     {
                         label: "일반/임대 수입",
                         value: formatEok(marketRevenue),
-                        description: `일반분양 ${tierStats[2]?.count ?? 0}세대 / 임대 ${rentalCount}세대`,
+                        description: `일반분양 ${tierStats[2]?.count ?? 0}세대 / 임대 ${rentalCount}세대${miscCount > 0 ? ` / 기타 ${miscCount}건` : ""}`,
                     },
                 ]}
             />
@@ -137,7 +150,7 @@ export function UnitMixStats({ unitTypes, allocations, unitPricing }: UnitMixSta
                                     <div className="flex min-w-0 items-baseline gap-1.5">
                                         <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: stat.color }} />
                                         <span className="truncate text-sm font-bold tracking-tight text-slate-700">{stat.name}</span>
-                                        <span className="shrink-0 text-xs tracking-tight text-slate-500">{stat.count}세대</span>
+                                        <span className="shrink-0 text-xs tracking-tight text-slate-500">{stat.count}{stat.tier === 'Misc' ? '건' : '세대'}</span>
                                         <span className="shrink-0 text-xs tracking-tight text-muted-foreground/50">{percent.toFixed(1)}%</span>
                                     </div>
                                 </div>

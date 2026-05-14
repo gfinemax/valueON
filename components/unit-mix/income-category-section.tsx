@@ -6,14 +6,20 @@ import type {
     PointerEvent as ReactPointerEvent,
 } from "react";
 import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
-import { GripVertical, PanelRight, X } from "lucide-react";
-import { AnalysisResult, MemberTier, UnitAllocation, UnitType } from "@/types";
+import { AnalysisResult, IncomeCategoryId, IncomeCategoryMetadata, MemberTier, UnitAllocation, UnitType } from "@/types";
+import { Plus, Trash2, GripVertical, PanelRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatKoreanCurrency, formatKrwEok, formatKrwMan, formatKrwThousands, parseKoreanMoney } from "@/utils/currency";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-type IncomeCategoryId = "member1" | "member2" | "general" | "rental" | "other";
+type MiscIncomeSample = {
+    name: string;
+    amount: number;
+    count?: number;
+    note?: string;
+};
 
 interface IncomeCategorySectionProps {
     unitTypes: UnitType[];
@@ -22,6 +28,13 @@ interface IncomeCategorySectionProps {
     onUpdateAllocation: (id: string, field: keyof UnitAllocation, value: number | string) => void;
     isEditMode?: boolean;
     summaryContent?: ReactNode;
+    incomeCategoryMetadata?: IncomeCategoryMetadata[];
+    onUpdateCategoryTitle?: (id: string, title: string) => void;
+    onUpdateCategoryNote?: (id: string, note: string) => void;
+    onUpdateUnitTypeName?: (id: string, name: string) => void;
+    onAddAllocation?: (unitTypeId: string, tier: MemberTier) => void;
+    onAddMiscIncomeItem?: (sample: MiscIncomeSample) => void;
+    onDeleteAllocation?: (id: string) => void;
 }
 
 interface IncomeRow {
@@ -43,6 +56,7 @@ interface IncomeCategorySummary {
     itemCount: number;
     householdCount: number;
     revenue: number;
+    note?: string;
 }
 
 const CATEGORY_META: Record<IncomeCategoryId, { title: string; description: string; color: string; border: string }> = {
@@ -83,6 +97,35 @@ const TIER_LABELS: Record<MemberTier, string> = {
     "2nd": "2차 조합원",
     General: "일반분양",
 };
+
+const MISC_INCOME_SAMPLES: MiscIncomeSample[] = [
+    {
+        name: "업무대행비",
+        amount: 3810000000,
+        note: "조합 및 시행 업무대행 수입",
+    },
+    {
+        name: "예금이자수입",
+        amount: 120000000,
+        note: "분양대금 및 운영자금 예치 이자",
+    },
+    {
+        name: "연체료 수입",
+        amount: 50000000,
+        note: "납부 지연에 따른 연체료",
+    },
+    {
+        name: "부대시설 매각수입",
+        amount: 800000000,
+        note: "상가, 부대시설 등 기타 매각 수입",
+    },
+    {
+        name: "기타수입",
+        amount: 0,
+        note: "직접 입력",
+    },
+];
+
 const INCOME_DETAIL_STORAGE_KEY = "valueon-income-selected-category-v1";
 const MIN_DETAIL_PANEL_WIDTH = 360;
 const MAX_DETAIL_PANEL_WIDTH = 720;
@@ -111,7 +154,11 @@ function getRows(
         return [{
             allocation,
             unitType,
-            label: unitType.category === "RENTAL" ? "임대수입" : TIER_LABELS[allocation.tier],
+            label: unitType.category === "MISC"
+                ? "기타수입"
+                : unitType.category === "RENTAL"
+                    ? "임대수입"
+                    : TIER_LABELS[allocation.tier],
             totalPrice,
             pricePerPyung,
             revenue: totalPrice * allocation.count,
@@ -126,6 +173,13 @@ export function IncomeCategorySection({
     onUpdateAllocation,
     isEditMode = true,
     summaryContent,
+    incomeCategoryMetadata,
+    onUpdateCategoryTitle,
+    onUpdateCategoryNote,
+    onUpdateUnitTypeName,
+    onAddAllocation,
+    onAddMiscIncomeItem,
+    onDeleteAllocation,
 }: IncomeCategorySectionProps) {
     const [selectedCategoryId, setSelectedCategoryId] = useState<IncomeCategoryId | null>(null);
     const [detailPanelWidth, setDetailPanelWidth] = useState(500);
@@ -134,14 +188,16 @@ export function IncomeCategorySection({
 
     const summaries = useMemo<IncomeCategorySummary[]>(() => {
         const rows = getRows(unitTypes, allocations, unitPricing);
-        const apartmentRows = rows.filter((row) => row.unitType.category !== "RENTAL");
+        const apartmentRows = rows.filter((row) => (row.unitType.category ?? "APARTMENT") === "APARTMENT");
         const firstMemberRows = apartmentRows.filter((row) => row.allocation.tier === "1st");
         const secondMemberRows = apartmentRows.filter((row) => row.allocation.tier === "2nd");
         const generalRows = apartmentRows.filter((row) => row.allocation.tier === "General");
         const rentalRows = rows.filter((row) => row.unitType.category === "RENTAL");
+        const otherRows = rows.filter((row) => row.unitType.category === "MISC");
 
         const buildSummary = (id: IncomeCategoryId, categoryRows: IncomeRow[], itemCount = categoryRows.length) => {
             const meta = CATEGORY_META[id];
+            const customMeta = incomeCategoryMetadata?.find(m => m.id === id);
             return {
                 id,
                 ...meta,
@@ -149,6 +205,8 @@ export function IncomeCategorySection({
                 itemCount,
                 householdCount: categoryRows.reduce((sum, row) => sum + row.allocation.count, 0),
                 revenue: categoryRows.reduce((sum, row) => sum + row.revenue, 0),
+                title: customMeta?.title || meta.title,
+                note: customMeta?.note,
             };
         };
 
@@ -157,9 +215,9 @@ export function IncomeCategorySection({
             buildSummary("member2", secondMemberRows),
             buildSummary("general", generalRows),
             buildSummary("rental", rentalRows),
-            buildSummary("other", [], 0),
+            buildSummary("other", otherRows),
         ];
-    }, [allocations, unitPricing, unitTypes]);
+    }, [allocations, unitPricing, unitTypes, incomeCategoryMetadata]);
 
     const totalRevenue = summaries.reduce((sum, summary) => sum + summary.revenue, 0);
     const selectedCategory = summaries.find((summary) => summary.id === selectedCategoryId);
@@ -273,9 +331,49 @@ export function IncomeCategorySection({
                                         <GripVertical className="mt-0.5 h-4 w-4 shrink-0 text-slate-300" />
                                         <div className="min-w-0 flex-1">
                                             <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-                                                <h4 className="truncate text-lg font-extrabold tracking-tight text-slate-950">
-                                                    {summary.title}
-                                                </h4>
+                                                <Popover>
+                                                    <PopoverTrigger asChild>
+                                                        <h4
+                                                            className="truncate text-lg font-extrabold tracking-tight text-slate-950 cursor-pointer hover:text-blue-600 transition-colors"
+                                                            onClick={(e) => e.stopPropagation()}
+                                                        >
+                                                            {summary.title}
+                                                            {summary.note ? (
+                                                                <span className="ml-1 text-blue-400 text-xs">💬</span>
+                                                            ) : (
+                                                                <span className="ml-1 text-slate-300 text-xs opacity-0 group-hover:opacity-100 transition-opacity">+ 메모</span>
+                                                            )}
+                                                        </h4>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-80 p-3" side="top" align="start" onClick={(e) => e.stopPropagation()}>
+                                                        <div className="space-y-3">
+                                                            <div className="space-y-1">
+                                                                <label className="text-sm font-medium text-slate-700">카테고리 이름</label>
+                                                                <Input
+                                                                    type="text"
+                                                                    value={summary.title}
+                                                                    onChange={(e) => onUpdateCategoryTitle?.(summary.id, e.target.value)}
+                                                                    onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+                                                                    className="h-9 text-sm w-full font-medium"
+                                                                    placeholder="카테고리 이름..."
+                                                                />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <label className="text-sm font-medium text-slate-700">메모</label>
+                                                                <Input
+                                                                    type="text"
+                                                                    value={summary.note || ""}
+                                                                    onChange={(e) => onUpdateCategoryNote?.(summary.id, e.target.value)}
+                                                                    onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+                                                                    className="h-9 text-sm w-full"
+                                                                    placeholder="이 카테고리에 대한 메모..."
+                                                                    autoFocus
+                                                                />
+                                                            </div>
+                                                            <p className="text-xs text-slate-400">Enter 또는 바깥을 클릭하면 저장됩니다</p>
+                                                        </div>
+                                                    </PopoverContent>
+                                                </Popover>
                                                 <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
                                                     {percent.toFixed(1)}%
                                                 </span>
@@ -402,12 +500,73 @@ export function IncomeCategorySection({
                                         row={row}
                                         isEditMode={isEditMode}
                                         onUpdateAllocation={onUpdateAllocation}
+                                        onUpdateUnitTypeName={onUpdateUnitTypeName}
+                                        onDeleteAllocation={onDeleteAllocation}
                                     />
                                 ))}
                             </div>
                         ) : (
-                            <div className="rounded-lg border border-dashed border-slate-200 p-5 text-sm text-slate-500">
+                            <div className="rounded-lg border border-dashed border-slate-200 p-5 text-sm text-slate-500 text-center">
                                 등록된 세부 수입 항목이 없습니다.
+                            </div>
+                        )}
+
+                        {isEditMode && (
+                            <div className="mt-6 border-t border-slate-200 pt-6">
+                                <h5 className="text-xs font-bold text-slate-500 mb-3 uppercase tracking-wider px-1">항목 추가하기</h5>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {selectedCategoryId === 'other' ? (
+                                        MISC_INCOME_SAMPLES.map((sample) => (
+                                            <Button
+                                                key={sample.name}
+                                                variant="outline"
+                                                size="sm"
+                                                className="min-w-0 justify-start gap-2 h-11 border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-700 transition-all shadow-sm"
+                                                onClick={() => (
+                                                    onAddMiscIncomeItem
+                                                        ? onAddMiscIncomeItem(sample)
+                                                        : onAddAllocation?.('u-misc', 'General')
+                                                )}
+                                            >
+                                                <Plus className="h-3.5 w-3.5 shrink-0" />
+                                                <span className="min-w-0 truncate text-left">
+                                                    {sample.name}
+                                                </span>
+                                                <span className="ml-auto shrink-0 text-[11px] text-slate-400">
+                                                    {sample.amount > 0 ? formatKrwEok(sample.amount) : "직접 입력"}
+                                                </span>
+                                            </Button>
+                                        ))
+                                    ) : (
+                                        unitTypes
+                                            .filter(type => {
+                                                if (selectedCategoryId === 'rental') return type.category === 'RENTAL';
+                                                return type.category === 'APARTMENT';
+                                            })
+                                            .map((type) => (
+                                                <Button
+                                                    key={type.id}
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="justify-start gap-2 h-10 border-slate-200 bg-white hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-all shadow-sm"
+                                                    onClick={() => {
+                                                        let tier: MemberTier = 'General';
+                                                        if (selectedCategoryId === 'member1') tier = '1st';
+                                                        else if (selectedCategoryId === 'member2') tier = '2nd';
+                                                        onAddAllocation?.(type.id, tier);
+                                                    }}
+                                                >
+                                                    <Plus className="h-3.5 w-3.5" />
+                                                    <span className="truncate">{type.name}</span>
+                                                </Button>
+                                            ))
+                                    )}
+                                </div>
+                                <p className="mt-3 px-1 text-[11px] text-slate-400">
+                                    {selectedCategoryId === 'other'
+                                        ? "샘플을 선택한 뒤 항목명, 수량, 금액을 수정할 수 있습니다."
+                                        : "유형을 선택하면 현재 카테고리에 새로운 수입 항목이 추가됩니다."}
+                                </p>
                             </div>
                         )}
                     </div>
@@ -421,30 +580,60 @@ function IncomeDetailRow({
     row,
     isEditMode,
     onUpdateAllocation,
+    onUpdateUnitTypeName,
+    onDeleteAllocation,
 }: {
     row: IncomeRow;
     isEditMode: boolean;
     onUpdateAllocation: (id: string, field: keyof UnitAllocation, value: number | string) => void;
+    onUpdateUnitTypeName?: (id: string, name: string) => void;
+    onDeleteAllocation?: (id: string) => void;
 }) {
+    const isMiscIncome = row.unitType.category === 'MISC';
+
     return (
         <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
             <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                    <h5 className="truncate text-sm font-extrabold text-slate-950">
-                        {row.unitType.name} · {row.label}
-                    </h5>
+                <div className="min-w-0 flex-1">
+                    {isEditMode && isMiscIncome ? (
+                        <div className="space-y-1">
+                            <label className="block text-xs text-slate-500">항목명</label>
+                            <Input
+                                type="text"
+                                className="h-8 text-sm font-bold"
+                                value={row.unitType.name}
+                                onChange={(event) => onUpdateUnitTypeName?.(row.unitType.id, event.target.value)}
+                            />
+                        </div>
+                    ) : (
+                        <h5 className="truncate text-sm font-extrabold text-slate-950">
+                            {row.unitType.name} · {row.label}
+                        </h5>
+                    )}
                     <p className="mt-1 text-xs text-slate-500">
-                        공급 {row.unitType.supplyArea}평 · 전용 {row.unitType.exclusiveAreaM2}㎡
+                        {isMiscIncome ? '일반 수입 항목' : `공급 ${row.unitType.supplyArea}평 · 전용 ${row.unitType.exclusiveAreaM2}㎡`}
                     </p>
                 </div>
-                <div className="text-right text-base font-extrabold text-slate-950">
-                    {formatKrwEok(row.revenue)}
+                <div className="text-right flex flex-col items-end gap-1">
+                    <div className="text-base font-extrabold text-slate-950">
+                        {formatKrwEok(row.revenue)}
+                    </div>
+                    {isEditMode && (
+                        <Button
+                            variant="ghost"
+                            size="icon-xs"
+                            className="text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                            onClick={() => onDeleteAllocation?.(row.allocation.id)}
+                        >
+                            <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                    )}
                 </div>
             </div>
 
             <div className="mt-3 grid grid-cols-2 gap-3">
                 <div>
-                    <label className="mb-1 block text-xs text-slate-500">세대수</label>
+                    <label className="mb-1 block text-xs text-slate-500">{isMiscIncome ? '수량' : '세대수'}</label>
                     {isEditMode ? (
                         <div className="flex items-center gap-1">
                             <Input
@@ -453,15 +642,15 @@ function IncomeDetailRow({
                                 value={row.allocation.count}
                                 onChange={(event) => onUpdateAllocation(row.allocation.id, "count", Number(event.target.value))}
                             />
-                            <span className="text-xs text-slate-400">세대</span>
+                            <span className="text-xs text-slate-400">{isMiscIncome ? '건' : '세대'}</span>
                         </div>
                     ) : (
-                        <div className="text-sm font-semibold text-slate-700">{row.allocation.count}세대</div>
+                        <div className="text-sm font-semibold text-slate-700">{row.allocation.count}{isMiscIncome ? '건' : '세대'}</div>
                     )}
                 </div>
 
                 <div>
-                    <label className="mb-1 block text-xs text-slate-500">평당 단가</label>
+                    <label className="mb-1 block text-xs text-slate-500">{isMiscIncome ? '금액' : '평당 단가'}</label>
                     {isEditMode ? (
                         <MoneyInput
                             value={row.pricePerPyung}
@@ -469,7 +658,7 @@ function IncomeDetailRow({
                         />
                     ) : (
                         <div className="text-right text-sm font-semibold text-slate-700">
-                            {formatKrwMan(row.pricePerPyung)}
+                            {isMiscIncome ? formatKrwThousands(row.pricePerPyung) : formatKrwMan(row.pricePerPyung)}
                         </div>
                     )}
                 </div>

@@ -35,9 +35,20 @@ export interface AnalysisInputs {
   // Funding Plan Data
   fundingPlan: FundingPlanItem[];
 
+  // Income Category Metadata
+  incomeCategoryMetadata?: IncomeCategoryMetadata[];
+
   // Default data deletion tracking for merge-safe deployments
   deletedDefaultCategoryIds?: string[];
   deletedDefaultItemIds?: Record<string, string[]>;
+}
+
+export type IncomeCategoryId = "member1" | "member2" | "general" | "rental" | "other";
+
+export interface IncomeCategoryMetadata {
+  id: IncomeCategoryId;
+  title: string;
+  note?: string;
 }
 
 export type FundingCategory = 'bridge' | 'pf' | 'member' | 'other';
@@ -59,7 +70,7 @@ export interface UnitType {
   name: string;
   supplyArea: number; // in pyung
   exclusiveAreaM2?: number; // 전용면적 in m²
-  category?: 'APARTMENT' | 'RETAIL' | 'RENTAL';
+  category?: 'APARTMENT' | 'RETAIL' | 'RENTAL' | 'MISC';
   totalUnits?: number; // 해당 평형의 총 세대수 (연동 계산용)
 }
 

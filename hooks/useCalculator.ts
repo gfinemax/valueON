@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { AnalysisInputs, CostCategory, CostItem, FundingCategory, FundingPlanItem, UnitAllocation } from "@/types";
+import { AnalysisInputs, CostCategory, CostItem, FundingCategory, FundingPlanItem, MemberTier, UnitAllocation, UnitType } from "@/types";
 import { defaultValues } from "@/constants/defaultValues";
 import { calculateAnalysisResult } from "@/lib/analysis";
 import { recommendCalculationBasis } from "@/utils/calculation-basis";
@@ -168,10 +168,14 @@ function normalizeInputs(
     });
     const customCategories = savedCategories.filter((category) => !defaultCategoryIds.has(category.id));
 
-    const mergedUnitTypes = defaultValues.unitTypes.map((defaultType) => {
-        const savedType = inputs.unitTypes?.find((type) => type.id === defaultType.id);
+    const savedUnitTypes = Array.isArray(inputs.unitTypes) ? inputs.unitTypes : [];
+    const defaultUnitTypeIds = new Set(defaultValues.unitTypes.map((unitType) => unitType.id));
+    const mergedDefaultUnitTypes = defaultValues.unitTypes.map((defaultType) => {
+        const savedType = savedUnitTypes.find((type) => type.id === defaultType.id);
         return savedType ? { ...defaultType, ...savedType } : defaultType;
     });
+    const customUnitTypes = savedUnitTypes.filter((type) => !defaultUnitTypeIds.has(type.id));
+    const mergedUnitTypes = [...mergedDefaultUnitTypes, ...customUnitTypes];
     const unitAreaById = new Map(mergedUnitTypes.map((unitType) => [unitType.id, unitType.supplyArea]));
     const mergedAllocations = defaultValues.unitAllocations.map((defaultAllocation) => {
         const savedAllocation = inputs.unitAllocations?.find((allocation) => allocation.id === defaultAllocation.id);
@@ -188,18 +192,26 @@ function normalizeInputs(
             fixedTotalPrice: undefined,
         };
     });
+    const customAllocations = (inputs.unitAllocations ?? []).filter(
+        (alloc) => !defaultValues.unitAllocations.some((da) => da.id === alloc.id)
+    );
 
     return {
         ...defaultValues,
         ...inputs,
         advancedCategories: [...mergedCategories, ...customCategories],
         unitTypes: mergedUnitTypes,
-        unitAllocations: mergedAllocations,
+        unitAllocations: [...mergedAllocations, ...customAllocations],
         fundingPlan: Array.isArray(inputs.fundingPlan) ? inputs.fundingPlan : defaultValues.fundingPlan,
+        incomeCategoryMetadata: (inputs.incomeCategoryMetadata || defaultValues.incomeCategoryMetadata || []).map(defaultMeta => {
+            const savedMeta = (inputs.incomeCategoryMetadata || []).find(m => m.id === defaultMeta.id);
+            return savedMeta ? { ...defaultMeta, ...savedMeta } : defaultMeta;
+        }),
     };
 }
 
 const defaultCategoryIds = new Set(defaultValues.advancedCategories.map((category) => category.id));
+const defaultUnitTypeIds = new Set(defaultValues.unitTypes.map((unitType) => unitType.id));
 const defaultItemIdsByCategory = new Map(
     defaultValues.advancedCategories.map((category) => [
         category.id,
@@ -833,6 +845,110 @@ export function useCalculator() {
         });
     };
 
+    const updateIncomeCategoryTitle = (id: string, title: string) => {
+        setInputs((prev) => ({
+            ...prev,
+            incomeCategoryMetadata: (prev.incomeCategoryMetadata || []).map(m =>
+                m.id === id ? { ...m, title } : m
+            )
+        }));
+    };
+
+    const updateIncomeCategoryNote = (id: string, note: string) => {
+        setInputs((prev) => ({
+            ...prev,
+            incomeCategoryMetadata: (prev.incomeCategoryMetadata || []).map(m =>
+                m.id === id ? { ...m, note } : m
+            )
+        }));
+    };
+
+    const updateUnitTypeName = (unitTypeId: string, name: string) => {
+        setInputs((prev) => ({
+            ...prev,
+            unitTypes: prev.unitTypes.map((unitType) =>
+                unitType.id === unitTypeId ? { ...unitType, name } : unitType
+            ),
+        }));
+    };
+
+    const addUnitAllocation = (unitTypeId: string, tier: MemberTier) => {
+        setInputs((prev) => {
+            const id = `a-${Date.now()}`;
+            const newAllocation: UnitAllocation = {
+                id,
+                unitTypeId,
+                tier,
+                count: 0,
+                targetPricePerPyung: 0,
+            };
+            return {
+                ...prev,
+                unitAllocations: [...prev.unitAllocations, newAllocation],
+            };
+        });
+    };
+
+    const addMiscIncomeItem = ({
+        name,
+        amount,
+        count = 1,
+        note,
+    }: {
+        name: string;
+        amount: number;
+        count?: number;
+        note?: string;
+    }) => {
+        setInputs((prev) => {
+            const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+            const miscItemCount = prev.unitTypes.filter((unitType) => unitType.category === "MISC" && unitType.id !== "u-misc").length;
+            const itemName = name.trim() || `기타수입 ${miscItemCount + 1}`;
+            const unitTypeId = `u-misc-${uniqueId}`;
+            const allocationId = `a-misc-${uniqueId}`;
+            const newUnitType: UnitType = {
+                id: unitTypeId,
+                name: itemName,
+                supplyArea: 1,
+                exclusiveAreaM2: 0,
+                category: "MISC",
+                totalUnits: count,
+            };
+            const newAllocation: UnitAllocation = {
+                id: allocationId,
+                unitTypeId,
+                tier: "General",
+                count,
+                targetPricePerPyung: amount,
+                note,
+            };
+
+            return {
+                ...prev,
+                unitTypes: [...prev.unitTypes, newUnitType],
+                unitAllocations: [...prev.unitAllocations, newAllocation],
+            };
+        });
+    };
+
+    const deleteUnitAllocation = (id: string) => {
+        setInputs((prev) => {
+            const targetAllocation = prev.unitAllocations.find((allocation) => allocation.id === id);
+            const unitAllocations = prev.unitAllocations.filter((allocation) => allocation.id !== id);
+            const shouldRemoveUnitType = targetAllocation
+                && !defaultUnitTypeIds.has(targetAllocation.unitTypeId)
+                && !unitAllocations.some((allocation) => allocation.unitTypeId === targetAllocation.unitTypeId);
+
+            return {
+                ...prev,
+                unitAllocations,
+                unitTypes: shouldRemoveUnitType
+                    ? prev.unitTypes.filter((unitType) => unitType.id !== targetAllocation.unitTypeId)
+                    : prev.unitTypes,
+            };
+        });
+    };
+
     // Reorder items
     const reorderCategoryItem = (categoryId: string, activeId: string, overId: string) => {
         setInputs((prev) => {
@@ -908,6 +1024,12 @@ export function useCalculator() {
         updateCategoryItemName,
         updateCategoryTitle,
         reorderCategoryItem,
+        updateIncomeCategoryTitle,
+        updateIncomeCategoryNote,
+        updateUnitTypeName,
+        addUnitAllocation,
+        addMiscIncomeItem,
+        deleteUnitAllocation,
         updateUnitAllocation,
         updateUnitTypeTotalUnits,
         addFundingPlanItem,

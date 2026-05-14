@@ -20,6 +20,12 @@ export default function IncomePage() {
         inputs,
         updateUnitAllocation,
         updateUnitTypeTotalUnits,
+        updateIncomeCategoryTitle,
+        updateIncomeCategoryNote,
+        updateUnitTypeName,
+        addUnitAllocation,
+        addMiscIncomeItem,
+        deleteUnitAllocation,
         result
     } = useCalculator();
 
@@ -60,8 +66,15 @@ export default function IncomePage() {
                     unitTypes={inputs.unitTypes}
                     allocations={inputs.unitAllocations}
                     onUpdateAllocation={updateUnitAllocation}
+                    onAddAllocation={addUnitAllocation}
+                    onDeleteAllocation={deleteUnitAllocation}
+                    incomeCategoryMetadata={inputs.incomeCategoryMetadata}
+                    onUpdateCategoryTitle={updateIncomeCategoryTitle}
+                    onUpdateCategoryNote={updateIncomeCategoryNote}
+                    onUpdateUnitTypeName={updateUnitTypeName}
                     unitPricing={result.unitPricing}
                     isEditMode={isEditMode}
+                    onAddMiscIncomeItem={addMiscIncomeItem}
                     summaryContent={
                         <UnitMixStats
                             unitTypes={inputs.unitTypes}

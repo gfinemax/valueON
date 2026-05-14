@@ -29,7 +29,7 @@ import {
 } from "@dnd-kit/sortable";
 import { calculateCostItemAmount } from "@/lib/analysis";
 import { ManagementHeroSummary } from "@/components/management/management-hero-summary";
-import { formatKrwEok, formatKrwEokSigned, formatKrwThousands } from "@/utils/currency";
+import { formatKrwEok, formatKrwEokSigned, formatKrwMan, formatKrwThousands } from "@/utils/currency";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
     Dialog,
@@ -160,7 +160,40 @@ export function AdvancedInputSection({
 
     // 2. Derive totalExpense and pieData from sorted list
     const totalExpense = categoriesWithTotals.reduce((sum, cat) => sum + cat.totalAmount, 0);
-    const largestCategory = categoriesWithTotals[0];
+    const landCategory = categoriesWithTotals.find((cat) => cat.id === "land" || cat.title.includes("토지"));
+    const constructionCategory = categoriesWithTotals.find((cat) => cat.id === "construction" || cat.title.includes("공사"));
+    const landCostPerPyung = landCategory && projectTarget.totalLandArea > 0
+        ? landCategory.totalAmount / projectTarget.totalLandArea
+        : 0;
+    const constructionCostPerPyung = constructionCategory && projectTarget.totalFloorArea > 0
+        ? constructionCategory.totalAmount / projectTarget.totalFloorArea
+        : 0;
+    const privateLandArea = (projectTarget.privateLandArea ?? 0) > 0
+        ? projectTarget.privateLandArea ?? 0
+        : Math.max(projectTarget.totalLandArea - (projectTarget.publicLandArea ?? 0), 0);
+    const publicLandArea = projectTarget.publicLandArea ?? 0;
+    const privateLandItem = landCategory?.items.find((item) => {
+        const itemName = item.name.replace(/\s/g, "");
+        return item.id === "l1"
+            || itemName.includes("토지매입")
+            || itemName.includes("사유지매입")
+            || itemName.includes("민유지매입")
+            || (itemName.includes("매입") && !itemName.includes("국유"));
+    });
+    const publicLandItem = landCategory?.items.find((item) => {
+        const itemName = item.name.replace(/\s/g, "");
+        return item.id === "l2" || itemName.includes("국유") || itemName.includes("공유");
+    });
+    const privateLandCostPerPyung = privateLandItem && privateLandArea > 0
+        ? calculateCostItemAmount(privateLandItem, { projectTarget, unitAllocations }) / privateLandArea
+        : 0;
+    const publicLandCostPerPyung = publicLandItem && publicLandArea > 0
+        ? calculateCostItemAmount(publicLandItem, { projectTarget, unitAllocations }) / publicLandArea
+        : 0;
+    const directConstructionItem = constructionCategory?.items.find((item) => item.name.includes("직접공사비"));
+    const directConstructionCostPerPyung = directConstructionItem && projectTarget.totalFloorArea > 0
+        ? calculateCostItemAmount(directConstructionItem, { projectTarget, unitAllocations }) / projectTarget.totalFloorArea
+        : 0;
     const financeCategory = categoriesWithTotals.find((cat) => cat.title.includes("금융"));
     const incomeGap = totalIncome !== undefined ? totalIncome - totalExpense : undefined;
     const selectedCategory = categories.find((cat) => cat.id === selectedCategoryId);
@@ -371,14 +404,16 @@ export function AdvancedInputSection({
                     sticky
                     items={[
                         {
-                            label: "카테고리 구성",
-                            value: `${categories.length}개`,
-                            description: `세부 항목 ${categories.reduce((sum, category) => sum + category.items.length, 0)}개`,
+                            label: "토지비 평당",
+                            value: landCategory ? formatKrwMan(landCostPerPyung) : "-",
+                            description: landCategory
+                                ? `사유지 ${formatKrwMan(privateLandCostPerPyung)} · 국유지 ${formatKrwMan(publicLandCostPerPyung)}`
+                                : "토지비 없음",
                         },
                         {
-                            label: "최대 비용 항목",
-                            value: largestCategory ? formatKrwEok(largestCategory.totalAmount) : "0억원",
-                            description: largestCategory ? largestCategory.title : "등록된 비용 없음",
+                            label: "공사비 평당",
+                            value: constructionCategory ? formatKrwMan(constructionCostPerPyung) : "-",
+                            description: constructionCategory ? `직접공사비 ${formatKrwMan(directConstructionCostPerPyung)}` : "공사비 없음",
                             tone: "accent",
                         },
                         {

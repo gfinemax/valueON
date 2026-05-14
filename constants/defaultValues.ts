@@ -1,4 +1,4 @@
-import { AnalysisInputs, CostCategory, UnitType, UnitAllocation } from "@/types";
+import { AnalysisInputs, CostCategory, UnitType, UnitAllocation, IncomeCategoryMetadata } from "@/types";
 
 const defaultAdvancedCategories: CostCategory[] = [
     {
@@ -92,6 +92,8 @@ const defaultUnitTypes: UnitType[] = [
     { id: "u6", name: "임대 84Type", supplyArea: 34, exclusiveAreaM2: 112.40, category: "RENTAL", totalUnits: 3 },
     { id: "u5", name: "임대 73Type", supplyArea: 31, exclusiveAreaM2: 102.48, category: "RENTAL", totalUnits: 3 },
     { id: "u4", name: "임대 59Type", supplyArea: 25, exclusiveAreaM2: 82.84, category: "RENTAL", totalUnits: 12 },
+    // 기타 수입 (Misc)
+    { id: "u-misc", name: "기타 수입 항목", supplyArea: 1, exclusiveAreaM2: 0, category: "MISC", totalUnits: 1000 },
 ];
 
 const defaultUnitAllocations: UnitAllocation[] = [
@@ -114,6 +116,14 @@ const defaultUnitAllocations: UnitAllocation[] = [
     { id: "a10", unitTypeId: "u4", tier: "General", count: 12, targetPricePerPyung: 25000000 },
     { id: "a11", unitTypeId: "u5", tier: "General", count: 3, targetPricePerPyung: 25000000 },
     { id: "a12", unitTypeId: "u6", tier: "General", count: 3, targetPricePerPyung: 25000000 },
+];
+
+const defaultIncomeCategoryMetadata: IncomeCategoryMetadata[] = [
+    { id: "member1", title: "1차 조합원" },
+    { id: "member2", title: "2차 조합원" },
+    { id: "general", title: "일반분양수입" },
+    { id: "rental", title: "임대주택수입" },
+    { id: "other", title: "기타수입" },
 ];
 
 export const defaultValues: AnalysisInputs = {
@@ -185,4 +195,5 @@ export const defaultValues: AnalysisInputs = {
             repaymentSource: "기타수입",
         },
     ],
+    incomeCategoryMetadata: defaultIncomeCategoryMetadata,
 };
