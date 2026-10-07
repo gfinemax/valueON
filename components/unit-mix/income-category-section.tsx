@@ -44,6 +44,9 @@ interface IncomeRow {
     totalPrice: number;
     pricePerPyung: number;
     revenue: number;
+    baseTotalPrice: number;
+    additionalContribution: number;
+    finalPricePerPyung: number;
 }
 
 interface IncomeCategorySummary {
@@ -148,7 +151,7 @@ function getRows(
         if (!unitType) return [];
 
         const pricing = unitPricing?.find((item) => item.allocationId === allocation.id);
-        const pricePerPyung = allocation.targetPricePerPyung ?? pricing?.pricePerPyung ?? 0;
+        const pricePerPyung = allocation.targetPricePerPyung ?? pricing?.basePricePerPyung ?? pricing?.pricePerPyung ?? 0;
         const totalPrice = pricing?.totalPrice ?? unitType.supplyArea * pricePerPyung;
 
         return [{
@@ -162,6 +165,9 @@ function getRows(
             totalPrice,
             pricePerPyung,
             revenue: totalPrice * allocation.count,
+            baseTotalPrice: pricing?.baseTotalPrice ?? totalPrice,
+            additionalContribution: pricing?.additionalContribution ?? 0,
+            finalPricePerPyung: pricing?.pricePerPyung ?? pricePerPyung,
         }];
     });
 }
@@ -650,7 +656,7 @@ function IncomeDetailRow({
                 </div>
 
                 <div>
-                    <label className="mb-1 block text-xs text-slate-500">{isMiscIncome ? '금액' : '평당 단가'}</label>
+                    <label className="mb-1 block text-xs text-slate-500">{isMiscIncome ? '금액' : '기본 평당 단가'}</label>
                     {isEditMode ? (
                         <MoneyInput
                             value={row.pricePerPyung}
@@ -663,6 +669,15 @@ function IncomeDetailRow({
                     )}
                 </div>
             </div>
+
+            {row.unitType.category === "APARTMENT" && (row.allocation.tier === "1st" || row.allocation.tier === "2nd") && (
+                <dl className="mt-3 space-y-1 rounded-md bg-slate-50 p-3 text-xs">
+                    <div className="flex justify-between gap-2"><dt>기본 분담금 / 세대</dt><dd>{formatKoreanCurrency(row.baseTotalPrice)}원</dd></div>
+                    <div className="flex justify-between gap-2 text-amber-700"><dt>적자 추가분담금 / 세대</dt><dd>{formatKoreanCurrency(row.additionalContribution)}원</dd></div>
+                    <div className="flex justify-between gap-2 font-bold"><dt>최종 분담금 / 세대</dt><dd>{formatKoreanCurrency(row.totalPrice)}원</dd></div>
+                    <div className="flex justify-between gap-2 text-slate-500"><dt>최종 평당 단가</dt><dd>{formatKrwMan(row.finalPricePerPyung)}</dd></div>
+                </dl>
+            )}
 
             {isEditMode && (
                 <div className="mt-3">

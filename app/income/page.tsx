@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useCalculator } from "@/hooks/useCalculator";
 import { useSearchIndex } from "@/hooks/useSearchIndex";
 import { UnitMixStats } from "@/components/unit-mix/unit-mix-stats";
+import { DeficitAllocationPanel } from "@/components/unit-mix/deficit-allocation-panel";
 import { UnitConfigPanel } from "@/components/unit-mix/unit-config-panel";
 import { IncomeCategorySection } from "@/components/unit-mix/income-category-section";
 import { SearchHeader } from "@/components/search-header";
@@ -20,6 +21,7 @@ export default function IncomePage() {
         inputs,
         updateUnitAllocation,
         applyHouseholdPreset,
+        setDeficitAllocationEnabled,
         updateHouseholdCount,
         updateSupplyArea,
         updateIncomeCategoryTitle,
@@ -65,6 +67,12 @@ export default function IncomePage() {
                         onUpdateSupplyArea={updateSupplyArea}
                     />
                 )}
+
+                <DeficitAllocationPanel
+                    result={result}
+                    isEditMode={isEditMode}
+                    onEnabledChange={setDeficitAllocationEnabled}
+                />
 
                 {/* Income category cards and detail editor */}
                 <IncomeCategorySection

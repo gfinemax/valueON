@@ -171,7 +171,34 @@ export function calculateAnalysisResult(inputs: AnalysisInputs): AnalysisResult 
     }
   });
 
+  // Calculate the deficit from original prices only; derived contributions are
+  // never written back into inputs or counted again on a subsequent calculation.
+  const baseRevenue = totalRevenue;
+  const deficit = Math.max(0, totalProjectCost - baseRevenue);
+  const enabled = inputs.allocateDeficitToMembers ?? true;
+  const eligibleAllocations = inputs.unitAllocations.filter((allocation) =>
+    (allocation.tier === "1st" || allocation.tier === "2nd")
+    && allocation.count > 0
+    && inputs.unitTypes.some((type) => type.id === allocation.unitTypeId && type.category === "APARTMENT" && type.supplyArea > 0));
+  const eligibleIds = new Set(eligibleAllocations.map((allocation) => allocation.id));
+  const memberArea = eligibleAllocations.reduce((sum, allocation) => sum + allocation.count * getUnitArea(allocation.unitTypeId), 0);
+  const memberCount = eligibleAllocations.reduce((sum, allocation) => sum + allocation.count, 0);
+  const additionalPerPyung = enabled && memberArea > 0 ? deficit / memberArea : 0;
+  const allocatedTotal = additionalPerPyung > 0 ? deficit : 0;
+  calculatedUnitPricing.forEach((pricing) => {
+    const allocation = inputs.unitAllocations.find((item) => item.id === pricing.allocationId);
+    pricing.baseTotalPrice = pricing.totalPrice;
+    pricing.basePricePerPyung = pricing.pricePerPyung;
+    pricing.additionalPricePerPyung = eligibleIds.has(pricing.allocationId) ? additionalPerPyung : 0;
+    pricing.additionalContribution = pricing.supplyArea * pricing.additionalPricePerPyung;
+    pricing.totalPrice += pricing.additionalContribution;
+    pricing.pricePerPyung += pricing.additionalPricePerPyung;
+    pricing.revenueContribution = pricing.totalPrice * (allocation?.count ?? 0);
+  });
+  totalRevenue = baseRevenue + allocatedTotal;
+
   return {
+    deficitAllocation: { enabled, baseRevenue, deficit, memberArea, memberCount, additionalPerPyung, allocatedTotal, remainingDeficit: deficit - allocatedTotal },
     totalProjectCost,
     costPerPyung,
     estimatedPrices: {

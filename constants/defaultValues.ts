@@ -138,6 +138,7 @@ export const defaultValues: AnalysisInputs = {
 
     unitTypes: defaultUnitTypes,
     unitAllocations: defaultUnitAllocations,
+    allocateDeficitToMembers: true,
     initialPayment: 450000000, // 초기 분양가 4억 5천만원
     fundingPlan: [
         {

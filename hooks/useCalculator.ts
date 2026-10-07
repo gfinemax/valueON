@@ -617,6 +617,9 @@ export function useCalculator() {
         });
     };
 
+    const setDeficitAllocationEnabled = (enabled: boolean) =>
+        setInputs((prev) => ({ ...prev, allocateDeficitToMembers: enabled }));
+
     const applyHouseholdPreset = () => setInputs(applyHouseholdPresetToInputs);
     const updateHouseholdCount = (unitTypeId: string, tier: MemberTier, value: number) =>
         setInputs((prev) => updateHouseholdCountInInputs(prev, unitTypeId, tier, value));
@@ -1055,6 +1058,7 @@ export function useCalculator() {
         updateUnitAllocation,
         updateUnitTypeTotalUnits,
         applyHouseholdPreset,
+        setDeficitAllocationEnabled,
         updateHouseholdCount,
         updateSupplyArea,
         addFundingPlanItem,

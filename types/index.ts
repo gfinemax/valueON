@@ -28,6 +28,7 @@ export interface AnalysisInputs {
   // Unit Mix Data
   unitTypes: UnitType[];
   unitAllocations: UnitAllocation[];
+  allocateDeficitToMembers?: boolean; // 공급면적 비율로 적자 추가분담금 배분
 
   // 1차 조합원 초기 분양가 (Initial payment)
   initialPayment: number;
@@ -152,9 +153,23 @@ export interface AnalysisResult {
     supplyArea: number; // 평형 (pyung)
     totalPrice: number;
     pricePerPyung: number;
+    baseTotalPrice?: number;
+    basePricePerPyung?: number;
+    additionalContribution?: number; // 세대당 적자 추가분담금
+    additionalPricePerPyung?: number;
     revenueContribution?: number; // Total revenue from this allocation (price * count)
   }[];
 
   // Total Expected Revenue (분양가 총액)
   totalRevenue?: number;
+  deficitAllocation?: {
+    enabled: boolean;
+    baseRevenue: number;
+    deficit: number;
+    memberArea: number;
+    memberCount: number;
+    additionalPerPyung: number;
+    allocatedTotal: number;
+    remainingDeficit: number;
+  };
 }

@@ -188,6 +188,8 @@ function getAllocationUnitPrice(inputs: AnalysisInputs, allocationId: string) {
 
 function createSimulationBaseInputs(inputs: AnalysisInputs) {
   const cloned = structuredClone(inputs);
+  // Scenario pricing already solves the required member contribution.
+  cloned.allocateDeficitToMembers = false;
   const firstTierPrices = new Map<string, number>();
 
   cloned.unitAllocations.forEach((allocation) => {
@@ -447,12 +449,13 @@ function getPreviewMembers(columns: MemberColumn[]) {
 }
 
 function getAnchoredBasePrices(inputs: AnalysisInputs, columns: MemberColumn[]) {
+  const currentPricing = calculateAnalysisResult(inputs).unitPricing;
   return Object.fromEntries(
     columns.map((column) => {
       const allocation = inputs.unitAllocations.find(
         (item) => item.id === column.allocationId
       );
-      return [column.allocationId, allocation ? getAllocationUnitPrice(inputs, allocation.id) : 0];
+      return [column.allocationId, currentPricing?.find((pricing) => pricing.allocationId === column.allocationId)?.totalPrice ?? (allocation ? getAllocationUnitPrice(inputs, allocation.id) : 0)];
     })
   );
 }

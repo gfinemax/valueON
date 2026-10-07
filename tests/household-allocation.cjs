@@ -87,4 +87,65 @@ assert.equal(editedThenReloaded.unitAllocations.find(a=>a.id==='alloc-49a-1st').
 const duplicated = { ...inputs, unitAllocations: [...inputs.unitAllocations, { ...inputs.unitAllocations[0], id: 'duplicate-49a', count: 2 }] };
 const consolidated = updateHouseholdCountInInputs(duplicated, 'unit-49a', '1st', 15);
 assert.equal(consolidated.unitAllocations.filter(a => a.unitTypeId === 'unit-49a' && a.tier === '1st').reduce((sum,a) => sum+a.count,0),15);
-console.log('PASS: preset totals, prices/revenue, exact edits, rental area link, legacy preservation, preset application, and saved-data reload');
+// Actual project deficit is recovered from original prices, including rental
+// income, then allocated only to apartment members by supply area.
+const deficitInputs = {
+    ...structuredClone(inputs),
+    advancedCategories: [{ id: 'test-cost', title: '사업비', items: [{ id: 'cost', name: '사업비', amount: 358422000000, calculationBasis: 'fixed' }] }],
+    allocateDeficitToMembers: true,
+};
+const originalInputsJson = JSON.stringify(deficitInputs);
+const deficitResult = calculateAnalysisResult(deficitInputs);
+assert.equal(deficitResult.deficitAllocation.deficit,20160000000);
+assert.equal(deficitResult.deficitAllocation.memberArea,6788);
+assert.equal(deficitResult.deficitAllocation.memberCount,244);
+assert.equal(deficitResult.totalRevenue,358422000000);
+assert.equal(deficitResult.deficitAllocation.remainingDeficit,0);
+assert.equal(deficitResult.deficitAllocation.additionalPerPyung,20160000000/6788);
+assert.equal(JSON.stringify(deficitInputs),originalInputsJson);
+let additionalSum = 0;
+let finalRevenueSum = 0;
+for (const allocation of deficitInputs.unitAllocations) {
+    const pricing = deficitResult.unitPricing.find(p=>p.allocationId===allocation.id);
+    additionalSum += pricing.additionalContribution * allocation.count;
+    finalRevenueSum += pricing.totalPrice * allocation.count;
+    if (allocation.unitTypeId.startsWith('rental-')) {
+        assert.equal(pricing.additionalContribution,0);
+        assert.equal(pricing.pricePerPyung,13000000);
+    } else {
+        assert.equal(pricing.basePricePerPyung,allocation.tier==='1st'?45000000:55000000);
+        assert.ok(Math.abs(pricing.additionalContribution - pricing.supplyArea*20160000000/6788)<0.001);
+    }
+}
+assert.ok(Math.abs(additionalSum-20160000000)<0.001);
+assert.ok(Math.abs(finalRevenueSum-deficitResult.totalRevenue)<0.001);
+assert.equal(deficitResult.estimatedPrices.type59,deficitResult.unitPricing.find(p=>p.allocationId==='alloc-59a-1st').totalPrice);
+assert.deepEqual(calculateAnalysisResult(deficitInputs),deficitResult);
+const allocationOff = { ...deficitInputs, allocateDeficitToMembers:false };
+const offResult = calculateAnalysisResult(allocationOff);
+assert.equal(offResult.totalRevenue,338262000000);
+assert.equal(offResult.deficitAllocation.remainingDeficit,20160000000);
+assert.ok(offResult.unitPricing.every(p=>p.additionalContribution===0));
+const reloadedOff = normalizeInputs(JSON.parse(JSON.stringify(allocationOff)));
+assert.equal(reloadedOff.allocateDeficitToMembers,false);
+assert.equal(calculateAnalysisResult(reloadedOff).totalRevenue,338262000000);
+const reloadedOn = normalizeInputs(JSON.parse(JSON.stringify(deficitInputs)));
+assert.equal(calculateAnalysisResult(reloadedOn).totalRevenue,calculateAnalysisResult(reloadedOn).totalProjectCost);
+const higherCost = structuredClone(deficitInputs);
+higherCost.advancedCategories[0].items[0].amount+=1000000000;
+assert.equal(calculateAnalysisResult(higherCost).deficitAllocation.deficit,21160000000);
+assert.equal(calculateAnalysisResult(higherCost).totalRevenue,359422000000);
+const moreMembers = updateHouseholdCountInInputs(deficitInputs,'unit-49a','1st',14);
+assert.equal(calculateAnalysisResult(moreMembers).deficitAllocation.memberArea,6806);
+assert.equal(calculateAnalysisResult(moreMembers).totalRevenue,358422000000);
+const differentArea = updateHouseholdSupplyArea(deficitInputs,'unit-49a',19);
+assert.equal(calculateAnalysisResult(differentArea).deficitAllocation.memberArea,6808);
+assert.equal(calculateAnalysisResult(differentArea).totalRevenue,358422000000);
+const zeroMemberArea = { ...deficitInputs, unitTypes: deficitInputs.unitTypes.map(t=>t.category==='APARTMENT'?{...t,supplyArea:0}:t) };
+const unallocated = calculateAnalysisResult(zeroMemberArea);
+assert.equal(unallocated.deficitAllocation.allocatedTotal,0);
+assert.ok(unallocated.deficitAllocation.remainingDeficit>0);
+assert.ok(unallocated.unitPricing.every(p=>Number.isFinite(p.totalPrice)));
+const surplus = calculateAnalysisResult(inputs);
+assert.equal(surplus.deficitAllocation.allocatedTotal,0);
+console.log('PASS: household migration, prices, 20.16-billion-won deficit allocation, toggles, persistence, rental exclusion, cost/count/area recalculation, and no double charging');
