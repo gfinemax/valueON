@@ -51,13 +51,39 @@ assert.equal(areaChanged.unitTypes.find(t=>t.id==='rental-59c').supplyArea,26);
 assert.equal(calculateAnalysisResult(areaChanged).totalRevenue - result.totalRevenue,1426000000);
 const legacy = { ...inputs, unitTypes:[{id:'u1',name:'59 Type',category:'APARTMENT',supplyArea:25,totalUnits:125},{id:'custom',name:'Other',category:'MISC',supplyArea:1}],unitAllocations:[{id:'a1',unitTypeId:'u1',tier:'1st',count:125,targetPricePerPyung:30000000},{id:'custom-income',unitTypeId:'custom',tier:'General',count:1,targetPricePerPyung:1000000}] };
 const normalizedLegacy = normalizeInputs(legacy);
-assert.equal(normalizedLegacy.unitTypes.some(t=>t.id==='unit-49a'),false);
+assert.equal(normalizedLegacy.unitTypes.some(t=>t.id==='unit-49a'),true);
+assert.equal(normalizedLegacy.projectTarget.totalHouseholds,262);
 const applied = applyHouseholdPresetToInputs(normalizedLegacy);
 assert.equal(applied.unitTypes.some(t=>t.id==='u1'),false);
 assert.equal(applied.unitAllocations.find(a=>a.id==='custom-income').targetPricePerPyung,1000000);
 assert.equal(applied.advancedCategories,normalizedLegacy.advancedCategories);
 assert.deepEqual(applyHouseholdPresetToInputs(applied),applied);
 assert.deepEqual(JSON.parse(JSON.stringify(normalizeInputs(JSON.parse(JSON.stringify(applied))).unitAllocations)),applied.unitAllocations);
+const oldSavedProject = {
+    ...legacy,
+    projectTarget: { ...legacy.projectTarget, totalHouseholds: 254 },
+    unitTypes: [
+        { id: 'u2', name: '84 Type', category: 'APARTMENT', supplyArea: 34, totalUnits: 64 },
+        { id: 'u3', name: '73 Type', category: 'APARTMENT', supplyArea: 31, totalUnits: 47 },
+        { id: 'u1', name: '59 Type', category: 'APARTMENT', supplyArea: 25, totalUnits: 125 },
+        { id: 'u6', name: '임대 84Type', category: 'RENTAL', supplyArea: 34, totalUnits: 3 },
+        { id: 'u5', name: '임대 73Type', category: 'RENTAL', supplyArea: 31, totalUnits: 3 },
+        { id: 'u4', name: '임대 59Type', category: 'RENTAL', supplyArea: 25, totalUnits: 12 },
+        legacy.unitTypes[1],
+    ],
+};
+const upgraded = normalizeInputs(JSON.parse(JSON.stringify(oldSavedProject)));
+assert.equal(upgraded.projectTarget.totalHouseholds,262);
+assert.equal(upgraded.unitTypes.filter(t=>t.category==='APARTMENT').reduce((sum,t)=>sum+t.totalUnits,0),244);
+assert.equal(upgraded.unitTypes.filter(t=>t.category==='RENTAL').reduce((sum,t)=>sum+t.totalUnits,0),18);
+assert.equal(upgraded.unitAllocations.filter(a=>a.tier==='1st').reduce((sum,a)=>sum+a.count,0),150);
+assert.equal(upgraded.unitAllocations.filter(a=>a.tier==='2nd').reduce((sum,a)=>sum+a.count,0),94);
+assert.equal(upgraded.unitTypes.some(t=>t.id==='u3'),false);
+assert.equal(calculateAnalysisResult(upgraded).totalRevenue,338263000000);
+assert.deepEqual(JSON.parse(JSON.stringify(normalizeInputs(upgraded))),JSON.parse(JSON.stringify(upgraded)));
+const editedThenReloaded = normalizeInputs(updateHouseholdCountInInputs(upgraded,'unit-49a','1st',14));
+assert.equal(editedThenReloaded.projectTarget.totalHouseholds,263);
+assert.equal(editedThenReloaded.unitAllocations.find(a=>a.id==='alloc-49a-1st').count,14);
 const duplicated = { ...inputs, unitAllocations: [...inputs.unitAllocations, { ...inputs.unitAllocations[0], id: 'duplicate-49a', count: 2 }] };
 const consolidated = updateHouseholdCountInInputs(duplicated, 'unit-49a', '1st', 15);
 assert.equal(consolidated.unitAllocations.filter(a => a.unitTypeId === 'unit-49a' && a.tier === '1st').reduce((sum,a) => sum+a.count,0),15);

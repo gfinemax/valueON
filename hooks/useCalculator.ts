@@ -201,7 +201,7 @@ function normalizeInputs(
         (alloc) => !defaultValues.unitAllocations.some((da) => da.id === alloc.id)
     );
 
-    return {
+    const normalizedInputs: AnalysisInputs = {
         ...defaultValues,
         ...inputs,
         advancedCategories: [...mergedCategories, ...customCategories],
@@ -213,6 +213,17 @@ function normalizeInputs(
             return savedMeta ? { ...defaultMeta, ...savedMeta } : defaultMeta;
         }),
     };
+
+    // Upgrade the previous 59/73/84-type configuration once. Subsequent user edits
+    // to the new 49A/59A/59B/59C/84A/84B configuration remain saved as entered.
+    const legacyResidentialIds = new Set(["u1", "u2", "u3", "u4", "u5", "u6"]);
+    const hasLegacyResidentialTypes = savedUnitTypes.some((type) => legacyResidentialIds.has(type.id)
+        && (type.category === "APARTMENT" || type.category === "RENTAL"));
+    const hasNewResidentialTypes = savedUnitTypes.some((type) => type.id.startsWith("unit-")
+        && defaultUnitTypeIds.has(type.id));
+    return hasLegacyResidentialTypes && !hasNewResidentialTypes
+        ? applyHouseholdPresetToInputs(normalizedInputs)
+        : normalizedInputs;
 }
 
 const defaultCategoryIds = new Set(defaultValues.advancedCategories.map((category) => category.id));
