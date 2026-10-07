@@ -83,40 +83,26 @@ const defaultAdvancedCategories: CostCategory[] = [
     },
 ];
 
-const defaultUnitTypes: UnitType[] = [
-    // 아파트 (Apartment) - 총 236세대
-    { id: "u2", name: "84 Type", supplyArea: 34, exclusiveAreaM2: 112.40, category: "APARTMENT", totalUnits: 64 },
-    { id: "u3", name: "73 Type", supplyArea: 31, exclusiveAreaM2: 102.48, category: "APARTMENT", totalUnits: 47 },
-    { id: "u1", name: "59 Type", supplyArea: 25, exclusiveAreaM2: 82.84, category: "APARTMENT", totalUnits: 125 },
-    // 임대주택 (Rental) - 총 18세대
-    { id: "u6", name: "임대 84Type", supplyArea: 34, exclusiveAreaM2: 112.40, category: "RENTAL", totalUnits: 3 },
-    { id: "u5", name: "임대 73Type", supplyArea: 31, exclusiveAreaM2: 102.48, category: "RENTAL", totalUnits: 3 },
-    { id: "u4", name: "임대 59Type", supplyArea: 25, exclusiveAreaM2: 82.84, category: "RENTAL", totalUnits: 12 },
-    // 기타 수입 (Misc)
-    { id: "u-misc", name: "기타 수입 항목", supplyArea: 1, exclusiveAreaM2: 0, category: "MISC", totalUnits: 1000 },
+export const householdPreset = [
+    { key: "49a", name: "49A형", area: 18, exclusive: 49, first: 13, second: 7, rental: 0 },
+    { key: "59a", name: "59A형", area: 25, exclusive: 59, first: 54, second: 34, rental: 0 },
+    { key: "59b", name: "59B형", area: 25, exclusive: 59, first: 11, second: 7, rental: 0 },
+    { key: "59c", name: "59C형", area: 25, exclusive: 59, first: 16, second: 10, rental: 12 },
+    { key: "84a", name: "84A형", area: 34, exclusive: 84, first: 20, second: 13, rental: 0 },
+    { key: "84b", name: "84B형", area: 34, exclusive: 84, first: 36, second: 23, rental: 6 },
 ];
 
-const defaultUnitAllocations: UnitAllocation[] = [
-    // 아파트 - 1st Members (평당 단가) - 총 70세대
-    { id: "a1", unitTypeId: "u1", tier: "1st", count: 37, targetPricePerPyung: 30000000 },  // 59 Type: 7억 5천
-    { id: "a7", unitTypeId: "u3", tier: "1st", count: 14, targetPricePerPyung: 29838710 },  // 73 Type: 9억 2,500만
-    { id: "a2", unitTypeId: "u2", tier: "1st", count: 19, targetPricePerPyung: 29382353 },  // 84 Type: 9억 9,900만
+const defaultUnitTypes: UnitType[] = householdPreset.flatMap<UnitType>((row) => [
+    { id: `unit-${row.key}`, name: row.name, supplyArea: row.area, exclusiveAreaM2: row.exclusive, category: "APARTMENT", totalUnits: row.first + row.second },
+    { id: `rental-${row.key}`, name: `공공임대 ${row.name}`, supplyArea: row.area, exclusiveAreaM2: row.exclusive, category: "RENTAL", totalUnits: row.rental },
+]);
+defaultUnitTypes.push({ id: "u-misc", name: "기타 수입 항목", supplyArea: 1, exclusiveAreaM2: 0, category: "MISC", totalUnits: 1000 });
 
-    // 아파트 - 2nd Members (평당 단가) - 총 130세대
-    { id: "a3", unitTypeId: "u1", tier: "2nd", count: 69, targetPricePerPyung: 40000000 },  // 59 Type: 10억
-    { id: "a8", unitTypeId: "u3", tier: "2nd", count: 26, targetPricePerPyung: 42741935 }, // 73 Type: 13.25억
-    { id: "a4", unitTypeId: "u2", tier: "2nd", count: 35, targetPricePerPyung: 41147059 }, // 84 Type: 13.99억
-
-    // 아파트 - General Sales (평당 단가) - 총 36세대
-    { id: "a5", unitTypeId: "u1", tier: "General", count: 19, targetPricePerPyung: 44000000 },  // 59 Type: 11억
-    { id: "a9", unitTypeId: "u3", tier: "General", count: 7, targetPricePerPyung: 47580645 },   // 73 Type: 14.75억
-    { id: "a6", unitTypeId: "u2", tier: "General", count: 10, targetPricePerPyung: 45558824 },  // 84 Type: 15.49억
-
-    // 임대주택 - General only (평당 2,500만원) - 총 18세대
-    { id: "a10", unitTypeId: "u4", tier: "General", count: 12, targetPricePerPyung: 25000000 },
-    { id: "a11", unitTypeId: "u5", tier: "General", count: 3, targetPricePerPyung: 25000000 },
-    { id: "a12", unitTypeId: "u6", tier: "General", count: 3, targetPricePerPyung: 25000000 },
-];
+const defaultUnitAllocations: UnitAllocation[] = householdPreset.flatMap<UnitAllocation>((row) => [
+    { id: `alloc-${row.key}-1st`, unitTypeId: `unit-${row.key}`, tier: "1st", count: row.first, targetPricePerPyung: 45000000 },
+    { id: `alloc-${row.key}-2nd`, unitTypeId: `unit-${row.key}`, tier: "2nd", count: row.second, targetPricePerPyung: 55000000 },
+    { id: `alloc-${row.key}-rental`, unitTypeId: `rental-${row.key}`, tier: "General", count: row.rental, targetPricePerPyung: 13000000, note: "건축비만 반영 (토지비 제외)" },
+]);
 
 const defaultIncomeCategoryMetadata: IncomeCategoryMetadata[] = [
     { id: "member1", title: "1차 조합원" },
@@ -132,7 +118,7 @@ export const defaultValues: AnalysisInputs = {
         privateLandArea: 3483,
         publicLandArea: 393,
         totalFloorArea: 13426,
-        totalHouseholds: 254,
+        totalHouseholds: 262,
     },
 
     addedCosts: {

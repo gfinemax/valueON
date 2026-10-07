@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { AnalysisInputs, CostCategory, CostItem, FundingCategory, FundingPlanItem, MemberTier, UnitAllocation, UnitType } from "@/types";
+import { applyHouseholdPresetToInputs, updateHouseholdCountInInputs, updateHouseholdSupplyArea } from "@/lib/household-allocation";
 import { defaultValues } from "@/constants/defaultValues";
 import { calculateAnalysisResult } from "@/lib/analysis";
 import { recommendCalculationBasis } from "@/utils/calculation-basis";
@@ -170,14 +171,18 @@ function normalizeInputs(
 
     const savedUnitTypes = Array.isArray(inputs.unitTypes) ? inputs.unitTypes : [];
     const defaultUnitTypeIds = new Set(defaultValues.unitTypes.map((unitType) => unitType.id));
-    const mergedDefaultUnitTypes = defaultValues.unitTypes.map((defaultType) => {
+    const mergedDefaultUnitTypes = defaultValues.unitTypes.filter((type) => savedUnitTypes.length === 0 || savedUnitTypes.some((saved) => saved.id === type.id)).map((defaultType) => {
         const savedType = savedUnitTypes.find((type) => type.id === defaultType.id);
-        return savedType ? { ...defaultType, ...savedType } : defaultType;
+        const mergedType = savedType ? { ...defaultType, ...savedType } : defaultType;
+        // Replace the previous temporary 49A supply area in saved projects.
+        return (mergedType.id === "unit-49a" || mergedType.id === "rental-49a") && mergedType.supplyArea === 21
+            ? { ...mergedType, supplyArea: 18 }
+            : mergedType;
     });
     const customUnitTypes = savedUnitTypes.filter((type) => !defaultUnitTypeIds.has(type.id));
     const mergedUnitTypes = [...mergedDefaultUnitTypes, ...customUnitTypes];
     const unitAreaById = new Map(mergedUnitTypes.map((unitType) => [unitType.id, unitType.supplyArea]));
-    const mergedAllocations = defaultValues.unitAllocations.map((defaultAllocation) => {
+    const mergedAllocations = defaultValues.unitAllocations.filter((allocation) => !inputs.unitAllocations?.length || inputs.unitAllocations.some((saved) => saved.id === allocation.id)).map((defaultAllocation) => {
         const savedAllocation = inputs.unitAllocations?.find((allocation) => allocation.id === defaultAllocation.id);
         const mergedAllocation = savedAllocation ? { ...defaultAllocation, ...savedAllocation } : defaultAllocation;
         const area = unitAreaById.get(mergedAllocation.unitTypeId) || 0;
@@ -600,6 +605,12 @@ export function useCalculator() {
             return { ...prev, advancedCategories: newCategories };
         });
     };
+
+    const applyHouseholdPreset = () => setInputs(applyHouseholdPresetToInputs);
+    const updateHouseholdCount = (unitTypeId: string, tier: MemberTier, value: number) =>
+        setInputs((prev) => updateHouseholdCountInInputs(prev, unitTypeId, tier, value));
+    const updateSupplyArea = (unitTypeId: string, area: number) =>
+        setInputs((prev) => updateHouseholdSupplyArea(prev, unitTypeId, area));
 
     // Update unit type total units and redistribute allocations proportionally
     const updateUnitTypeTotalUnits = (unitTypeId: string, newTotal: number) => {
@@ -1032,6 +1043,9 @@ export function useCalculator() {
         deleteUnitAllocation,
         updateUnitAllocation,
         updateUnitTypeTotalUnits,
+        applyHouseholdPreset,
+        updateHouseholdCount,
+        updateSupplyArea,
         addFundingPlanItem,
         updateFundingPlanItem,
         removeFundingPlanItem,

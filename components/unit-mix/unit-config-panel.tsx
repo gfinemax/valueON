@@ -1,103 +1,61 @@
 "use client";
 
-import { UnitType } from "@/types";
+import { UnitType, UnitAllocation, MemberTier } from "@/types";
 import { Input } from "@/components/ui/input";
-import { ExpandToggle } from "@/components/ui/expand-toggle";
-import { useState } from "react";
-import { Settings } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface UnitConfigPanelProps {
     unitTypes: UnitType[];
-    onUpdateUnitTypeTotalUnits: (unitTypeId: string, totalUnits: number) => void;
+    allocations: UnitAllocation[];
+    onApplyPreset: () => void;
+    onUpdateCount: (unitTypeId: string, tier: MemberTier, count: number) => void;
+    onUpdateSupplyArea: (unitTypeId: string, area: number) => void;
 }
 
-export function UnitConfigPanel({ unitTypes, onUpdateUnitTypeTotalUnits }: UnitConfigPanelProps) {
-    const [isOpen, setIsOpen] = useState(false);
-
-    const apartmentTypes = unitTypes.filter(u => u.category === 'APARTMENT');
-    const rentalTypes = unitTypes.filter(u => u.category === 'RENTAL');
-
-    const totalApartment = apartmentTypes.reduce((sum, u) => sum + (u.totalUnits || 0), 0);
-    const totalRental = rentalTypes.reduce((sum, u) => sum + (u.totalUnits || 0), 0);
-    const grandTotal = totalApartment + totalRental;
-
+export function UnitConfigPanel({ unitTypes, allocations, onApplyPreset, onUpdateCount, onUpdateSupplyArea }: UnitConfigPanelProps) {
+    const count = (id: string, tier?: MemberTier) => allocations.filter((allocation) => allocation.unitTypeId === id && (!tier || allocation.tier === tier)).reduce((sum, allocation) => sum + allocation.count, 0);
+    const apartments = unitTypes.filter((type) => type.category === "APARTMENT");
+    const rentals = unitTypes.filter((type) => type.category === "RENTAL");
+    const rows = apartments.map((type) => {
+        const rental = rentals.find((item) => item.id === type.id.replace("unit-", "rental-"));
+        return { type, rental, first: count(type.id, "1st"), second: count(type.id, "2nd"), general: count(type.id, "General"), rentalCount: rental ? count(rental.id) : 0 };
+    });
+    const unmatchedRentals = rentals.filter((type) => !rows.some((row) => row.rental?.id === type.id));
+    const totals = rows.reduce((sum, row) => ({ first: sum.first + row.first, second: sum.second + row.second, general: sum.general + row.general, rental: sum.rental + row.rentalCount }), { first: 0, second: 0, general: 0, rental: unmatchedRentals.reduce((sum, type) => sum + count(type.id), 0) });
+    const showGeneral = totals.general > 0;
+    const renderCount = (type: UnitType, tier: MemberTier, value: number, label: string) => (
+        <Input type="number" min={0} step={1} aria-label={`${type.name} ${label} 세대수`} className="h-8 w-20 text-center" value={value} onChange={(event) => onUpdateCount(type.id, tier, Number(event.target.value))} />
+    );
     return (
-        <div className="bg-slate-100 rounded-lg overflow-hidden mb-4">
-            {/* Header - Always Visible */}
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                aria-expanded={isOpen}
-                aria-controls="unit-config-panel-details"
-                className="group w-full px-4 py-3 flex items-center justify-between gap-3 text-left transition-colors hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30"
-            >
-                <div className="flex items-center gap-2">
-                    <Settings className="w-4 h-4 text-slate-500" />
-                    <span className="text-sm font-semibold text-slate-700">세대 배분 설정</span>
-                    <span className="text-xs text-slate-500 bg-white px-2 py-0.5 rounded">
-                        총 {grandTotal}세대
-                    </span>
-                </div>
-                <ExpandToggle expanded={isOpen} />
-            </button>
-
-            {/* Expandable Content */}
-            {isOpen && (
-                <div id="unit-config-panel-details" className="px-4 pb-4 pt-2 border-t border-slate-200">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* Apartment Types */}
-                        <div>
-                            <h4 className="text-xs font-semibold text-slate-600 mb-2 flex items-center gap-1">
-                                아파트
-                                <span className="text-slate-400">({totalApartment}세대)</span>
-                            </h4>
-                            <div className="space-y-2">
-                                {apartmentTypes.map(ut => (
-                                    <div key={ut.id} className="flex items-center gap-2 bg-white rounded p-2">
-                                        <span className="text-sm font-medium text-slate-700 w-20">{ut.name}</span>
-                                        <span className="text-xs text-slate-400">{ut.supplyArea}평</span>
-                                        <div className="flex-1" />
-                                        <Input
-                                            type="number"
-                                            className="w-20 h-7 text-center text-sm"
-                                            value={ut.totalUnits || 0}
-                                            onChange={(e) => onUpdateUnitTypeTotalUnits(ut.id, Number(e.target.value))}
-                                        />
-                                        <span className="text-xs text-slate-500">세대</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Rental Types */}
-                        <div>
-                            <h4 className="text-xs font-semibold text-slate-600 mb-2 flex items-center gap-1">
-                                임대주택
-                                <span className="text-slate-400">({totalRental}세대)</span>
-                            </h4>
-                            <div className="space-y-2">
-                                {rentalTypes.map(ut => (
-                                    <div key={ut.id} className="flex items-center gap-2 bg-white rounded p-2">
-                                        <span className="text-sm font-medium text-slate-700 w-20">{ut.name}</span>
-                                        <span className="text-xs text-slate-400">{ut.supplyArea}평</span>
-                                        <div className="flex-1" />
-                                        <Input
-                                            type="number"
-                                            className="w-20 h-7 text-center text-sm"
-                                            value={ut.totalUnits || 0}
-                                            onChange={(e) => onUpdateUnitTypeTotalUnits(ut.id, Number(e.target.value))}
-                                        />
-                                        <span className="text-xs text-slate-500">세대</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-
-                    <p className="text-xs text-slate-400 mt-3">
-                        * 세대수 변경 시 tier별 비율이 유지되며 자동 재분배됩니다.
-                    </p>
-                </div>
-            )}
-        </div>
+        <section className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                <h2 className="font-semibold">세대 배분 설정 · 총 {totals.first + totals.second + totals.general + totals.rental}세대</h2>
+                <Button type="button" variant="outline" onClick={onApplyPreset}>제공 배분표 적용</Button>
+            </div>
+            <p className="mb-3 text-xs text-slate-500">배분표 적용 시 아파트·공공임대 세대수와 평당가를 교체합니다. 1차 4,500만원 · 2차 5,500만원 · 공공임대 건축비 1,300만원/평 (토지비 제외)</p>
+            <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                    <caption className="sr-only">평형별 공공임대 및 조합원 세대 배분</caption>
+                    <thead><tr className="border-b text-left">{["구분", "공급면적(평)", "전체 세대수", "공공임대", "조합원분", "1차 조합원", "2차 조합원", ...(showGeneral ? ["일반분양"] : [])].map((label) => <th key={label} scope="col" className="whitespace-nowrap p-2">{label}</th>)}</tr></thead>
+                    <tbody>
+                        {rows.map(({ type, rental, first, second, general, rentalCount }) => (
+                            <tr key={type.id} className="border-b">
+                                <th scope="row" className="whitespace-nowrap p-2 text-left">{type.name}</th>
+                                <td className="p-2"><Input type="number" min={0.01} step={0.01} aria-label={`${type.name} 공급면적 평`} className="h-8 w-20" value={type.supplyArea} onChange={(event) => onUpdateSupplyArea(type.id, Number(event.target.value))} /></td>
+                                <td className="p-2">{first + second + general + rentalCount}</td>
+                                <td className="p-2">{rental ? renderCount(rental, "General", rentalCount, "공공임대") : "—"}</td>
+                                <td className="p-2">{first + second}</td>
+                                <td className="p-2">{renderCount(type, "1st", first, "1차 조합원")}</td>
+                                <td className="p-2">{renderCount(type, "2nd", second, "2차 조합원")}</td>
+                                {showGeneral && <td className="p-2">{renderCount(type, "General", general, "일반분양")}</td>}
+                            </tr>
+                        ))}
+                        {unmatchedRentals.map((type) => <tr key={type.id} className="border-b"><th scope="row" className="p-2 text-left">{type.name}</th><td className="p-2">{type.supplyArea}</td><td className="p-2">{count(type.id)}</td><td className="p-2">{renderCount(type, "General", count(type.id), "공공임대")}</td><td colSpan={showGeneral ? 4 : 3} /></tr>)}
+                    </tbody>
+                    <tfoot><tr className="font-bold"><th scope="row" className="p-2 text-left">합계</th><td /><td className="p-2">{totals.first + totals.second + totals.general + totals.rental}</td><td className="p-2">{totals.rental}</td><td className="p-2">{totals.first + totals.second}</td><td className="p-2">{totals.first}</td><td className="p-2">{totals.second}</td>{showGeneral && <td className="p-2">{totals.general}</td>}</tr></tfoot>
+                </table>
+            </div>
+            <p className="mt-3 text-xs text-slate-500">세대수를 직접 입력하면 전체와 합계가 자동 계산됩니다. 공급면적은 49A형 18평, 59형 25평, 84형 34평이며 실제 공급면적으로 수정할 수 있습니다. 평당가는 아래 수입 상세에서 수정할 수 있습니다.</p>
+        </section>
     );
 }

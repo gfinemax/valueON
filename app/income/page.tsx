@@ -19,7 +19,9 @@ export default function IncomePage() {
     const {
         inputs,
         updateUnitAllocation,
-        updateUnitTypeTotalUnits,
+        applyHouseholdPreset,
+        updateHouseholdCount,
+        updateSupplyArea,
         updateIncomeCategoryTitle,
         updateIncomeCategoryNote,
         updateUnitTypeName,
@@ -57,7 +59,10 @@ export default function IncomePage() {
                 {isEditMode && showConfig && (
                     <UnitConfigPanel
                         unitTypes={inputs.unitTypes}
-                        onUpdateUnitTypeTotalUnits={updateUnitTypeTotalUnits}
+                        allocations={inputs.unitAllocations}
+                        onApplyPreset={applyHouseholdPreset}
+                        onUpdateCount={updateHouseholdCount}
+                        onUpdateSupplyArea={updateSupplyArea}
                     />
                 )}
 
